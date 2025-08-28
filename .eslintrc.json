@@ -1,0 +1,13 @@
+{
+  "root": true,
+  "env": { "browser": true, "es2022": true, "node": true },
+  "extends": ["eslint:recommended", "plugin:react/recommended", "prettier"],
+  "settings": { "react": { "version": "detect" } },
+  "parserOptions": { "ecmaVersion": 2023, "sourceType": "module" },
+  "plugins": ["react"],
+  "rules": {
+    "react/prop-types": "off",
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+  },
+  "ignorePatterns": ["dist", "build"]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "savebucks",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run -w apps/api dev & npm run -w apps/web dev",
+    "build": "npm run -w apps/api build && npm run -w apps/web build",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "eslint": "^9.6.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.35.0",
+    "prettier": "^3.3.3"
+  }
+}
