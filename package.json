@@ -10,6 +10,8 @@
     "dev": "run-p dev:*",
     "dev:web": "npm run -w apps/web dev",
     "dev:api": "npm run -w apps/api dev",
+    "dev:worker": "npm run -w apps/worker dev",
+    "dev:telegram": "npm run -w apps/worker telegram:dev",
     "build": "npm run -w apps/api build && npm run -w apps/web build",
     "lint": "eslint .",
     "format": "prettier --write ."
