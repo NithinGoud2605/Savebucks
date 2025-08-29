@@ -1,12 +1,23 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>savebucks</title>
-  </head>
-  <body class="bg-zinc-50 dark:bg-zinc-900">
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SaveBucks - Best Deals Community</title>
+  <meta name="description" content="Discover the best deals and save money with the most trusted community-driven US deals platform." />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <script>
+    // Prevent FOUC by setting theme immediately
+    (function() {
+      const theme = localStorage.getItem('theme');
+      if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
 </html>

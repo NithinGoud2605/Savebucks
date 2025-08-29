@@ -8,6 +8,8 @@ import { makeAuth } from './middleware/auth.js';
 import health from './routes/health.js';
 import deals from './routes/deals.js';
 import adminRoutes from './routes/admin.js';
+import authRoutes from './routes/auth.js';
+import usersRoutes from './routes/users.js';
 import { log } from './lib/logger.js';
 
 const app = express();
@@ -19,6 +21,8 @@ app.use(express.json());
 app.use(makeAuth());
 
 app.use(health);
+app.use(authRoutes);
+app.use(usersRoutes);
 app.use(deals);
 app.use(adminRoutes);
 

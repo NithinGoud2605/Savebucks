@@ -1,188 +1,117 @@
 import React from 'react';
-import { supa } from '../lib/supa';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth.js';
 
 export default function AuthBox() {
-  const [user, setUser] = React.useState(null);
-  const [loading, setLoading] = React.useState(false);
-  const [showSignUp, setShowSignUp] = React.useState(false);
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [message, setMessage] = React.useState('');
+  const { user, isAuthenticated, signOut } = useAuth();
 
-  React.useEffect(() => {
-    supa.auth.getUser().then(({ data }) => setUser(data?.user ?? null));
-    const { data: sub } = supa.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null));
-    return () => sub.subscription.unsubscribe();
-  }, []);
-
-  async function signInWithEmail() {
-    setLoading(true);
-    setMessage('');
-    try {
-      const { error } = await supa.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      setEmail('');
-      setPassword('');
-      setShowSignUp(false);
-    } catch (error) {
-      setMessage(error.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function signUpWithEmail() {
-    setLoading(true);
-    setMessage('');
-    try {
-      const { error } = await supa.auth.signUp({ 
-        email, 
-        password,
-        options: {
-          emailRedirectTo: window.location.origin
-        }
-      });
-      if (error) throw error;
-      setMessage('Check your email for confirmation link!');
-      setEmail('');
-      setPassword('');
-    } catch (error) {
-      setMessage(error.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function signInWithGoogle() {
-    setLoading(true);
-    try {
-      await supa.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin }
-      });
-    } catch (error) {
-      console.error('Sign in error:', error);
-      setMessage(error.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function signOut() {
-    setLoading(true);
-    try {
-      await supa.auth.signOut();
-    } catch (error) {
-      console.error('Sign out error:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (user) {
+  if (isAuthenticated && user) {
     return (
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-zinc-600 hidden md:inline">
-          {user.email} {!user.email_confirmed_at && '(unconfirmed)'}
-        </span>
-        <button 
-          onClick={signOut} 
-          disabled={loading}
-          className="px-3 py-1.5 text-sm rounded-lg bg-zinc-100 hover:bg-zinc-200 disabled:opacity-50"
-        >
-          {loading ? 'Signing out...' : 'Sign out'}
-        </button>
-      </div>
-    );
-  }
+      <div className="bg-white rounded-xl shadow-soft border border-secondary-200 p-6">
+        <div className="flex items-center space-x-4">
+          {/* User Avatar */}
+          <div className="flex-shrink-0">
+            {user.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt={user.handle || user.email}
+                className="w-12 h-12 rounded-full border-2 border-primary-200"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center border-2 border-primary-200">
+                <span className="text-primary-600 font-semibold text-lg">
+                  {(user.handle || user.email).charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+          </div>
 
-  if (showSignUp) {
-    return (
-      <div className="flex flex-col gap-2 p-3 bg-white border rounded-lg shadow-lg min-w-[280px]">
-        <h3 className="font-semibold text-sm">Sign up</h3>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="px-3 py-1.5 text-sm border rounded"
-        />
-        <input
-          type="password"
-          placeholder="Password (min 6 chars)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="px-3 py-1.5 text-sm border rounded"
-        />
-        {message && <div className="text-xs text-red-600">{message}</div>}
-        <div className="flex gap-2">
-          <button
-            onClick={signUpWithEmail}
-            disabled={loading || !email || password.length < 6}
-            className="flex-1 px-3 py-1.5 text-sm rounded bg-zinc-900 text-white disabled:opacity-50"
+          {/* User Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center space-x-2">
+              <h3 className="text-lg font-semibold text-secondary-900 truncate">
+                {user.handle || user.email.split('@')[0]}
+              </h3>
+              {user.role !== 'user' && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                  {user.role === 'admin' ? 'Admin' : 'Moderator'}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-secondary-600 truncate">{user.email}</p>
+            <div className="flex items-center space-x-4 mt-1">
+              <span className="text-xs text-secondary-500">
+                Karma: <span className="font-medium text-primary-600">{user.karma || 0}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="mt-4 flex space-x-3">
+          <Link
+            to={`/profile/${user.handle || user.id}`}
+            className="btn btn-secondary text-sm px-4 py-2 flex-1"
           >
-            {loading ? 'Signing up...' : 'Sign up'}
-          </button>
+            View Profile
+          </Link>
           <button
-            onClick={() => setShowSignUp(false)}
-            className="px-3 py-1.5 text-sm rounded bg-zinc-100"
+            onClick={signOut}
+            className="btn text-sm px-4 py-2 bg-secondary-100 text-secondary-700 hover:bg-secondary-200 border border-secondary-300"
           >
-            Cancel
+            Sign Out
           </button>
         </div>
-        <div className="text-xs text-zinc-500 text-center">or</div>
-        <button
-          onClick={signInWithGoogle}
-          disabled={loading}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white disabled:opacity-50"
-        >
-          Continue with Google
-        </button>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-2 p-3 bg-white border rounded-lg shadow-lg min-w-[280px]">
-      <h3 className="font-semibold text-sm">Sign in</h3>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="px-3 py-1.5 text-sm border rounded"
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="px-3 py-1.5 text-sm border rounded"
-      />
-      {message && <div className="text-xs text-red-600">{message}</div>}
-      <div className="flex gap-2">
-        <button
-          onClick={signInWithEmail}
-          disabled={loading || !email || !password}
-          className="flex-1 px-3 py-1.5 text-sm rounded bg-zinc-900 text-white disabled:opacity-50"
-        >
-          {loading ? 'Signing in...' : 'Sign in'}
-        </button>
-        <button
-          onClick={() => setShowSignUp(true)}
-          className="px-3 py-1.5 text-sm rounded bg-zinc-100"
-        >
-          Sign up
-        </button>
+    <div className="bg-white rounded-xl shadow-soft border border-secondary-200 p-6">
+      <div className="text-center">
+        <div className="mb-4">
+          <div className="w-16 h-16 mx-auto bg-primary-100 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+        </div>
+
+        <h3 className="text-lg font-semibold text-secondary-900 mb-2">
+          Join SaveBucks
+        </h3>
+        <p className="text-sm text-secondary-600 mb-6">
+          Sign in to post deals, vote, and join the community
+        </p>
+
+        <div className="space-y-3">
+          <Link
+            to="/signin"
+            className="btn btn-primary w-full py-2.5 text-sm font-medium"
+          >
+            Sign In
+          </Link>
+          <Link
+            to="/signup"
+            className="btn btn-secondary w-full py-2.5 text-sm font-medium"
+          >
+            Create Account
+          </Link>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-secondary-200">
+          <p className="text-xs text-secondary-500">
+            By signing up, you agree to our{' '}
+            <Link to="/terms" className="text-primary-600 hover:text-primary-500">
+              Terms
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy" className="text-primary-600 hover:text-primary-500">
+              Privacy Policy
+            </Link>
+          </p>
+        </div>
       </div>
-      <div className="text-xs text-zinc-500 text-center">or</div>
-      <button
-        onClick={signInWithGoogle}
-        disabled={loading}
-        className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white disabled:opacity-50"
-      >
-        Continue with Google
-      </button>
     </div>
   );
 }
