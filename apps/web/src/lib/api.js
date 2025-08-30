@@ -65,6 +65,55 @@ function handleApiError(error, fallbackData = null) {
 
 
 export const api = {
+  // Tags
+  getTags: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value.toString())
+      }
+    })
+    return apiRequest(`/api/tags?${searchParams}`)
+  },
+
+  getPopularTags: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value.toString())
+      }
+    })
+    return apiRequest(`/api/tags/popular?${searchParams}`)
+  },
+
+  suggestTags: (title, description = '', maxSuggestions = 10) => apiRequest('/api/tags/suggest', {
+    method: 'POST',
+    body: { title, description, max_suggestions: maxSuggestions },
+  }),
+
+  createTag: (tagData) => apiRequest('/api/tags', {
+    method: 'POST',
+    body: tagData,
+  }),
+
+  updateTag: (tagId, tagData) => apiRequest(`/api/tags/${tagId}`, {
+    method: 'PUT',
+    body: tagData,
+  }),
+
+  deleteTag: (tagId) => apiRequest(`/api/tags/${tagId}`, {
+    method: 'DELETE',
+  }),
+
+  addTagsToDeals: (dealId, tagIds) => apiRequest(`/api/deals/${dealId}/tags`, {
+    method: 'POST',
+    body: { tag_ids: tagIds },
+  }),
+
+  addTagsToCoupon: (couponId, tagIds) => apiRequest(`/api/coupons/${couponId}/tags`, {
+    method: 'POST',
+    body: { tag_ids: tagIds },
+  }),
   // Authentication
   signUp: (credentials) => apiRequest('/api/auth/signup', {
     method: 'POST',
@@ -93,8 +142,18 @@ export const api = {
   }),
 
   // Deals
-  getDeals: (params) => {
-    const searchParams = new URLSearchParams(params)
+  getDeals: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        if (key === 'tags' && Array.isArray(value)) {
+          // Handle tag arrays
+          value.forEach(tagId => searchParams.append('tags', tagId.toString()))
+        } else {
+          searchParams.append(key, value.toString())
+        }
+      }
+    })
     return apiRequest(`/api/deals?${searchParams}`)
   },
   
@@ -115,6 +174,252 @@ export const api = {
     body: { body, parent_id: parentId },
   }),
   
+  // Categories
+  getCategories: (params = {}) => {
+    const searchParams = new URLSearchParams(params)
+    return apiRequest(`/api/categories?${searchParams}`)
+  },
+  
+  getCategory: (slug) => apiRequest(`/api/categories/${slug}`),
+  
+  // Collections
+  getCollections: (params = {}) => {
+    const searchParams = new URLSearchParams(params)
+    return apiRequest(`/api/collections?${searchParams}`)
+  },
+  
+  getCollection: (slug) => apiRequest(`/api/collections/${slug}`),
+  
+  // Banners
+  getBanners: (params = {}) => {
+    const searchParams = new URLSearchParams(params)
+    return apiRequest(`/api/banners?${searchParams}`)
+  },
+  
+  // Deal Tags
+  getDealTags: () => apiRequest('/api/deal-tags'),
+
+  // Users
+  getUser: (handle) => apiRequest(`/api/users/${handle}`),
+  
+  updateProfile: (handle, profileData) => apiRequest(`/api/users/${handle}`, {
+    method: 'PUT',
+    body: profileData,
+  }),
+  
+  uploadAvatar: (handle, file) => {
+    const formData = new FormData()
+    formData.append('avatar', file)
+    return apiRequest(`/api/users/${handle}/avatar`, {
+      method: 'POST',
+      body: formData,
+      headers: {} // Remove Content-Type to let browser set it with boundary
+    })
+  },
+  
+  followUser: (handle) => apiRequest(`/api/users/${handle}/follow`, {
+    method: 'POST',
+  }),
+  
+  getUserFollowers: (handle, page = 1) => {
+    const params = new URLSearchParams({ page: page.toString() })
+    return apiRequest(`/api/users/${handle}/followers?${params}`)
+  },
+  
+  getUserFollowing: (handle, page = 1) => {
+    const params = new URLSearchParams({ page: page.toString() })
+    return apiRequest(`/api/users/${handle}/following?${params}`)
+  },
+  
+  getUserAchievements: (handle) => apiRequest(`/api/users/${handle}/achievements`),
+  
+  getUserActivity: (handle, page = 1) => {
+    const params = new URLSearchParams({ page: page.toString() })
+    return apiRequest(`/api/users/${handle}/activity?${params}`)
+  },
+
+  // Leaderboard
+  getLeaderboard: (period = 'all_time', limit = 50) => {
+    const params = new URLSearchParams({ limit: limit.toString() })
+    return apiRequest(`/api/users/leaderboard/${period}?${params}`)
+  },
+
+  // Deal Images
+  uploadDealImages: (dealId, files) => {
+    const formData = new FormData()
+    files.forEach((file, index) => {
+      formData.append('images', file)
+    })
+    return apiRequest(`/api/deals/${dealId}/images`, {
+      method: 'POST',
+      body: formData,
+      headers: {} // Remove Content-Type to let browser set it with boundary
+    })
+  },
+
+  // Coupons
+  listCoupons: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value.toString())
+      }
+    })
+    return apiRequest(`/api/coupons?${searchParams}`)
+  },
+
+  getCoupon: (id) => apiRequest(`/api/coupons/${id}`),
+
+  createCoupon: (couponData) => apiRequest('/api/coupons', {
+    method: 'POST',
+    body: couponData,
+  }),
+
+  uploadCouponImages: (couponId, files) => {
+    const formData = new FormData()
+    files.forEach((file, index) => {
+      formData.append('images', file)
+    })
+    return apiRequest(`/api/coupons/${couponId}/images`, {
+      method: 'POST',
+      body: formData,
+      headers: {} // Remove Content-Type to let browser set it with boundary
+    })
+  },
+
+  voteCoupon: (couponId, value) => apiRequest(`/api/coupons/${couponId}/vote`, {
+    method: 'POST',
+    body: { value },
+  }),
+
+  useCoupon: (couponId, orderAmount, wasSuccessful = true) => apiRequest(`/api/coupons/${couponId}/use`, {
+    method: 'POST',
+    body: { order_amount: orderAmount, was_successful: wasSuccessful },
+  }),
+
+  addCouponComment: (couponId, body, parentId = null) => apiRequest(`/api/coupons/${couponId}/comments`, {
+    method: 'POST',
+    body: { body, parent_id: parentId },
+  }),
+
+  // Companies
+  getCompanies: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value.toString())
+      }
+    })
+    return apiRequest(`/api/companies?${searchParams}`)
+  },
+
+  getCompany: (slug) => apiRequest(`/api/companies/${slug}`),
+
+  getCompanyDeals: (slug, params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value.toString())
+      }
+    })
+    return apiRequest(`/api/companies/${slug}/deals?${searchParams}`)
+  },
+
+  getCompanyCoupons: (slug, params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value.toString())
+      }
+    })
+    return apiRequest(`/api/companies/${slug}/coupons?${searchParams}`)
+  },
+
+  getCompanyCategories: () => apiRequest('/api/companies/categories'),
+
+  // Admin APIs
+  getAdminDashboard: () => apiRequest('/api/admin/dashboard'),
+  
+  getPendingDeals: (page = 1) => {
+    const params = new URLSearchParams({ page: page.toString() })
+    return apiRequest(`/api/admin/deals/pending?${params}`)
+  },
+  
+  getPendingCoupons: (page = 1) => {
+    const params = new URLSearchParams({ page: page.toString() })
+    return apiRequest(`/api/admin/coupons/pending?${params}`)
+  },
+  
+  reviewDeal: (dealId, action, rejectionReason = null) => apiRequest(`/api/admin/deals/${dealId}/review`, {
+    method: 'POST',
+    body: { action, rejection_reason: rejectionReason },
+  }),
+  
+  reviewCoupon: (couponId, action, rejectionReason = null) => apiRequest(`/api/admin/coupons/${couponId}/review`, {
+    method: 'POST',
+    body: { action, rejection_reason: rejectionReason },
+  }),
+  
+  getAdminUsers: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value.toString())
+      }
+    })
+    return apiRequest(`/api/admin/users?${searchParams}`)
+  },
+  
+  updateUserRole: (userId, role) => apiRequest(`/api/admin/users/${userId}/role`, {
+    method: 'POST',
+    body: { role },
+  }),
+  
+  getAdminAnalytics: (period = '30') => {
+    const params = new URLSearchParams({ period })
+    return apiRequest(`/api/admin/analytics?${params}`)
+  },
+  
+  featureDeal: (dealId, featured) => apiRequest(`/api/admin/deals/${dealId}/feature`, {
+    method: 'POST',
+    body: { featured },
+  }),
+  
+  featureCoupon: (couponId, featured) => apiRequest(`/api/admin/coupons/${couponId}/feature`, {
+    method: 'POST',
+    body: { featured },
+  }),
+
+  // Company management APIs
+  createCompany: (companyData) => apiRequest('/api/companies', {
+    method: 'POST',
+    body: companyData,
+  }),
+
+  updateCompany: (companyId, companyData) => apiRequest(`/api/companies/${companyId}`, {
+    method: 'PUT',
+    body: companyData,
+  }),
+
+  uploadCompanyLogo: (companyId, logoFile) => {
+    const formData = new FormData()
+    formData.append('logo', logoFile)
+    
+    return fetch(`${API_BASE_URL}/api/companies/${companyId}/logo`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${getToken()}`,
+      },
+      body: formData,
+    }).then(async response => {
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Upload failed')
+      }
+      return response.json()
+    })
+  },
+
   // Enhanced deal features
   getSimilarDeals: async (dealId, params = {}) => {
     const searchParams = new URLSearchParams(params)
@@ -197,25 +502,25 @@ export const api = {
     return await apiRequest(`/api/users/${userId}/following`)
   },
 
-  getUserFollowers: async (userId) => {
-    return await apiRequest(`/api/users/${userId}/followers`)
+  getUserFollowers: async (handle) => {
+    return await apiRequest(`/api/users/${handle}/followers`)
   },
   
-  getUserActivity: async (userId, options = {}) => {
+  getUserActivity: async (handle, options = {}) => {
     const params = new URLSearchParams(options)
-    return await apiRequest(`/api/users/${userId}/activity?${params}`)
+    return await apiRequest(`/api/users/${handle}/activity?${params}`)
   },
   
-  getUserStats: async (userId) => {
-    return await apiRequest(`/api/users/${userId}/stats`)
+  getUserStats: async (handle) => {
+    return await apiRequest(`/api/users/${handle}/stats`)
   },
   
-  getUserBadges: async (userId) => {
-    return await apiRequest(`/api/users/${userId}/badges`)
+  getUserBadges: async (handle) => {
+    return await apiRequest(`/api/users/${handle}/badges`)
   },
   
-  getUserReputation: async (userId) => {
-    return await apiRequest(`/api/users/${userId}/reputation`)
+  getUserReputation: async (handle) => {
+    return await apiRequest(`/api/users/${handle}/reputation`)
   },
   
   getUserAchievements: async (userId) => {
@@ -353,4 +658,157 @@ export const api = {
     method: 'POST',
     body: { action, postIds },
   }),
+
+  // ===== NEW FEATURE APIs =====
+
+  // Saved Searches & Follow Alerts
+  savedSearches: {
+    create: (searchData) => apiRequest('/api/saved-searches', {
+      method: 'POST',
+      body: searchData,
+    }),
+    
+    list: () => apiRequest('/api/saved-searches'),
+    
+    update: (searchId, updates) => apiRequest(`/api/saved-searches/${searchId}`, {
+      method: 'PUT',
+      body: updates,
+    }),
+    
+    delete: (searchId) => apiRequest(`/api/saved-searches/${searchId}`, {
+      method: 'DELETE',
+    }),
+    
+    toggle: (searchId) => apiRequest(`/api/saved-searches/${searchId}/toggle`, {
+      method: 'POST',
+    }),
+  },
+
+  notifications: {
+    getPreferences: () => apiRequest('/api/notifications/preferences'),
+    
+    updatePreferences: (preferences) => apiRequest('/api/notifications/preferences', {
+      method: 'PUT',
+      body: preferences,
+    }),
+    
+    getQueue: (params = {}) => {
+      const searchParams = new URLSearchParams(params)
+      return apiRequest(`/api/notifications/queue?${searchParams}`)
+    },
+    
+    markAsRead: (notificationIds) => apiRequest('/api/notifications/mark-read', {
+      method: 'POST',
+      body: { notification_ids: notificationIds },
+    }),
+  },
+
+  // Price Tracking & Countdown
+  priceTracking: {
+    getDealHistory: (dealId, days = 30) => apiRequest(`/api/price-tracking/deals/${dealId}/history?days=${days}`),
+    
+    getDealCountdown: (dealId) => apiRequest(`/api/price-tracking/deals/${dealId}/countdown`),
+    
+    createAlert: (alertData) => apiRequest('/api/price-tracking/alerts', {
+      method: 'POST',
+      body: alertData,
+    }),
+    
+    getUserAlerts: () => apiRequest('/api/price-tracking/alerts'),
+    
+    updateAlert: (alertId, updates) => apiRequest(`/api/price-tracking/alerts/${alertId}`, {
+      method: 'PUT',
+      body: updates,
+    }),
+    
+    deleteAlert: (alertId) => apiRequest(`/api/price-tracking/alerts/${alertId}`, {
+      method: 'DELETE',
+    }),
+    
+    getExpiringDeals: (days = 7) => apiRequest(`/api/price-tracking/expiring?days=${days}`),
+    
+    markExpired: (dealIds) => apiRequest('/api/price-tracking/mark-expired', {
+      method: 'POST',
+      body: { deal_ids: dealIds },
+    }),
+  },
+
+  // Auto-Tagging
+  autoTagging: {
+    autoTagDeal: (dealData) => apiRequest('/api/auto-tagging/deals', {
+      method: 'POST',
+      body: dealData,
+    }),
+    
+    getMerchantPatterns: () => apiRequest('/api/auto-tagging/merchant-patterns'),
+    
+    createMerchantPattern: (patternData) => apiRequest('/api/auto-tagging/merchant-patterns', {
+      method: 'POST',
+      body: patternData,
+    }),
+    
+    updateMerchantPattern: (patternId, updates) => apiRequest(`/api/auto-tagging/merchant-patterns/${patternId}`, {
+      method: 'PUT',
+      body: updates,
+    }),
+    
+    deleteMerchantPattern: (patternId) => apiRequest(`/api/auto-tagging/merchant-patterns/${patternId}`, {
+      method: 'DELETE',
+    }),
+    
+    getCategoryPatterns: () => apiRequest('/api/auto-tagging/category-patterns'),
+    
+    createCategoryPattern: (patternData) => apiRequest('/api/auto-tagging/category-patterns', {
+      method: 'POST',
+      body: patternData,
+    }),
+    
+    updateCategoryPattern: (patternId, updates) => apiRequest(`/api/auto-tagging/category-patterns/${patternId}`, {
+      method: 'PUT',
+      body: updates,
+    }),
+    
+    deleteCategoryPattern: (patternId) => apiRequest(`/api/auto-tagging/category-patterns/${patternId}`, {
+      method: 'DELETE',
+    }),
+    
+    getTaggingLog: (params = {}) => {
+      const searchParams = new URLSearchParams(params)
+      return apiRequest(`/api/auto-tagging/log?${searchParams}`)
+    },
+    
+    getTaggingStats: () => apiRequest('/api/auto-tagging/stats'),
+  },
+
+  // Gamification
+  gamification: {
+    getUserXP: (userId) => apiRequest(`/api/gamification/users/${userId}/xp`),
+    
+    getUserLevel: (userId) => apiRequest(`/api/gamification/users/${userId}/level`),
+    
+    getUserAchievements: (userId) => apiRequest(`/api/gamification/users/${userId}/achievements`),
+    
+    getAchievements: () => apiRequest('/api/gamification/achievements'),
+    
+    getLeaderboard: (params = {}) => {
+      const searchParams = new URLSearchParams(params)
+      return apiRequest(`/api/gamification/leaderboard?${searchParams}`)
+    },
+    
+    awardXP: (userId, xpData) => apiRequest(`/api/gamification/users/${userId}/xp`, {
+      method: 'POST',
+      body: xpData,
+    }),
+    
+    checkAchievements: (userId) => apiRequest(`/api/gamification/users/${userId}/check-achievements`, {
+      method: 'POST',
+    }),
+    
+    getXPConfig: () => apiRequest('/api/gamification/xp-config'),
+    
+    updateXPConfig: (config) => apiRequest('/api/gamification/xp-config', {
+      method: 'PUT',
+      body: config,
+    }),
+  },
 }

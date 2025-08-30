@@ -5,15 +5,22 @@ import { Skeleton } from './components/Loader/Skeleton'
 
 // Lazy load components for code splitting
 const ListPage = React.lazy(() => import('./pages/ListPage'))
-const DealPage = React.lazy(() => import('./pages/DealPage'))
+const NewHomepage = React.lazy(() => import('./pages/NewHomepage'))
+const SearchResults = React.lazy(() => import('./pages/SearchResults'))
+const DealPage = React.lazy(() => import('./pages/EnhancedDealPage'))
 const PostDeal = React.lazy(() => import('./pages/PostDeal'))
 const AdminPage = React.lazy(() => import('./pages/Admin/AdminPage'))
+const TagManagement = React.lazy(() => import('./pages/Admin/TagManagement'))
 const Leaderboard = React.lazy(() => import('./pages/Leaderboard'))
 const Profile = React.lazy(() => import('./pages/Profile'))
 const ForumsHome = React.lazy(() => import('./pages/Forums/ForumsHome'))
 const ForumThreads = React.lazy(() => import('./pages/Forums/ForumThreads'))
 const ThreadComposer = React.lazy(() => import('./pages/Forums/ThreadComposer'))
 const ThreadPage = React.lazy(() => import('./pages/Forums/ThreadPage'))
+const CategoryPage = React.lazy(() => import('./pages/CategoryPage'))
+const CategoriesPage = React.lazy(() => import('./pages/CategoriesPage'))
+const CouponsPage = React.lazy(() => import('./pages/CouponsPage'))
+const PostCoupon = React.lazy(() => import('./pages/PostCoupon'))
 const About = React.lazy(() => import('./pages/About'))
 const Privacy = React.lazy(() => import('./pages/Privacy'))
 const Terms = React.lazy(() => import('./pages/Terms'))
@@ -23,6 +30,10 @@ const NotFound = React.lazy(() => import('./pages/NotFound'))
 const SignIn = React.lazy(() => import('./pages/SignIn'))
 const SignUp = React.lazy(() => import('./pages/SignUp'))
 const AuthCallback = React.lazy(() => import('./pages/AuthCallback'))
+const SavedSearches = React.lazy(() => import('./pages/SavedSearches'))
+const PriceAlerts = React.lazy(() => import('./pages/PriceAlerts'))
+const Achievements = React.lazy(() => import('./pages/Achievements'))
+const EnhancedLeaderboard = React.lazy(() => import('./pages/EnhancedLeaderboard'))
 
 const PageLoader = () => (
   <div className="container mx-auto px-4 py-8">
@@ -44,7 +55,15 @@ export const router = createBrowserRouter([
         path: '',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ListPage />
+            <NewHomepage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'search',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <SearchResults />
           </Suspense>
         ),
       },
@@ -89,10 +108,42 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'admin/tags',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <TagManagement />
+          </Suspense>
+        ),
+      },
+      {
         path: 'leaderboard',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <Leaderboard />
+            <EnhancedLeaderboard />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'saved-searches',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <SavedSearches />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'price-alerts',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PriceAlerts />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'achievements',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <Achievements />
           </Suspense>
         ),
       },
@@ -173,6 +224,38 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <Contact />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'categories',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <CategoriesPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'category/:slug',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <CategoryPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'coupons',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <CouponsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'post-coupon',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PostCoupon />
           </Suspense>
         ),
       },

@@ -10,6 +10,7 @@ import { UserStats } from '../components/User/UserStats'
 import { ReputationBadges } from '../components/User/ReputationBadges'
 import { Skeleton } from '../components/Loader/Skeleton'
 import { api } from '../lib/api'
+import { useAuth } from '../hooks/useAuth'
 import { setPageMeta } from '../lib/head'
 import { dateAgo, formatCompactNumber, pluralize } from '../lib/format'
 import { clsx } from 'clsx'
@@ -18,13 +19,19 @@ export default function Profile() {
   const { handle } = useParams()
   const [activeTab, setActiveTab] = useState('overview')
   const [isOwnProfile, setIsOwnProfile] = useState(false)
-  const currentUser = localStorage.getItem('demo_user') // Mock auth
+  const { user: currentUser } = useAuth() // Use proper auth system
 
   // Fetch user profile data
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['user-profile', handle],
-    queryFn: () => api.getUserProfile(handle),
+    queryFn: () => {
+      if (!handle) {
+        throw new Error('No user handle provided')
+      }
+      return api.getUserProfile(handle)
+    },
     staleTime: 2 * 60 * 1000, // 2 minutes
+    enabled: !!handle, // Only run query if handle exists
   })
 
   // Check if viewing own profile
@@ -45,6 +52,25 @@ export default function Profile() {
       })
     }
   }, [profile])
+
+  if (!handle) {
+    return (
+      <Container className="py-8">
+        <div className="text-center max-w-lg mx-auto">
+          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">No User Specified</h1>
+          <p className="text-gray-600 mb-8">
+            Please provide a valid username to view their profile.
+          </p>
+          <Link to="/" className="btn-primary">Browse Deals</Link>
+        </div>
+      </Container>
+    )
+  }
 
   if (error) {
     return (
@@ -227,7 +253,7 @@ export default function Profile() {
                 </div>
 
                 {/* Compact Reputation Display */}
-                <ReputationBadges userId={profile.id} variant="compact" limit={5} />
+                <ReputationBadges userId={profile.handle} variant="compact" limit={5} />
               </div>
             </div>
 
@@ -236,7 +262,7 @@ export default function Profile() {
               {!isOwnProfile && (
                 <>
                   <FollowButton 
-                    userId={profile.id}
+                    userId={profile.handle}
                     size="lg" 
                     showFollowerCount={true}
                     className="w-full"
@@ -318,7 +344,7 @@ export default function Profile() {
                       View All Activity →
                     </button>
                   </div>
-                  <ActivityFeed userId={profile.id} limit={5} showControls={false} />
+                  <ActivityFeed userId={profile.handle} limit={5} showControls={false} />
                 </div>
 
                 {/* Recent Deals */}
@@ -344,7 +370,7 @@ export default function Profile() {
                 )}
 
                 {/* Statistics Preview */}
-                <UserStats userId={profile.id} variant="compact" />
+                <UserStats userId={profile.handle} variant="compact" />
               </div>
             )}
 
@@ -389,7 +415,7 @@ export default function Profile() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">
                   Activity Feed
                 </h2>
-                <ActivityFeed userId={profile.id} />
+                <ActivityFeed userId={profile.handle} />
               </div>
             )}
 
@@ -398,7 +424,7 @@ export default function Profile() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">
                   Detailed Statistics
                 </h2>
-                <UserStats userId={profile.id} />
+                <UserStats userId={profile.handle} />
               </div>
             )}
 
@@ -407,7 +433,7 @@ export default function Profile() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">
                   Badges & Achievements
                 </h2>
-                <ReputationBadges userId={profile.id} />
+                <ReputationBadges userId={profile.handle} />
               </div>
             )}
           </div>
@@ -415,10 +441,10 @@ export default function Profile() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Quick Stats Card */}
-            <UserStats userId={profile.id} variant="compact" />
+            <UserStats userId={profile.handle} variant="compact" />
 
             {/* Top Badges */}
-            <ReputationBadges userId={profile.id} variant="compact" limit={3} />
+            <ReputationBadges userId={profile.handle} variant="compact" limit={3} />
 
             {/* Social Connections */}
             <div className="card p-6">

@@ -1,19 +1,20 @@
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { apiAuth } from '../lib/api';
+import { api } from '../lib/api';
 
 export default function DealCard({ deal }) {
   const qc = useQueryClient();
   
   async function upvote() {
-    await apiAuth(`/api/deals/${deal.id}/vote`, {
-      method:'POST',
-      body: JSON.stringify({ value: 1 })
-    });
-    qc.invalidateQueries({ queryKey: ['deals', 'hot'] });
-    qc.invalidateQueries({ queryKey: ['deals', 'new'] });
-    qc.invalidateQueries({ queryKey: ['deals', 'trending'] });
-    qc.invalidateQueries({ queryKey: ['deal', deal.id] });
+    try {
+      await api.voteDeal(deal.id, 1);
+      qc.invalidateQueries({ queryKey: ['deals', 'hot'] });
+      qc.invalidateQueries({ queryKey: ['deals', 'new'] });
+      qc.invalidateQueries({ queryKey: ['deals', 'trending'] });
+      qc.invalidateQueries({ queryKey: ['deal', deal.id] });
+    } catch (error) {
+      console.error('Error voting:', error);
+    }
   }
 
   async function report() {
@@ -21,10 +22,7 @@ export default function DealCard({ deal }) {
     if (!reason || reason.length < 3) return;
     
     try {
-      await apiAuth(`/api/deals/${deal.id}/report`, {
-        method: 'POST',
-        body: JSON.stringify({ reason })
-      });
+      await api.reportDeal(deal.id, reason);
       alert('Report submitted. Thank you!');
     } catch (error) {
       alert('Error submitting report: ' + error.message);

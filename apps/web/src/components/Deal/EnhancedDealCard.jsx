@@ -10,6 +10,7 @@ import { BookmarkButton } from './BookmarkButton'
 import { PriceHistory } from './PriceHistory'
 import { DealScore } from './DealScore'
 import { ExpirationTimer } from './ExpirationTimer'
+import { CompactCouponCode } from './CouponCode.jsx'
 import { useToast } from '../Toast'
 import { api } from '../../lib/api'
 import { formatPrice, dateAgo, truncate } from '../../lib/format'
@@ -118,9 +119,11 @@ export function EnhancedDealCard({ deal, compact = false, enhanced = true, class
                 </span>
                 
                 {deal.coupon_code && (
-                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">
-                    CODE: {deal.coupon_code}
-                  </span>
+                  <CompactCouponCode 
+                    code={deal.coupon_code}
+                    type={deal.coupon_type || 'code'}
+                    discount={deal.discount_percentage}
+                  />
                 )}
                 
                 {deal.is_verified && (

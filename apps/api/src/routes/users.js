@@ -1,336 +1,624 @@
-import { Router } from 'express';
-import { makeAdminClient } from '../lib/supa.js';
-import { makeUserClientFromToken } from '../lib/supaUser.js';
-import { log } from '../lib/logger.js';
+import express from 'express'
+import { makeAdminClient } from '../lib/supa.js'
+import multer from 'multer'
+import path from 'path'
 
-const r = Router();
-const supaAdmin = makeAdminClient();
+const router = express.Router()
+const supabase = makeAdminClient()
 
-function bearer(req) {
-  const h = req.headers.authorization || '';
-  return h.startsWith('Bearer ') ? h.slice(7) : null;
+// Auth middleware
+const requireAuth = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Authentication required' })
+  }
+  next()
 }
 
-/**
- * Get user profile by handle
- * GET /api/users/:handle
- */
-r.get('/api/users/:handle', async (req, res) => {
-  try {
-    const { handle } = req.params;
-    
-    // Get user profile
-    const { data: profile, error: profileError } = await supaAdmin
-      .from('profiles')
-      .select(`
-        id,
-        handle,
-        avatar_url,
-        karma,
-        role,
-        created_at,
-        updated_at
-      `)
-      .eq('handle', handle.toLowerCase())
-      .single();
-    
-    if (profileError || !profile) {
-      return res.status(404).json({ error: 'User not found' });
+// Configure multer for image uploads
+const storage = multer.memoryStorage()
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true)
+    } else {
+      cb(new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.'))
     }
-    
-    // Get user stats
-    const { data: dealsCount } = await supaAdmin
-      .from('deals')
-      .select('id', { count: 'exact' })
-      .eq('submitter_id', profile.id)
-      .eq('status', 'approved');
-    
-    const { data: commentsCount } = await supaAdmin
-      .from('comments')
-      .select('id', { count: 'exact' })
-      .eq('user_id', profile.id);
-    
-    // Get recent deals
-    const { data: recentDeals } = await supaAdmin
-      .from('deals')
-      .select('id, title, price, merchant, created_at, status')
-      .eq('submitter_id', profile.id)
-      .eq('status', 'approved')
-      .order('created_at', { ascending: false })
-      .limit(5);
-    
-    res.json({
-      id: profile.id,
-      handle: profile.handle,
-      display_name: profile.handle,
-      avatar_url: profile.avatar_url,
-      karma: profile.karma,
-      role: profile.role,
-      is_verified: profile.role !== 'user',
-      created_at: profile.created_at,
-      updated_at: profile.updated_at,
-      stats: {
-        deals_posted: dealsCount?.length || 0,
-        comments_made: commentsCount?.length || 0,
-        karma: profile.karma,
-      },
-      recent_deals: recentDeals || []
-    });
-    
-  } catch (error) {
-    log('Get user profile error:', error);
-    res.status(500).json({ error: 'Internal server error' });
   }
-});
+})
 
-/**
- * Search users
- * GET /api/users/search?q=query
- */
-r.get('/api/users/search', async (req, res) => {
+// Get leaderboard
+router.get('/api/users/leaderboard/:period', async (req, res) => {
   try {
-    const { q } = req.query;
-    
-    if (!q || q.trim().length < 2) {
-      return res.status(400).json({ error: 'Query must be at least 2 characters' });
+    const { period = 'all_time' } = req.params
+    const { limit = 50 } = req.query
+
+    // Validate period
+    const validPeriods = ['weekly', 'monthly', 'all_time']
+    if (!validPeriods.includes(period)) {
+      return res.status(400).json({ error: 'Invalid period. Use weekly, monthly, or all_time' })
     }
-    
-    const { data: users, error } = await supaAdmin
-      .from('profiles')
-      .select('id, handle, avatar_url, karma, role')
-      .or(`handle.ilike.%${q.trim()}%`)
-      .order('karma', { ascending: false })
-      .limit(10);
-    
+
+    // Call the database function
+    const { data, error } = await supabase
+      .rpc('get_leaderboard', {
+        period_type: period,
+        limit_count: parseInt(limit)
+      })
+
     if (error) {
-      log('User search error:', error);
-      return res.status(500).json({ error: 'Search failed' });
+      console.error('Leaderboard error:', error)
+      return res.status(400).json({ error: error.message })
     }
-    
-    const results = users.map(user => ({
-      id: user.id,
-      handle: user.handle,
-      display_name: user.handle,
-      avatar_url: user.avatar_url,
-      karma: user.karma,
-      role: user.role
-    }));
-    
-    res.json(results);
-    
-  } catch (error) {
-    log('User search error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
-/**
- * Get user activity feed
- * GET /api/users/:handle/activity
- */
-r.get('/api/users/:handle/activity', async (req, res) => {
+    res.json(data || [])
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Get user profile
+router.get('/api/users/:handle', async (req, res) => {
   try {
-    const { handle } = req.params;
-    const { limit = 20, offset = 0 } = req.query;
-    
-    // Get user profile
-    const { data: profile } = await supaAdmin
+    const { handle } = req.params
+
+    const { data: profile, error } = await supabase
       .from('profiles')
-      .select('id')
-      .eq('handle', handle.toLowerCase())
-      .single();
-    
-    if (!profile) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    // Get recent deals
-    const { data: deals } = await supaAdmin
-      .from('deals')
-      .select('id, title, price, merchant, created_at, status')
-      .eq('submitter_id', profile.id)
-      .eq('status', 'approved')
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-    
-    // Get recent comments
-    const { data: comments } = await supaAdmin
-      .from('comments')
       .select(`
-        id,
-        body,
-        created_at,
-        deal_id,
-        deals!inner(id, title)
+        *,
+        user_achievements (
+          achievement_id,
+          earned_at,
+          points_earned,
+          achievements (*)
+        ),
+        user_follows!user_follows_following_id_fkey (
+          follower_id,
+          created_at,
+          profiles!user_follows_follower_id_fkey (handle, avatar_url)
+        )
       `)
+      .eq('handle', handle)
+      .single()
+
+    if (error || !profile) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    // Get follower and following counts
+    const { count: followersCount } = await supabase
+      .from('user_follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('following_id', profile.id)
+
+    const { count: followingCount } = await supabase
+      .from('user_follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('follower_id', profile.id)
+
+    // Get user's recent activity
+    const { data: activities } = await supabase
+      .from('user_activities')
+      .select('*')
       .eq('user_id', profile.id)
       .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-    
-    // Combine and sort activities
-    const activities = [
-      ...(deals || []).map(deal => ({
-        id: `deal-${deal.id}`,
-        type: 'deal_posted',
-        created_at: deal.created_at,
-        deal: {
-          id: deal.id,
-          title: deal.title,
-          price: deal.price,
-          merchant: deal.merchant
-        },
-        points: 5
-      })),
-      ...(comments || []).map(comment => ({
-        id: `comment-${comment.id}`,
-        type: 'deal_commented',
-        created_at: comment.created_at,
-        comment: {
-          id: comment.id,
-          body: comment.body
-        },
-        deal: comment.deals,
-        points: 1
-      }))
-    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-     .slice(0, limit);
-    
-    res.json(activities);
-    
-  } catch (error) {
-    log('Get user activity error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+      .limit(20)
 
-/**
- * Get user stats
- * GET /api/users/:handle/stats
- */
-r.get('/api/users/:handle/stats', async (req, res) => {
-  try {
-    const { handle } = req.params;
-    
-    // Get user profile
-    const { data: profile } = await supaAdmin
-      .from('profiles')
-      .select('id, karma, created_at')
-      .eq('handle', handle.toLowerCase())
-      .single();
-    
-    if (!profile) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    // Get detailed stats
-    const { data: approvedDeals } = await supaAdmin
+    // Get user's recent deals
+    const { data: deals } = await supabase
       .from('deals')
-      .select('id', { count: 'exact' })
+      .select('*')
       .eq('submitter_id', profile.id)
-      .eq('status', 'approved');
-    
-    const { data: allDeals } = await supaAdmin
-      .from('deals')
-      .select('id', { count: 'exact' })
-      .eq('submitter_id', profile.id);
-    
-    const { data: comments } = await supaAdmin
-      .from('comments')
-      .select('id', { count: 'exact' })
-      .eq('user_id', profile.id);
-    
-    // Calculate success rate
-    const successRate = allDeals?.length > 0 
-      ? Math.round((approvedDeals?.length || 0) / allDeals.length * 100)
-      : 0;
-    
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .limit(10)
+
     res.json({
-      karma: profile.karma,
-      karma_change_30d: 0, // Would need historical data
-      deals_posted: approvedDeals?.length || 0,
-      deals_posted_change_30d: 0, // Would need historical data
-      comments_made: comments?.length || 0,
-      comments_change_30d: 0, // Would need historical data
-      successful_deals: approvedDeals?.length || 0,
-      success_rate: successRate,
-      total_submissions: allDeals?.length || 0,
-      member_since: profile.created_at,
-      engagement_rate: 0.15, // Mock data - would calculate from actual engagement
-      activity_heatmap: [], // Would need to implement activity tracking
-      monthly_stats: {}, // Would need historical data
-      category_breakdown: {}, // Would need to track categories
-      best_deals: [], // Would need to implement deal ranking
-      top_interactions: [] // Would need to track interactions
-    });
-    
+      ...profile,
+      followers_count: followersCount || 0,
+      following_count: followingCount || 0,
+      recent_activities: activities || [],
+      recent_deals: deals || []
+    })
   } catch (error) {
-    log('Get user stats error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error fetching user profile:', error)
+    res.status(500).json({ error: 'Internal server error' })
   }
-});
+})
 
-/**
- * Follow/Unfollow user
- * POST /api/users/:userId/follow
- * DELETE /api/users/:userId/unfollow
- */
-r.post('/api/users/:userId/follow', async (req, res) => {
+// Update user profile
+router.put('/api/users/:handle', requireAuth, async (req, res) => {
   try {
-    const token = bearer(req);
-    if (!token) return res.status(401).json({ error: 'auth required' });
-    
-    const { data: userData } = await supaAdmin.auth.getUser(token);
-    if (!userData.user) return res.status(401).json({ error: 'invalid token' });
-    
-    const { userId } = req.params;
-    
-    // For now, just return success (would implement actual following logic)
-    res.json({ message: 'Following user', following: true });
-    
-  } catch (error) {
-    log('Follow user error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+    const { handle } = req.params
+    const { bio, website, location } = req.body
+    const userId = req.user.id
 
-r.post('/api/users/:userId/unfollow', async (req, res) => {
+    // Verify user owns this profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('handle', handle)
+      .single()
+
+    if (!profile || profile.id !== userId) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({
+        bio: bio?.slice(0, 500), // Limit bio length
+        website: website?.slice(0, 200),
+        location: location?.slice(0, 100)
+      })
+      .eq('id', userId)
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(data)
+  } catch (error) {
+    console.error('Error updating profile:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Upload profile image
+router.post('/api/users/:handle/avatar', requireAuth, upload.single('avatar'), async (req, res) => {
   try {
-    const token = bearer(req);
-    if (!token) return res.status(401).json({ error: 'auth required' });
-    
-    const { data: userData } = await supaAdmin.auth.getUser(token);
-    if (!userData.user) return res.status(401).json({ error: 'invalid token' });
-    
-    const { userId } = req.params;
-    
-    // For now, just return success (would implement actual unfollowing logic)
-    res.json({ message: 'Unfollowed user', following: false });
-    
-  } catch (error) {
-    log('Unfollow user error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+    const { handle } = req.params
+    const userId = req.user.id
 
-/**
- * Check if following user
- * GET /api/users/:userId/following
- */
-r.get('/api/users/:userId/following', async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' })
+    }
+
+    // Verify user owns this profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('handle', handle)
+      .single()
+
+    if (!profile || profile.id !== userId) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    // Generate unique filename
+    const fileExt = path.extname(req.file.originalname)
+    const fileName = `${userId}-${Date.now()}${fileExt}`
+    const filePath = `avatars/${fileName}`
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('images')
+      .upload(filePath, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false
+      })
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError)
+      return res.status(500).json({ error: 'Failed to upload image' })
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('images')
+      .getPublicUrl(filePath)
+
+    // Update user profile with new avatar URL
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ avatar_url: publicUrl })
+      .eq('id', userId)
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    // Save image record
+    await supabase
+      .from('images')
+      .insert({
+        user_id: userId,
+        filename: fileName,
+        original_name: req.file.originalname,
+        file_size: req.file.size,
+        mime_type: req.file.mimetype,
+        storage_path: filePath,
+        public_url: publicUrl,
+        entity_type: 'profile',
+        entity_id: userId,
+        is_primary: true
+      })
+
+    res.json({ avatar_url: publicUrl })
+  } catch (error) {
+    console.error('Error uploading avatar:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Follow/unfollow user
+router.post('/api/users/:handle/follow', requireAuth, async (req, res) => {
   try {
-    const token = bearer(req);
-    if (!token) return res.status(401).json({ error: 'auth required' });
-    
-    const { data: userData } = await supaAdmin.auth.getUser(token);
-    if (!userData.user) return res.status(401).json({ error: 'invalid token' });
-    
-    // For now, return false (would implement actual following check)
-    res.json({ following: false });
-    
-  } catch (error) {
-    log('Check following error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+    const { handle } = req.params
+    const followerId = req.user.id
 
-export default r;
+    // Get the user to follow
+    const { data: userToFollow } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('handle', handle)
+      .single()
+
+    if (!userToFollow) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    if (userToFollow.id === followerId) {
+      return res.status(400).json({ error: 'Cannot follow yourself' })
+    }
+
+    // Check if already following
+    const { data: existingFollow } = await supabase
+      .from('user_follows')
+      .select('*')
+      .eq('follower_id', followerId)
+      .eq('following_id', userToFollow.id)
+      .single()
+
+    if (existingFollow) {
+      // Unfollow
+      const { error } = await supabase
+        .from('user_follows')
+        .delete()
+        .eq('follower_id', followerId)
+        .eq('following_id', userToFollow.id)
+
+      if (error) {
+        return res.status(400).json({ error: error.message })
+      }
+
+      res.json({ following: false })
+    } else {
+      // Follow
+      const { error } = await supabase
+        .from('user_follows')
+        .insert({
+          follower_id: followerId,
+          following_id: userToFollow.id
+        })
+
+      if (error) {
+        return res.status(400).json({ error: error.message })
+      }
+
+      res.json({ following: true })
+    }
+  } catch (error) {
+    console.error('Error following user:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Get user's followers
+router.get('/api/users/:handle/followers', async (req, res) => {
+  try {
+    const { handle } = req.params
+    const { page = 1, limit = 20 } = req.query
+
+    // Get user ID
+    const { data: user } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('handle', handle)
+      .single()
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    const offset = (page - 1) * limit
+
+    const { data: followers, error } = await supabase
+      .from('user_follows')
+      .select(`
+        created_at,
+        profiles!user_follows_follower_id_fkey (
+          handle,
+          avatar_url,
+          karma,
+          total_posts
+        )
+      `)
+      .eq('following_id', user.id)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(followers || [])
+  } catch (error) {
+    console.error('Error fetching followers:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Get user's following
+router.get('/api/users/:handle/following', async (req, res) => {
+  try {
+    const { handle } = req.params
+    const { page = 1, limit = 20 } = req.query
+
+    // Get user ID
+    const { data: user } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('handle', handle)
+      .single()
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    const offset = (page - 1) * limit
+
+    const { data: following, error } = await supabase
+      .from('user_follows')
+      .select(`
+        created_at,
+        profiles!user_follows_following_id_fkey (
+          handle,
+          avatar_url,
+          karma,
+          total_posts
+        )
+      `)
+      .eq('follower_id', user.id)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(following || [])
+  } catch (error) {
+    console.error('Error fetching following:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Get user achievements
+router.get('/api/users/:handle/achievements', async (req, res) => {
+  try {
+    const { handle } = req.params
+
+    // Get user ID
+    const { data: user } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('handle', handle)
+      .single()
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    const { data: achievements, error } = await supabase
+      .from('user_achievements')
+      .select(`
+        earned_at,
+        points_earned,
+        achievements (*)
+      `)
+      .eq('user_id', user.id)
+      .order('earned_at', { ascending: false })
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(achievements || [])
+  } catch (error) {
+    console.error('Error fetching achievements:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Get user activity feed
+router.get('/api/users/:handle/activity', async (req, res) => {
+  try {
+    const { handle } = req.params
+    const { page = 1, limit = 20 } = req.query
+
+    // Get user ID
+    const { data: user } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('handle', handle)
+      .single()
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    const offset = (page - 1) * limit
+
+    const { data: activities, error } = await supabase
+      .from('user_activities')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(activities || [])
+  } catch (error) {
+    console.error('Error fetching user activity:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Get user badges
+router.get('/api/users/:handle/badges', async (req, res) => {
+  try {
+    const { handle } = req.params
+
+    // Get user ID
+    const { data: user } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('handle', handle)
+      .single()
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    const { data: badges, error } = await supabase
+      .from('user_badges')
+      .select(`
+        awarded_at,
+        badges!user_badges_badge_id_fkey (*)
+      `)
+      .eq('user_id', user.id)
+      .order('awarded_at', { ascending: false })
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(badges || [])
+  } catch (error) {
+    console.error('Error fetching user badges:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Get user stats
+router.get('/api/users/:handle/stats', async (req, res) => {
+  try {
+    const { handle } = req.params
+
+    // Get user ID
+    const { data: user } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('handle', handle)
+      .single()
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    // Get basic stats from profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('total_posts, total_comments, karma, weekly_points, monthly_points, all_time_points')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError) {
+      return res.status(400).json({ error: profileError.message })
+    }
+
+    // Get additional stats
+    const { count: dealsCount } = await supabase
+      .from('deals')
+      .select('*', { count: 'exact', head: true })
+      .eq('submitter_id', user.id)
+      .eq('status', 'approved')
+
+    const { count: votesReceived } = await supabase
+      .from('votes')
+      .select('*', { count: 'exact', head: true })
+      .eq('deal_id', user.id)
+
+    res.json({
+      total_posts: profile.total_posts || 0,
+      total_comments: profile.total_comments || 0,
+      karma: profile.karma || 0,
+      weekly_points: profile.weekly_points || 0,
+      monthly_points: profile.monthly_points || 0,
+      all_time_points: profile.all_time_points || 0,
+      deals_posted: dealsCount || 0,
+      votes_received: votesReceived || 0
+    })
+  } catch (error) {
+    console.error('Error fetching user stats:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Get user reputation
+router.get('/api/users/:handle/reputation', async (req, res) => {
+  try {
+    const { handle } = req.params
+
+    // Get user ID
+    const { data: user } = await supabase
+      .from('profiles')
+      .select('id, karma, role, created_at')
+      .eq('handle', handle)
+      .single()
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    // Calculate reputation level based on karma
+    let level = 'Newcomer'
+    let nextLevel = 'Regular'
+    let pointsToNext = 50
+
+    if (user.karma >= 1000) {
+      level = 'Expert'
+      nextLevel = 'Master'
+      pointsToNext = 5000 - user.karma
+    } else if (user.karma >= 500) {
+      level = 'Advanced'
+      nextLevel = 'Expert' 
+      pointsToNext = 1000 - user.karma
+    } else if (user.karma >= 100) {
+      level = 'Regular'
+      nextLevel = 'Advanced'
+      pointsToNext = 500 - user.karma
+    } else if (user.karma >= 50) {
+      level = 'Active'
+      nextLevel = 'Regular'
+      pointsToNext = 100 - user.karma
+    }
+
+    res.json({
+      karma: user.karma || 0,
+      level,
+      nextLevel,
+      pointsToNext: Math.max(0, pointsToNext),
+      role: user.role,
+      memberSince: user.created_at
+    })
+  } catch (error) {
+    console.error('Error fetching user reputation:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+export default router
