@@ -44,6 +44,8 @@ import {
   HandThumbDownIcon as ThumbDownSolidIcon,
   StarIcon as StarSolidIcon
 } from '@heroicons/react/24/solid'
+import { RightSidebar } from '../components/Layout/RightSidebar'
+import { CompactDealCard } from '../components/Deal/CompactDealCard'
 
 const EnhancedDealPage = () => {
   const { id } = useParams()
@@ -276,9 +278,9 @@ const EnhancedDealPage = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Images */}
-          <div className="space-y-4">
+          <div className="space-y-4 lg:col-span-2">
             {/* Main Image */}
             <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden">
               {discountBadge && (
@@ -611,6 +613,11 @@ const EnhancedDealPage = () => {
           </div>
         </div>
 
+        {/* Right Sidebar */}
+        <div className="hidden lg:block">
+          <RightSidebar />
+        </div>
+
         {/* Description Section */}
         {deal.description && (
           <div className="mt-8 bg-white rounded-2xl shadow-lg p-6">
@@ -638,40 +645,9 @@ const EnhancedDealPage = () => {
         {similarDeals && similarDeals.length > 0 && (
           <div className="mt-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Similar Deals</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="space-y-3">
               {similarDeals.map((similarDeal) => (
-                <Link
-                  key={similarDeal.id}
-                  to={`/deal/${similarDeal.id}`}
-                  className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
-                >
-                  <div className="aspect-square bg-gray-100 rounded-t-xl overflow-hidden">
-                    {similarDeal.image_url ? (
-                      <img
-                        src={similarDeal.image_url}
-                        alt={similarDeal.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <GiftIcon className="h-12 w-12 text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                      {similarDeal.title}
-                    </h3>
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-green-600">
-                        {formatPrice(similarDeal.price)}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        {similarDeal.merchant}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
+                <CompactDealCard key={similarDeal.id} deal={similarDeal} />
               ))}
             </div>
           </div>

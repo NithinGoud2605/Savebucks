@@ -169,6 +169,7 @@ export const api = {
   },
   
   getDeal: (id) => apiRequest(`/api/deals/${id}`),
+  getDealComments: (id) => apiRequest(`/api/deals/${id}/comments`),
   
   createDeal: (deal) => apiRequest('/api/deals', {
     method: 'POST',
@@ -179,6 +180,7 @@ export const api = {
     method: 'POST',
     body: { value },
   }),
+  bookmarkDeal: (id) => apiRequest(`/api/deals/${id}/bookmark`, { method: 'POST' }),
   
   commentDeal: (id, body, parentId = null) => apiRequest(`/api/deals/${id}/comment`, {
     method: 'POST',
