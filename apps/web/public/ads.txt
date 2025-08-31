@@ -1,0 +1,2 @@
+# Add your real publisher line when you're approved:
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0

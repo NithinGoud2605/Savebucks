@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiAuth } from '../lib/api';
+import { useHead } from '../lib/useHead.js';
 
 function useIsAdmin() {
   return useQuery({
@@ -55,6 +56,23 @@ export default function Admin() {
   const qc = useQueryClient();
   const { data: isAdmin } = useIsAdmin();
   const [tab, setTab] = React.useState('pending');
+
+  const siteUrl = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
+  const defaultImage = import.meta.env.VITE_DEFAULT_IMAGE || 'https://dummyimage.com/1200x630/ededed/222.png&text=savebucks';
+
+  useHead({
+    title: 'Admin - SaveBucks',
+    description: 'Admin panel for managing deals and reports on SaveBucks.',
+    image: defaultImage,
+    url: `${siteUrl}/admin`,
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Admin Panel",
+      "description": "Administrative interface for SaveBucks",
+      "url": `${siteUrl}/admin`
+    }
+  });
 
   const { data: deals = [], isLoading: dealsLoading } = useQuery({
     enabled: !!isAdmin && tab === 'pending',

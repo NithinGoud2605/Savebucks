@@ -14,3 +14,6 @@ export function hotScore(ups, downs, createdUnixSec, nowUnixSec) {
   const hours = (nowUnixSec - createdUnixSec) / 3600;
   return Number((order - hours / 48).toFixed(7));
 }
+
+// Telegram parser exports
+export * from './src/telegramParser.js';
