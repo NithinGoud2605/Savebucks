@@ -166,3 +166,350 @@
 .toast-exit {
   animation: toast-exit 0.2s ease-out;
 }
+
+/* Radix UI Animations */
+@keyframes enterFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(200px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes enterFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-200px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes enterFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-200px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes enterFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(200px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes exitToRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(200px);
+  }
+}
+
+@keyframes exitToLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-200px);
+  }
+}
+
+@keyframes exitToTop {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-200px);
+  }
+}
+
+@keyframes exitToBottom {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(200px);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: rotateX(-10deg) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: rotateX(0deg) scale(1);
+  }
+}
+
+@keyframes scaleOut {
+  from {
+    opacity: 1;
+    transform: rotateX(0deg) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: rotateX(-10deg) scale(0.9);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0%);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0%);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0%);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0%);
+  }
+}
+
+@keyframes slideOutToTop {
+  from {
+    transform: translateY(0%);
+  }
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes slideOutToBottom {
+  from {
+    transform: translateY(0%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes slideOutToLeft {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes zoomOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Radix UI Animation Classes */
+.animate-enterFromRight {
+  animation: enterFromRight 0.2s ease-out;
+}
+
+.animate-enterFromLeft {
+  animation: enterFromLeft 0.2s ease-out;
+}
+
+.animate-enterFromTop {
+  animation: enterFromTop 0.2s ease-out;
+}
+
+.animate-enterFromBottom {
+  animation: enterFromBottom 0.2s ease-out;
+}
+
+.animate-exitToRight {
+  animation: exitToRight 0.2s ease-out;
+}
+
+.animate-exitToLeft {
+  animation: exitToLeft 0.2s ease-out;
+}
+
+.animate-exitToTop {
+  animation: exitToTop 0.2s ease-out;
+}
+
+.animate-exitToBottom {
+  animation: exitToBottom 0.2s ease-out;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.2s ease-out;
+}
+
+.animate-scaleOut {
+  animation: scaleOut 0.2s ease-out;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-fadeOut {
+  animation: fadeOut 0.2s ease-out;
+}
+
+.animate-slideInFromTop {
+  animation: slideInFromTop 0.2s ease-out;
+}
+
+.animate-slideInFromBottom {
+  animation: slideInFromBottom 0.2s ease-out;
+}
+
+.animate-slideInFromLeft {
+  animation: slideInFromLeft 0.2s ease-out;
+}
+
+.animate-slideInFromRight {
+  animation: slideInFromRight 0.2s ease-out;
+}
+
+.animate-slideOutToTop {
+  animation: slideOutToTop 0.2s ease-out;
+}
+
+.animate-slideOutToBottom {
+  animation: slideOutToBottom 0.2s ease-out;
+}
+
+.animate-slideOutToLeft {
+  animation: slideOutToLeft 0.2s ease-out;
+}
+
+.animate-slideOutToRight {
+  animation: slideOutToRight 0.2s ease-out;
+}
+
+.animate-zoomIn {
+  animation: zoomIn 0.2s ease-out;
+}
+
+.animate-zoomOut {
+  animation: zoomOut 0.2s ease-out;
+}
+
+/* Radix UI Data Attributes */
+[data-state="open"] {
+  animation: scaleIn 0.2s ease-out;
+}
+
+[data-state="closed"] {
+  animation: scaleOut 0.2s ease-out;
+}
+
+[data-motion="from-start"] {
+  animation: enterFromLeft 0.2s ease-out;
+}
+
+[data-motion="from-end"] {
+  animation: enterFromRight 0.2s ease-out;
+}
+
+[data-motion="to-start"] {
+  animation: exitToLeft 0.2s ease-out;
+}
+
+[data-motion="to-end"] {
+  animation: exitToRight 0.2s ease-out;
+}
+
+/* Hide scrollbar for webkit browsers */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}

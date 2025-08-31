@@ -1,14 +1,17 @@
 import React from 'react'
-import { AnimatedCategoryNav } from '../components/Homepage/AnimatedCategoryNav.jsx'
-import { VibrantHero } from '../components/Homepage/VibrantHero.jsx'
+import { HeroBanners } from '../components/Homepage/HeroBanners.jsx'
+import { SecondaryBanners } from '../components/Homepage/SecondaryBanners.jsx'
 import { 
-  TrendingDeals,
-  FeaturedDeals, 
-  NewDeals,
-  TopRatedDeals
-} from '../components/Homepage/EnhancedDealCollection.jsx'
-import { VibrantLeaderboard } from '../components/Community/VibrantLeaderboard.jsx'
+  TrendingDeals, 
+  AmazonBestSellers, 
+  Over50PercentOff, 
+  Under20Dollars, 
+  ElectronicsDeals, 
+  FashionFinds 
+} from '../components/Homepage/DealCollection.jsx'
+import { TrendingStats } from '../components/Homepage/TrendingStats.jsx'
 import { FloatingSearchButton } from '../components/Homepage/FloatingSearchButton.jsx'
+import Leaderboard from '../components/Community/Leaderboard'
 import { setPageMeta } from '../lib/head.js'
 
 export default function NewHomepage() {
@@ -21,119 +24,151 @@ export default function NewHomepage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      {/* Animated Category Navigation */}
-      <AnimatedCategoryNav />
+    <div className="min-h-screen bg-secondary-50">
 
-      {/* Vibrant Hero Section */}
-      <VibrantHero />
-
-      {/* Trending Deals Section */}
-      <TrendingDeals maxItems={8} />
-
-      {/* Featured Deals Section */}
-      <FeaturedDeals maxItems={6} />
-
-      {/* Community Section with Leaderboard */}
-      <section className="py-16 bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl animate-pulse" />
-          <div className="absolute top-40 right-20 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '2s' }} />
-          <div className="absolute -bottom-8 left-40 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '4s' }} />
-        </div>
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center mb-12">
-            <div className="text-6xl mb-4 animate-bounce">🏆</div>
-            <h2 className="text-4xl font-black text-gray-900 mb-4">
-              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Community Champions
-              </span>
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Meet our top deal hunters who are saving the community thousands every day!
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* New Deals */}
+      {/* Hero Banners Section */}
+      <section className="py-6 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Hero Banner */}
             <div className="lg:col-span-2">
-              <NewDeals maxItems={6} />
+              <HeroBanners />
             </div>
-            
-            {/* Leaderboard */}
-            <div>
-              <VibrantLeaderboard compact={true} showViewMore={true} />
+
+            {/* Side Banners/Quick Links */}
+            <div className="space-y-4">
+              {/* Quick Deal Categories */}
+              <div className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl p-6 text-white">
+                <h3 className="text-lg font-semibold mb-3">Quick Finds</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <a href="/collections/over-50-off" className="bg-white bg-opacity-20 rounded-lg p-3 text-center hover:bg-opacity-30 transition-colors">
+                    <div className="text-2xl mb-1">🔥</div>
+                    <div className="text-sm font-medium">Over 50% Off</div>
+                  </a>
+                  <a href="/collections/under-20" className="bg-white bg-opacity-20 rounded-lg p-3 text-center hover:bg-opacity-30 transition-colors">
+                    <div className="text-2xl mb-1">💰</div>
+                    <div className="text-sm font-medium">Under $20</div>
+                  </a>
+                  <a href="/electronics" className="bg-white bg-opacity-20 rounded-lg p-3 text-center hover:bg-opacity-30 transition-colors">
+                    <div className="text-2xl mb-1">📱</div>
+                    <div className="text-sm font-medium">Electronics</div>
+                  </a>
+                  <a href="/fashion" className="bg-white bg-opacity-20 rounded-lg p-3 text-center hover:bg-opacity-30 transition-colors">
+                    <div className="text-2xl mb-1">👕</div>
+                    <div className="text-sm font-medium">Fashion</div>
+                  </a>
+                </div>
+              </div>
+
+              {/* Trending Stats */}
+              <TrendingStats />
+
+              {/* Newsletter Signup */}
+              <div className="bg-white rounded-2xl p-6 shadow-soft border border-secondary-200">
+                <h3 className="text-lg font-semibold text-secondary-900 mb-2">Never Miss a Deal</h3>
+                <p className="text-sm text-secondary-600 mb-4">Get the best deals delivered to your inbox</p>
+                <form className="space-y-3">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    className="input w-full text-sm"
+                  />
+                  <button className="btn btn-primary w-full text-sm py-2">
+                    Subscribe
+                  </button>
+                </form>
+                <p className="text-xs text-secondary-500 mt-2">
+                  No spam, unsubscribe anytime
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Top Rated Deals */}
-      <TopRatedDeals maxItems={8} />
+      {/* Trending Now Section */}
+      <TrendingDeals maxItems={8} />
 
-      {/* Interactive Categories Section */}
-      <section className="py-16 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 text-white relative overflow-hidden">
-        {/* Animated background elements */}
-        <div className="absolute inset-0">
-          {[...Array(50)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-2 h-2 bg-white rounded-full opacity-20 animate-twinkle"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${2 + Math.random() * 3}s`
-              }}
-            />
-          ))}
-        </div>
+      {/* Secondary Banners */}
+      <SecondaryBanners />
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center mb-12">
-            <div className="text-6xl mb-4">🛍️</div>
-            <h2 className="text-4xl font-black mb-4">
-              Explore Every Category
+      {/* Amazon Best Sellers */}
+      <AmazonBestSellers maxItems={12} />
+
+      {/* Over 50% Off Section */}
+      <section className="py-8 bg-gradient-to-r from-danger-50 to-warning-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-secondary-900 mb-2">
+              🔥 Massive Savings
             </h2>
-            <p className="text-xl text-indigo-200 max-w-2xl mx-auto">
-              From tech gadgets to fashion finds - discover amazing deals in every category
-            </p>
+            <p className="text-secondary-600">Deals with over 50% off - limited time only!</p>
+          </div>
+          <Over50PercentOff maxItems={8} showViewAll={true} />
+        </div>
+      </section>
+
+      {/* Electronics & Fashion with Leaderboard */}
+      <section className="py-8 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <div>
+              <ElectronicsDeals maxItems={6} />
+            </div>
+            <div>
+              <FashionFinds maxItems={6} />
+            </div>
+            <div className="xl:row-span-1">
+              <Leaderboard compact={true} showViewMore={true} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Under $20 Section */}
+      <section className="py-8 bg-success-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-secondary-900 mb-2">
+              💰 Budget Friendly
+            </h2>
+            <p className="text-secondary-600">Great deals under twenty dollars</p>
+          </div>
+          <Under20Dollars maxItems={8} showViewAll={true} />
+        </div>
+      </section>
+
+      {/* Featured Categories Grid */}
+      <section className="py-12 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-secondary-900 mb-2">
+              Shop by Category
+            </h2>
+            <p className="text-secondary-600">Find deals in your favorite categories</p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {[
-              { name: 'Electronics', slug: 'electronics', icon: '📱', color: 'from-blue-400 to-cyan-400', deals: '245+' },
-              { name: 'Fashion', slug: 'fashion', icon: '👗', color: 'from-pink-400 to-rose-400', deals: '189+' },
-              { name: 'Home & Garden', slug: 'home-garden', icon: '🏠', color: 'from-green-400 to-emerald-400', deals: '156+' },
-              { name: 'Health & Beauty', slug: 'health-beauty', icon: '💄', color: 'from-purple-400 to-violet-400', deals: '134+' },
-              { name: 'Sports', slug: 'sports-outdoors', icon: '⚽', color: 'from-orange-400 to-amber-400', deals: '98+' },
-              { name: 'Books & Media', slug: 'books-media', icon: '📚', color: 'from-indigo-400 to-blue-400', deals: '87+' },
-              { name: 'Food & Grocery', slug: 'food-grocery', icon: '🛒', color: 'from-red-400 to-pink-400', deals: '76+' },
-              { name: 'Travel', slug: 'travel', icon: '✈️', color: 'from-sky-400 to-blue-400', deals: '65+' },
-              { name: 'Gaming', slug: 'gaming', icon: '🎮', color: 'from-violet-400 to-purple-400', deals: '89+' },
-              { name: 'Toys & Kids', slug: 'toys', icon: '🧸', color: 'from-pink-300 to-rose-300', deals: '67+' }
-            ].map((category, index) => (
+              { name: 'Electronics', slug: 'electronics', icon: '📱', color: 'from-blue-400 to-blue-600' },
+              { name: 'Fashion', slug: 'fashion', icon: '👕', color: 'from-pink-400 to-pink-600' },
+              { name: 'Home & Garden', slug: 'home-garden', icon: '🏠', color: 'from-green-400 to-green-600' },
+              { name: 'Health & Beauty', slug: 'health-beauty', icon: '💄', color: 'from-purple-400 to-purple-600' },
+              { name: 'Sports', slug: 'sports-outdoors', icon: '⚽', color: 'from-orange-400 to-orange-600' },
+              { name: 'Books & Media', slug: 'books-media', icon: '📚', color: 'from-indigo-400 to-indigo-600' },
+              { name: 'Food & Grocery', slug: 'food-grocery', icon: '🛒', color: 'from-red-400 to-red-600' },
+              { name: 'Travel', slug: 'travel', icon: '✈️', color: 'from-cyan-400 to-cyan-600' },
+              { name: 'Automotive', slug: 'automotive', icon: '🚗', color: 'from-gray-400 to-gray-600' },
+              { name: 'Services', slug: 'services', icon: '⚙️', color: 'from-yellow-400 to-yellow-600' }
+            ].map((category) => (
               <a
                 key={category.slug}
                 href={`/category/${category.slug}`}
-                className="group relative"
-                style={{
-                  animationDelay: `${index * 100}ms`,
-                  animationFillMode: 'both'
-                }}
+                className="group"
               >
-                <div className={`relative bg-gradient-to-br ${category.color} rounded-3xl p-6 text-center shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:scale-110 group-hover:-rotate-2 transform`}>
-                  <div className="text-4xl mb-3 group-hover:animate-bounce">{category.icon}</div>
-                  <h3 className="font-bold text-white text-sm mb-2 leading-tight">{category.name}</h3>
-                  <div className="text-xs text-white/80 font-medium">{category.deals} deals</div>
-                  
-                  {/* Glow effect */}
-                  <div className="absolute inset-0 rounded-3xl bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
-                  
-                  {/* Sparkle effect */}
-                  <div className="absolute top-2 right-2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-ping" />
+                <div className={`bg-gradient-to-br ${category.color} rounded-2xl p-6 text-white text-center shadow-soft hover:shadow-medium transition-all duration-300 group-hover:scale-105`}>
+                  <div className="text-3xl mb-3">{category.icon}</div>
+                  <h3 className="font-semibold text-sm">{category.name}</h3>
                 </div>
               </a>
             ))}
@@ -141,66 +176,31 @@ export default function NewHomepage() {
         </div>
       </section>
 
-      {/* Call to Action Section */}
-      <section className="py-20 bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 text-white relative overflow-hidden">
-        {/* Animated background shapes */}
-        <div className="absolute inset-0">
-          <div className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full animate-float" />
-          <div className="absolute top-32 right-20 w-16 h-16 bg-white/10 rounded-full animate-float" style={{ animationDelay: '1s' }} />
-          <div className="absolute bottom-20 left-1/4 w-24 h-24 bg-white/10 rounded-full animate-float" style={{ animationDelay: '2s' }} />
-          <div className="absolute bottom-32 right-1/3 w-12 h-12 bg-white/10 rounded-full animate-float" style={{ animationDelay: '3s' }} />
-        </div>
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
-          <div className="text-8xl mb-8 animate-bounce">🚀</div>
-          <h2 className="text-5xl font-black mb-6">
-            Ready to Join the Savings Revolution?
+      {/* Bottom CTA Section */}
+      <section className="py-12 bg-gradient-to-r from-primary-600 to-primary-700 text-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold mb-4">
+            Ready to Start Saving?
           </h2>
-          <p className="text-2xl mb-12 max-w-3xl mx-auto leading-relaxed">
-            Join thousands of smart shoppers who save money every day with SaveBucks. 
-            Find deals, share discoveries, and build wealth together!
+          <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
+            Join thousands of smart shoppers who save money every day with SaveBucks
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="/signup"
-              className="group relative overflow-hidden bg-white text-gray-900 font-black text-lg px-10 py-5 rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
+              className="inline-flex items-center px-8 py-3 bg-white text-primary-600 font-semibold rounded-xl hover:bg-primary-50 transition-colors shadow-md"
             >
-              <span className="relative z-10 flex items-center">
-                🎯 Start Saving Now
-                <svg className="ml-3 w-6 h-6 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              Sign Up Free
+              <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </a>
-            
             <a
-              href="/deals"
-              className="border-3 border-white text-white font-black text-lg px-10 py-5 rounded-2xl hover:bg-white hover:text-gray-900 transition-all duration-300 backdrop-blur-sm bg-white/10"
+              href="/trending"
+              className="inline-flex items-center px-8 py-3 border-2 border-white text-white font-semibold rounded-xl hover:bg-white hover:text-primary-600 transition-colors"
             >
-              🔥 Browse Hot Deals
+              Browse Deals
             </a>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16 max-w-4xl mx-auto">
-            <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6">
-              <div className="text-3xl font-black mb-2">10K+</div>
-              <div className="text-sm font-medium">Happy Members</div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6">
-              <div className="text-3xl font-black mb-2">$2M+</div>
-              <div className="text-sm font-medium">Money Saved</div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6">
-              <div className="text-3xl font-black mb-2">50K+</div>
-              <div className="text-sm font-medium">Deals Posted</div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6">
-              <div className="text-3xl font-black mb-2">24/7</div>
-              <div className="text-sm font-medium">New Deals</div>
-            </div>
           </div>
         </div>
       </section>

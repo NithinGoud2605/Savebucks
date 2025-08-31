@@ -117,8 +117,30 @@ export default function ListPage() {
   
   useAdsense()
   
-  const tab = location.pathname === '/new' ? 'new' : 
-              location.pathname === '/trending' ? 'trending' : 'hot'
+  // Determine tab based on pathname for different filter views
+  const tab = (() => {
+    const path = location.pathname
+    switch (path) {
+      case '/new':
+        return 'new'
+      case '/trending':
+        return 'trending'
+      case '/under-20':
+        return 'under-20'
+      case '/50-percent-off':
+        return '50-percent-off'
+      case '/free-shipping':
+        return 'free-shipping'
+      case '/new-arrivals':
+        return 'new-arrivals'
+      case '/hot-deals':
+        return 'hot-deals'
+      case '/ending-soon':
+        return 'ending-soon'
+      default:
+        return 'hot'
+    }
+  })()
 
   // Enhanced infinite query with advanced parameters
   const {
@@ -332,10 +354,16 @@ export default function ListPage() {
     const titles = {
       hot: 'Hot Deals',
       new: 'New Deals', 
-      trending: 'Trending Deals'
+      trending: 'Trending Deals',
+      'under-20': 'Under $20 Deals',
+      '50-percent-off': '50% Off+ Deals',
+      'free-shipping': 'Free Shipping Deals',
+      'new-arrivals': 'New Arrivals',
+      'hot-deals': 'Hot Deals',
+      'ending-soon': 'Ending Soon'
     }
     
-    let description = `Discover the best ${tab} deals and save money with our community-driven platform.`
+    let description = `Discover the best ${titles[tab]} and save money with our community-driven platform.`
     
     if (searchQuery) {
       description = `Search results for "${searchQuery}" - ${filteredDeals.length} deals found.`
@@ -385,6 +413,12 @@ export default function ListPage() {
               {tab === 'hot' && 'Hot Deals 🔥'}
               {tab === 'new' && 'New Deals 🆕'}  
               {tab === 'trending' && 'Trending Deals 📈'}
+              {tab === 'under-20' && 'Under $20 Deals 💰'}
+              {tab === '50-percent-off' && '50% Off+ Deals 🎯'}
+              {tab === 'free-shipping' && 'Free Shipping Deals 🚚'}
+              {tab === 'new-arrivals' && 'New Arrivals 🆕'}
+              {tab === 'hot-deals' && 'Hot Deals 🔥'}
+              {tab === 'ending-soon' && 'Ending Soon ⏰'}
             </h1>
             
             {/* Real-time deal count */}
@@ -397,6 +431,12 @@ export default function ListPage() {
             {tab === 'hot' && 'The most popular deals right now'}
             {tab === 'new' && 'Latest deals from our community'}
             {tab === 'trending' && 'Deals gaining momentum'}
+            {tab === 'under-20' && 'Amazing deals under $20'}
+            {tab === '50-percent-off' && 'Deals with 50% or more discount'}
+            {tab === 'free-shipping' && 'Deals with free shipping included'}
+            {tab === 'new-arrivals' && 'Fresh deals just added'}
+            {tab === 'hot-deals' && 'The hottest deals trending now'}
+            {tab === 'ending-soon' && 'Deals expiring soon - act fast!'}
             {searchQuery && ` matching "${searchQuery}"`}
           </p>
         </div>

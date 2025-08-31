@@ -128,9 +128,51 @@ async function listDeals(tab, filters = {}) {
     };
   });
 
-  if (tab === 'new') return enriched.sort((a,b)=>b.created - a.created);
-  if (tab === 'trending') return enriched.sort((a,b)=>(b.ups - b.downs) - (a.ups - a.downs));
-  return enriched.sort((a,b)=>b.hot - a.hot);
+  // Apply tab-specific filtering and sorting
+  switch (tab) {
+    case 'new':
+      return enriched.sort((a,b) => b.created - a.created);
+    
+    case 'trending':
+      return enriched.sort((a,b) => (b.ups - b.downs) - (a.ups - a.downs));
+    
+    case 'under-20':
+      return enriched
+        .filter(deal => deal.price && deal.price <= 20)
+        .sort((a,b) => b.hot - a.hot);
+    
+    case '50-percent-off':
+      return enriched
+        .filter(deal => deal.discount_text && deal.discount_text.includes('50%'))
+        .sort((a,b) => b.hot - a.hot);
+    
+    case 'free-shipping':
+      return enriched
+        .filter(deal => deal.title.toLowerCase().includes('free shipping') || 
+                       deal.description?.toLowerCase().includes('free shipping'))
+        .sort((a,b) => b.hot - a.hot);
+    
+    case 'new-arrivals':
+      const oneWeekAgo = Math.floor((Date.now() - 7 * 24 * 60 * 60 * 1000) / 1000);
+      return enriched
+        .filter(deal => deal.created > oneWeekAgo)
+        .sort((a,b) => b.created - a.created);
+    
+    case 'hot-deals':
+      return enriched
+        .filter(deal => (deal.ups - deal.downs) >= 5) // Popular deals
+        .sort((a,b) => b.hot - a.hot);
+    
+    case 'ending-soon':
+      const now = Math.floor(Date.now() / 1000);
+      const threeDaysFromNow = now + (3 * 24 * 60 * 60);
+      return enriched
+        .filter(deal => deal.expires_at && deal.expires_at < threeDaysFromNow)
+        .sort((a,b) => deal.expires_at - b.expires_at);
+    
+    default: // 'hot'
+      return enriched.sort((a,b) => b.hot - a.hot);
+  }
 }
 
 r.get('/api/deals', async (req, res) => {

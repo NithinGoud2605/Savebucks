@@ -85,6 +85,54 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'under-20',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ListPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '50-percent-off',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ListPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'free-shipping',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ListPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'new-arrivals',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ListPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'hot-deals',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ListPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'ending-soon',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ListPage />
+          </Suspense>
+        ),
+      },
+      {
         path: 'deal/:id',
         element: (
           <Suspense fallback={<PageLoader />}>
