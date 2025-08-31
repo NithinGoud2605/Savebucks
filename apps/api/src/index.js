@@ -19,6 +19,9 @@ import priceTrackingRoutes from './routes/priceTracking.js';
 import autoTaggingRoutes from './routes/autoTagging.js';
 import gamificationRoutes from './routes/gamification.js';
 import navbarRoutes from './routes/navbar.js';
+import statsRoutes from './routes/stats.js';
+import analyticsRoutes from './routes/analytics.js';
+import goRoutes from './routes/go.js';
 import { log } from './lib/logger.js';
 
 const app = express();
@@ -41,8 +44,11 @@ app.use(priceTrackingRoutes);
 app.use(autoTaggingRoutes);
 app.use(gamificationRoutes);
 app.use('/api/navbar', navbarRoutes);
+app.use(statsRoutes);
+app.use(analyticsRoutes);
 app.use(deals);
 app.use(adminRoutes);
+app.use(goRoutes);
 
 const PORT = Number(process.env.PORT || 4000);
 app.listen(PORT, () => log(`API listening on http://localhost:${PORT}`));

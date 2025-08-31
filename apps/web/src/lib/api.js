@@ -52,6 +52,17 @@ export async function apiRequest(endpoint, options = {}) {
   }
 }
 
+export async function apiAuth(endpoint, options = {}) {
+  return apiRequest(endpoint, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+      ...getAuthHeaders(),
+    },
+  });
+}
+
 // Helper function to handle API errors consistently
 function handleApiError(error, fallbackData = null) {
   console.error('API Error:', error)
@@ -628,24 +639,24 @@ export const api = {
   // Admin
   getAdminDeals: (status) => {
     const params = status ? `?status=${status}` : ''
-    return apiRequest(`/api/admin/deals${params}`)
+    return apiAuth(`/api/admin/deals${params}`)
   },
   
-  approveDeal: (id, edits) => apiRequest(`/api/admin/deals/${id}/approve`, {
+  approveDeal: (id, edits) => apiAuth(`/api/admin/deals/${id}/approve`, {
     method: 'POST',
     body: edits || {},
   }),
   
-  rejectDeal: (id, reason) => apiRequest(`/api/admin/deals/${id}/reject`, {
+  rejectDeal: (id, reason) => apiAuth(`/api/admin/deals/${id}/reject`, {
     method: 'POST',
     body: { reason },
   }),
   
-  expireDeal: (id) => apiRequest(`/api/admin/deals/${id}/expire`, {
+  expireDeal: (id) => apiAuth(`/api/admin/deals/${id}/expire`, {
     method: 'POST',
   }),
   
-  checkAdmin: () => apiRequest('/api/admin/whoami'),
+  checkAdmin: () => apiAuth('/api/admin/whoami'),
   
   getAdminAnalytics: (timeRange = '7d') => apiRequest(`/api/admin/analytics?range=${timeRange}`),
   
