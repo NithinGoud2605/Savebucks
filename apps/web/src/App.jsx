@@ -14,7 +14,6 @@ export function App() {
         <Outlet />
       </main>
       <Footer />
-      <Toast />
     </div>
   )
 }

@@ -14,13 +14,18 @@ export function FollowButton({
 }) {
   const toast = useToast()
   const queryClient = useQueryClient()
-  const currentUserId = localStorage.getItem('demo_user') // Mock auth
+  const currentUserId = localStorage.getItem('user_handle')
 
   // Check if already following
   const { data: isFollowing = false, isLoading } = useQuery({
     queryKey: ['is-following', currentUserId, userId],
-    queryFn: () => api.isFollowing(userId),
-    enabled: !!currentUserId && !!userId && currentUserId !== userId,
+    queryFn: async () => {
+      // Determine following by checking followers list for current user
+      const followers = await api.getUserFollowers(userId)
+      const handle = localStorage.getItem('user_handle')
+      return Array.isArray(followers) && followers.some(f => f.profiles?.handle === handle)
+    },
+    enabled: !!currentUserId && !!userId,
   })
 
   // Get follower count
@@ -32,16 +37,15 @@ export function FollowButton({
 
   // Follow/unfollow mutation
   const followMutation = useMutation({
-    mutationFn: () => isFollowing ? api.unfollowUser(userId) : api.followUser(userId),
+    mutationFn: () => api.toggleFollowUser(userId),
     onSuccess: () => {
-      const action = isFollowing ? 'unfollowed' : 'followed'
-      toast.success(`Successfully ${action} user!`)
+      toast.success('Updated follow status')
       
       // Invalidate relevant queries
-      queryClient.invalidateQueries(['is-following', currentUserId, userId])
-      queryClient.invalidateQueries(['user-followers', userId])
-      queryClient.invalidateQueries(['user-following', currentUserId])
-      queryClient.invalidateQueries(['user-activity', userId])
+      queryClient.invalidateQueries({ queryKey: ['is-following', currentUserId, userId] })
+      queryClient.invalidateQueries({ queryKey: ['user-followers', userId] })
+      queryClient.invalidateQueries({ queryKey: ['user-following', currentUserId] })
+      queryClient.invalidateQueries({ queryKey: ['user-activity', userId] })
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to update follow status')
@@ -54,16 +58,11 @@ export function FollowButton({
       return
     }
     
-    if (currentUserId === userId) {
-      toast.error("You can't follow yourself")
-      return
-    }
-    
     followMutation.mutate()
   }
 
   // Don't show button for own profile
-  if (!currentUserId || currentUserId === userId) {
+  if (!userId) {
     return null
   }
 

@@ -147,7 +147,7 @@ export const api = {
   
   getCurrentUser: () => apiRequest('/api/auth/me'),
   
-  updateProfile: (profileData) => apiRequest('/api/auth/profile', {
+  updateAuthProfile: (profileData) => apiRequest('/api/auth/profile', {
     method: 'PUT',
     body: profileData,
   }),
@@ -169,6 +169,7 @@ export const api = {
   },
   
   getDeal: (id) => apiRequest(`/api/deals/${id}`),
+  getDealComments: (id) => apiRequest(`/api/deals/${id}/comments`),
   
   createDeal: (deal) => apiRequest('/api/deals', {
     method: 'POST',
@@ -179,6 +180,7 @@ export const api = {
     method: 'POST',
     body: { value },
   }),
+  bookmarkDeal: (id) => apiRequest(`/api/deals/${id}/bookmark`, { method: 'POST' }),
   
   commentDeal: (id, body, parentId = null) => apiRequest(`/api/deals/${id}/comment`, {
     method: 'POST',
@@ -213,7 +215,7 @@ export const api = {
   // Users
   getUser: (handle) => apiRequest(`/api/users/${handle}`),
   
-  updateProfile: (handle, profileData) => apiRequest(`/api/users/${handle}`, {
+  updateUserProfile: (handle, profileData) => apiRequest(`/api/users/${handle}`, {
     method: 'PUT',
     body: profileData,
   }),
@@ -228,10 +230,10 @@ export const api = {
     })
   },
   
-  followUser: (handle) => apiRequest(`/api/users/${handle}/follow`, {
+  toggleFollowUser: (handle) => apiRequest(`/api/users/${handle}/follow`, {
     method: 'POST',
   }),
-  
+
   getUserFollowers: (handle, page = 1) => {
     const params = new URLSearchParams({ page: page.toString() })
     return apiRequest(`/api/users/${handle}/followers?${params}`)

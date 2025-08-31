@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { api } from '../../lib/api'
+import { api, apiRequest } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 import { toast } from '../../lib/toast'
 import {

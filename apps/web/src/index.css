@@ -12,6 +12,9 @@
     @apply antialiased bg-secondary-50 text-secondary-900;
     font-family: 'Inter', system-ui, sans-serif;
   }
+  .dark body {
+    @apply bg-secondary-900 text-secondary-50;
+  }
 
   [role="button"], button {
     @apply transition-all duration-200;
@@ -31,6 +34,9 @@
   /* Markdown content styles */
   .markdown-content {
     @apply prose prose-gray max-w-none;
+  }
+  .dark .markdown-content {
+    @apply prose-invert;
   }
 
   .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4, .markdown-content h5, .markdown-content h6 {

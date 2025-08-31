@@ -73,9 +73,14 @@ class AuthService {
     try {
       const response = await api.signIn({ email, password })
       
-      // Store tokens
+      // Store tokens and lightweight user info for convenience
       localStorage.setItem('access_token', response.session.access_token)
       localStorage.setItem('refresh_token', response.session.refresh_token)
+      if (response.user?.handle) {
+        localStorage.setItem('user_handle', response.user.handle)
+      } else if (response.user?.email) {
+        localStorage.setItem('user_handle', response.user.email.split('@')[0])
+      }
       
       // Set user state
       this.setUser(response.user)
@@ -122,7 +127,7 @@ class AuthService {
   
   async updateProfile(profileData) {
     try {
-      const response = await api.updateProfile(profileData)
+      const response = await api.updateAuthProfile(profileData)
       this.setUser(response.user)
       toast.success('Profile updated successfully')
       return response
