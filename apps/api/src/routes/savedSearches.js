@@ -1,6 +1,7 @@
 import express from 'express'
 import { makeAdminClient } from '../lib/supa.js'
 import { makeUserClientFromToken } from '../lib/supaUser.js'
+import { requireAdmin } from '../middleware/requireAdmin.js'
 
 const router = express.Router()
 const supabase = makeAdminClient()
@@ -299,7 +300,7 @@ router.get('/api/notifications', requireAuth, async (req, res) => {
         id, title, message, action_url, image_url, priority,
         notification_type, status, sent_at, scheduled_for, created_at,
         deal:deals(id, title, price),
-        coupon:coupons(id, title, code),
+        coupon:coupons(id, title, coupon_code),
         saved_search:saved_searches(id, name)
       `)
       .eq('user_id', req.user.id)
@@ -350,6 +351,157 @@ router.put('/api/notifications/:id/read', requireAuth, async (req, res) => {
     res.json(notification)
   } catch (error) {
     console.error('Error marking notification as read:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Mark multiple notifications as read
+router.post('/api/notifications/mark-read', requireAuth, async (req, res) => {
+  try {
+    const { notification_ids } = req.body
+
+    if (!notification_ids || !Array.isArray(notification_ids)) {
+      return res.status(400).json({ error: 'notification_ids array is required' })
+    }
+
+    const { data: notifications, error } = await supabase
+      .from('notification_queue')
+      .update({ 
+        status: 'sent',
+        sent_at: new Date().toISOString()
+      })
+      .in('id', notification_ids)
+      .eq('user_id', req.user.id)
+      .select()
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json({ 
+      success: true, 
+      updated_count: notifications?.length || 0,
+      notifications: notifications || []
+    })
+  } catch (error) {
+    console.error('Error marking notifications as read:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Get notification queue (for admin)
+router.get('/api/admin/notifications/queue', requireAuth, async (req, res) => {
+  try {
+    // Check if user is admin
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', req.user.id)
+      .single()
+
+    if (!profile || profile.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' })
+    }
+
+    const { limit = 50, offset = 0, status } = req.query
+
+    let query = supabase
+      .from('notification_queue')
+      .select(`
+        id, title, message, action_url, image_url, priority,
+        notification_type, status, sent_at, scheduled_for, created_at,
+        deal:deals(id, title, price),
+        coupon:coupons(id, title, coupon_code),
+        saved_search:saved_searches(id, name),
+        user:profiles!notification_queue_user_id_fkey(handle)
+      `)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (status) {
+      query = query.eq('status', status)
+    }
+
+    const { data: notifications, error } = await query
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(notifications || [])
+  } catch (error) {
+    console.error('Error fetching notification queue:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin: Get saved searches stats
+router.get('/api/admin/saved-searches/stats', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    // Get total saved searches
+    const { count: totalSearches } = await supabase
+      .from('saved_searches')
+      .select('*', { count: 'exact', head: true })
+
+    // Get active saved searches
+    const { count: activeSearches } = await supabase
+      .from('saved_searches')
+      .select('*', { count: 'exact', head: true })
+      .eq('alert_enabled', true)
+
+    // Get total notifications
+    const { count: totalNotifications } = await supabase
+      .from('notification_queue')
+      .select('*', { count: 'exact', head: true })
+
+    // Get top searches
+    const { data: topSearches } = await supabase
+      .from('saved_searches')
+      .select(`
+        *,
+        user:profiles!saved_searches_user_id_fkey(handle)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    res.json({
+      saved_searches: {
+        total: totalSearches || 0,
+        active: activeSearches || 0
+      },
+      notifications: {
+        total: totalNotifications || 0
+      },
+      top_searches: topSearches || []
+    })
+  } catch (error) {
+    console.error('Error fetching saved searches stats:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin: Get saved searches list
+router.get('/api/admin/saved-searches/list', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { limit = 50, offset = 0 } = req.query
+
+    const { data: searches, error } = await supabase
+      .from('saved_searches')
+      .select(`
+        *,
+        user:profiles!saved_searches_user_id_fkey(handle),
+        category:categories(id, name, slug)
+      `)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(searches || [])
+  } catch (error) {
+    console.error('Error fetching saved searches list:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 })

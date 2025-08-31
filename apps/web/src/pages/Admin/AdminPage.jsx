@@ -9,13 +9,23 @@ import PendingApprovals from './PendingApprovals'
 import UserManagement from './UserManagement'
 import Analytics from './Analytics'
 import CompanyManagement from './CompanyManagement'
+import GamificationManagement from './GamificationManagement'
+import AutoTaggingManagement from './AutoTaggingManagement'
+import PriceTrackingManagement from './PriceTrackingManagement'
+import SavedSearchesManagement from './SavedSearchesManagement'
+import SystemHealth from './SystemHealth'
 import {
   ChartBarIcon,
   ClipboardDocumentCheckIcon,
   UsersIcon,
   ChartPieIcon,
   BuildingOfficeIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  TrophyIcon,
+  TagIcon,
+  CurrencyDollarIcon,
+  MagnifyingGlassIcon,
+  HeartIcon
 } from '@heroicons/react/24/outline'
 
 const AdminPage = () => {
@@ -83,6 +93,36 @@ const AdminPage = () => {
       name: 'Analytics',
       icon: ChartPieIcon,
       component: Analytics
+    },
+    {
+      id: 'gamification',
+      name: 'Gamification',
+      icon: TrophyIcon,
+      component: GamificationManagement
+    },
+    {
+      id: 'auto-tagging',
+      name: 'Auto-Tagging',
+      icon: TagIcon,
+      component: AutoTaggingManagement
+    },
+    {
+      id: 'price-tracking',
+      name: 'Price Tracking',
+      icon: CurrencyDollarIcon,
+      component: PriceTrackingManagement
+    },
+    {
+      id: 'saved-searches',
+      name: 'Saved Searches',
+      icon: MagnifyingGlassIcon,
+      component: SavedSearchesManagement
+    },
+    {
+      id: 'system-health',
+      name: 'System Health',
+      icon: HeartIcon,
+      component: SystemHealth
     }
   ]
 

@@ -1,6 +1,7 @@
 import express from 'express'
 import { makeAdminClient } from '../lib/supa.js'
 import { makeUserClientFromToken } from '../lib/supaUser.js'
+import { requireAdmin } from '../middleware/requireAdmin.js'
 
 const router = express.Router()
 const supabase = makeAdminClient()
@@ -29,34 +30,7 @@ const requireAuth = async (req, res, next) => {
   }
 }
 
-// Middleware to check admin role
-const requireAdmin = async (req, res, next) => {
-  try {
-    const token = bearer(req)
-    if (!token) return res.status(401).json({ error: 'Authentication required' })
 
-    const supaUser = makeUserClientFromToken(token)
-    const { data: { user } } = await supaUser.auth.getUser()
-    
-    if (!user) return res.status(401).json({ error: 'Invalid token' })
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' })
-    }
-
-    req.user = user
-    next()
-  } catch (error) {
-    console.error('Admin auth error:', error)
-    res.status(401).json({ error: 'Authentication failed' })
-  }
-}
 
 // Get user's XP and level information
 router.get('/api/users/:handle/xp', async (req, res) => {
@@ -537,6 +511,175 @@ router.get('/api/admin/gamification-stats', requireAdmin, async (req, res) => {
     })
   } catch (error) {
     console.error('Error fetching gamification stats:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin: Get gamification stats
+router.get('/api/admin/gamification/stats', requireAdmin, async (req, res) => {
+  try {
+    // Get total XP events
+    const { count: totalXpEvents } = await supabase
+      .from('xp_events')
+      .select('*', { count: 'exact', head: true })
+
+    // Get total achievements
+    const { count: totalAchievements } = await supabase
+      .from('achievements')
+      .select('*', { count: 'exact', head: true })
+
+    // Get total user achievements
+    const { count: totalUserAchievements } = await supabase
+      .from('user_achievements')
+      .select('*', { count: 'exact', head: true })
+
+    // Get top users by XP
+    const { data: topUsers } = await supabase
+      .from('profiles')
+      .select('handle, total_xp, current_level')
+      .gt('total_xp', 0)
+      .order('total_xp', { ascending: false })
+      .limit(10)
+
+    // Get recent XP events
+    const { data: recentXpEvents } = await supabase
+      .from('xp_events')
+      .select(`
+        *,
+        user:profiles!xp_events_user_id_fkey(handle)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    res.json({
+      xp_events: {
+        total: totalXpEvents || 0
+      },
+      achievements: {
+        total: totalAchievements || 0,
+        user_achievements: totalUserAchievements || 0
+      },
+      top_users: topUsers || [],
+      recent_xp_events: recentXpEvents || []
+    })
+  } catch (error) {
+    console.error('Error fetching gamification stats:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin: Get all achievements
+router.get('/api/admin/gamification/achievements', requireAdmin, async (req, res) => {
+  try {
+    const { data: achievements, error } = await supabase
+      .from('achievements')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(achievements || [])
+  } catch (error) {
+    console.error('Error fetching achievements:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin: Create achievement
+router.post('/api/admin/gamification/achievements', requireAdmin, async (req, res) => {
+  try {
+    const achievementData = req.body
+
+    const { data: achievement, error } = await supabase
+      .from('achievements')
+      .insert(achievementData)
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.status(201).json(achievement)
+  } catch (error) {
+    console.error('Error creating achievement:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin: Update achievement
+router.put('/api/admin/gamification/achievements/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params
+    const updates = req.body
+
+    const { data: achievement, error } = await supabase
+      .from('achievements')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    if (!achievement) {
+      return res.status(404).json({ error: 'Achievement not found' })
+    }
+
+    res.json(achievement)
+  } catch (error) {
+    console.error('Error updating achievement:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin: Get XP configuration
+router.get('/api/admin/gamification/xp-config', requireAdmin, async (req, res) => {
+  try {
+    const { data: xpConfig, error } = await supabase
+      .from('xp_config')
+      .select('*')
+      .order('event_type', { ascending: true })
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(xpConfig || [])
+  } catch (error) {
+    console.error('Error fetching XP config:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin: Update XP configuration
+router.put('/api/admin/gamification/xp-config/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params
+    const updates = req.body
+
+    const { data: xpConfig, error } = await supabase
+      .from('xp_config')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    if (!xpConfig) {
+      return res.status(404).json({ error: 'XP config not found' })
+    }
+
+    res.json(xpConfig)
+  } catch (error) {
+    console.error('Error updating XP config:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 })

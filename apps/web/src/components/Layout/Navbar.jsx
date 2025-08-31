@@ -5,6 +5,7 @@ import { api } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 import { ChevronDownIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { PlusIcon, FireIcon, ChatBubbleLeftRightIcon, TagIcon } from '@heroicons/react/24/solid'
+import NotificationBell from '../User/NotificationBell'
 
 const Navbar = () => {
   const { user, signOut } = useAuth()
@@ -142,6 +143,9 @@ const Navbar = () => {
               <PlusIcon className="w-4 h-4" />
               <span>Post Deal</span>
             </Link>
+
+            {/* Notification Bell */}
+            <NotificationBell />
 
             {/* User Menu */}
             {user ? (

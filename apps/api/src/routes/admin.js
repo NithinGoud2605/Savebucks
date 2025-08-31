@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { makeAdminClient } from '../lib/supa.js';
 import { makeUserClientFromToken } from '../lib/supaUser.js';
+import { requireAdmin } from '../middleware/requireAdmin.js';
 
 const r = Router();
 const supaAdmin = makeAdminClient();
@@ -10,34 +11,7 @@ function bearer(req) {
   return h.startsWith('Bearer ') ? h.slice(7) : null;
 }
 
-// Middleware to check admin role
-const requireAdmin = async (req, res, next) => {
-  try {
-    const token = bearer(req);
-    if (!token) return res.status(401).json({ error: 'Authentication required' });
 
-    const supaUser = makeUserClientFromToken(token);
-    const { data: { user } } = await supaUser.auth.getUser();
-    
-    if (!user) return res.status(401).json({ error: 'Invalid token' });
-
-    const { data: profile } = await supaAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile || profile.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
-
-    req.user = user;
-    next();
-  } catch (error) {
-    console.error('Admin auth error:', error);
-    res.status(401).json({ error: 'Authentication failed' });
-  }
-};
 
 // Dashboard Analytics
 r.get('/api/admin/dashboard', requireAdmin, async (req, res) => {
@@ -482,5 +456,429 @@ r.post('/api/admin/expiration/cleanup', requireAdmin, async (req, res) => {
     res.status(500).json({ error: 'Internal server error' })
   }
 })
+
+// Gamification System Management
+r.get('/api/admin/gamification/stats', requireAdmin, async (req, res) => {
+  try {
+    const [
+      { count: totalXpEvents },
+      { count: totalAchievements },
+      { count: totalUserAchievements },
+      { data: topUsers },
+      { data: recentXpEvents }
+    ] = await Promise.all([
+      supaAdmin.from('xp_events').select('*', { count: 'exact', head: true }),
+      supaAdmin.from('achievements').select('*', { count: 'exact', head: true }),
+      supaAdmin.from('user_achievements').select('*', { count: 'exact', head: true }),
+      supaAdmin.from('profiles')
+        .select('id, handle, total_xp, current_level, badges_earned, streak_days')
+        .order('total_xp', { ascending: false })
+        .limit(10),
+      supaAdmin.from('xp_events')
+        .select(`
+          id, event_type, xp_amount, final_xp, created_at,
+          profiles!user_id(handle)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20)
+    ]);
+
+    res.json({
+      stats: {
+        totalXpEvents: totalXpEvents || 0,
+        totalAchievements: totalAchievements || 0,
+        totalUserAchievements: totalUserAchievements || 0
+      },
+      topUsers: topUsers || [],
+      recentXpEvents: recentXpEvents || []
+    });
+  } catch (error) {
+    console.error('Gamification stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch gamification stats' });
+  }
+});
+
+r.get('/api/admin/gamification/achievements', requireAdmin, async (req, res) => {
+  try {
+    const { data: achievements } = await supaAdmin
+      .from('achievements')
+      .select('*')
+      .order('category', { ascending: true })
+      .order('name', { ascending: true });
+
+    res.json(achievements || []);
+  } catch (error) {
+    console.error('Achievements fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch achievements' });
+  }
+});
+
+r.post('/api/admin/gamification/achievements', requireAdmin, async (req, res) => {
+  try {
+    const { name, slug, description, category, criteria_type, criteria_value, xp_reward, badge_icon, badge_color, rarity, is_hidden } = req.body;
+    
+    const { data, error } = await supaAdmin
+      .from('achievements')
+      .insert({
+        name,
+        slug,
+        description,
+        category,
+        criteria_type,
+        criteria_value,
+        xp_reward,
+        badge_icon,
+        badge_color,
+        rarity,
+        is_hidden
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    console.error('Achievement creation error:', error);
+    res.status(500).json({ error: 'Failed to create achievement' });
+  }
+});
+
+r.put('/api/admin/gamification/achievements/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const { data, error } = await supaAdmin
+      .from('achievements')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    console.error('Achievement update error:', error);
+    res.status(500).json({ error: 'Failed to update achievement' });
+  }
+});
+
+r.get('/api/admin/gamification/xp-config', requireAdmin, async (req, res) => {
+  try {
+    const { data: xpConfig } = await supaAdmin
+      .from('xp_config')
+      .select('*')
+      .order('event_type', { ascending: true });
+
+    res.json(xpConfig || []);
+  } catch (error) {
+    console.error('XP config fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch XP configuration' });
+  }
+});
+
+r.put('/api/admin/gamification/xp-config/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { base_xp, max_daily, is_active } = req.body;
+    
+    const { data, error } = await supaAdmin
+      .from('xp_config')
+      .update({ base_xp, max_daily, is_active })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    console.error('XP config update error:', error);
+    res.status(500).json({ error: 'Failed to update XP configuration' });
+  }
+});
+
+// Auto-Tagging System Management
+r.get('/api/admin/auto-tagging/stats', requireAdmin, async (req, res) => {
+  try {
+    const [
+      { count: totalPatterns },
+      { count: totalMerchantPatterns },
+      { count: totalCategoryPatterns },
+      { data: recentLogs }
+    ] = await Promise.all([
+      supaAdmin.from('auto_tagging_log').select('*', { count: 'exact', head: true }),
+      supaAdmin.from('merchant_patterns').select('*', { count: 'exact', head: true }),
+      supaAdmin.from('category_patterns').select('*', { count: 'exact', head: true }),
+      supaAdmin.from('auto_tagging_log')
+        .select(`
+          id, detected_merchant, detected_category, status, created_at,
+          deals(title),
+          coupons(title)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20)
+    ]);
+
+    res.json({
+      stats: {
+        totalPatterns: totalPatterns || 0,
+        totalMerchantPatterns: totalMerchantPatterns || 0,
+        totalCategoryPatterns: totalCategoryPatterns || 0
+      },
+      recentLogs: recentLogs || []
+    });
+  } catch (error) {
+    console.error('Auto-tagging stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch auto-tagging stats' });
+  }
+});
+
+r.get('/api/admin/auto-tagging/merchant-patterns', requireAdmin, async (req, res) => {
+  try {
+    const { data: patterns } = await supaAdmin
+      .from('merchant_patterns')
+      .select('*')
+      .order('merchant_name', { ascending: true });
+
+    res.json(patterns || []);
+  } catch (error) {
+    console.error('Merchant patterns fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch merchant patterns' });
+  }
+});
+
+r.post('/api/admin/auto-tagging/merchant-patterns', requireAdmin, async (req, res) => {
+  try {
+    const { merchant_name, domain_patterns, title_patterns, auto_apply_tags, confidence_score } = req.body;
+    
+    const { data, error } = await supaAdmin
+      .from('merchant_patterns')
+      .insert({
+        merchant_name,
+        domain_patterns,
+        title_patterns,
+        auto_apply_tags,
+        confidence_score
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    console.error('Merchant pattern creation error:', error);
+    res.status(500).json({ error: 'Failed to create merchant pattern' });
+  }
+});
+
+r.get('/api/admin/auto-tagging/category-patterns', requireAdmin, async (req, res) => {
+  try {
+    const { data: patterns } = await supaAdmin
+      .from('category_patterns')
+      .select(`
+        *,
+        categories(name)
+      `)
+      .order('category_name', { ascending: true });
+
+    res.json(patterns || []);
+  } catch (error) {
+    console.error('Category patterns fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch category patterns' });
+  }
+});
+
+r.post('/api/admin/auto-tagging/category-patterns', requireAdmin, async (req, res) => {
+  try {
+    const { category_name, category_id, keyword_patterns, title_patterns, confidence_score, priority } = req.body;
+    
+    const { data, error } = await supaAdmin
+      .from('category_patterns')
+      .insert({
+        category_name,
+        category_id,
+        keyword_patterns,
+        title_patterns,
+        confidence_score,
+        priority
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    console.error('Category pattern creation error:', error);
+    res.status(500).json({ error: 'Failed to create category pattern' });
+  }
+});
+
+// Price Tracking Management
+r.get('/api/admin/price-tracking/stats', requireAdmin, async (req, res) => {
+  try {
+    const [
+      { count: totalPriceHistory },
+      { count: totalPriceAlerts },
+      { count: activePriceAlerts },
+      { data: recentPriceChanges }
+    ] = await Promise.all([
+      supaAdmin.from('deal_price_history').select('*', { count: 'exact', head: true }),
+      supaAdmin.from('price_alerts').select('*', { count: 'exact', head: true }),
+      supaAdmin.from('price_alerts').select('*', { count: 'exact', head: true }).eq('is_active', true),
+      supaAdmin.from('deal_price_history')
+        .select(`
+          id, price, original_price, stock_status, created_at,
+          deals(title),
+          profiles!created_by(handle)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20)
+    ]);
+
+    res.json({
+      stats: {
+        totalPriceHistory: totalPriceHistory || 0,
+        totalPriceAlerts: totalPriceAlerts || 0,
+        activePriceAlerts: activePriceAlerts || 0
+      },
+      recentPriceChanges: recentPriceChanges || []
+    });
+  } catch (error) {
+    console.error('Price tracking stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch price tracking stats' });
+  }
+});
+
+r.get('/api/admin/price-tracking/alerts', requireAdmin, async (req, res) => {
+  try {
+    const { data: alerts } = await supaAdmin
+      .from('price_alerts')
+      .select(`
+        *,
+        deals(title, price),
+        profiles!user_id(handle)
+      `)
+      .order('created_at', { ascending: false });
+
+    res.json(alerts || []);
+  } catch (error) {
+    console.error('Price alerts fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch price alerts' });
+  }
+});
+
+// Saved Searches Management
+r.get('/api/admin/saved-searches/stats', requireAdmin, async (req, res) => {
+  try {
+    const [
+      { count: totalSavedSearches },
+      { count: activeSearches },
+      { count: totalNotifications },
+      { data: topSearches }
+    ] = await Promise.all([
+      supaAdmin.from('saved_searches').select('*', { count: 'exact', head: true }),
+      supaAdmin.from('saved_searches').select('*', { count: 'exact', head: true }).eq('alert_enabled', true),
+      supaAdmin.from('notification_queue').select('*', { count: 'exact', head: true }),
+      supaAdmin.from('saved_searches')
+        .select('name, search_type, total_matches, total_notifications_sent, created_at, profiles!user_id(handle)')
+        .order('total_notifications_sent', { ascending: false })
+        .limit(10)
+    ]);
+
+    res.json({
+      stats: {
+        totalSavedSearches: totalSavedSearches || 0,
+        activeSearches: activeSearches || 0,
+        totalNotifications: totalNotifications || 0
+      },
+      topSearches: topSearches || []
+    });
+  } catch (error) {
+    console.error('Saved searches stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch saved searches stats' });
+  }
+});
+
+r.get('/api/admin/saved-searches/list', requireAdmin, async (req, res) => {
+  try {
+    const { data: searches } = await supaAdmin
+      .from('saved_searches')
+      .select(`
+        *,
+        profiles!user_id(handle)
+      `)
+      .order('created_at', { ascending: false });
+
+    res.json(searches || []);
+  } catch (error) {
+    console.error('Saved searches fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch saved searches' });
+  }
+});
+
+r.get('/api/admin/notifications/queue', requireAdmin, async (req, res) => {
+  try {
+    const { data: notifications } = await supaAdmin
+      .from('notification_queue')
+      .select(`
+        *,
+        profiles!user_id(handle),
+        saved_searches(name)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    res.json(notifications || []);
+  } catch (error) {
+    console.error('Notification queue fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch notification queue' });
+  }
+});
+
+// System Health and Maintenance
+r.get('/api/admin/system/health', requireAdmin, async (req, res) => {
+  try {
+    const [
+      { count: totalDeals },
+      { count: totalUsers },
+      { count: totalComments },
+      { count: totalVotes },
+      { count: pendingDeals },
+      { count: pendingCoupons }
+    ] = await Promise.all([
+      supaAdmin.from('deals').select('*', { count: 'exact', head: true }),
+      supaAdmin.from('profiles').select('*', { count: 'exact', head: true }),
+      supaAdmin.from('comments').select('*', { count: 'exact', head: true }),
+      supaAdmin.from('votes').select('*', { count: 'exact', head: true }),
+      supaAdmin.from('deals').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      supaAdmin.from('coupons').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+    ]);
+
+    // Get recent activity
+    const { data: recentActivity } = await supaAdmin
+      .from('deals')
+      .select('created_at')
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .order('created_at', { ascending: false });
+
+    res.json({
+      stats: {
+        totalDeals: totalDeals || 0,
+        totalUsers: totalUsers || 0,
+        totalComments: totalComments || 0,
+        totalVotes: totalVotes || 0,
+        pendingDeals: pendingDeals || 0,
+        pendingCoupons: pendingCoupons || 0
+      },
+      activity: {
+        dealsLast24h: recentActivity?.length || 0
+      },
+      status: 'healthy'
+    });
+  } catch (error) {
+    console.error('System health check error:', error);
+    res.status(500).json({ error: 'Failed to check system health' });
+  }
+});
 
 export default r;

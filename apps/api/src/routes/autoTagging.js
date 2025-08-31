@@ -1,6 +1,7 @@
 import express from 'express'
 import { makeAdminClient } from '../lib/supa.js'
 import { makeUserClientFromToken } from '../lib/supaUser.js'
+import { requireAdmin } from '../middleware/requireAdmin.js'
 
 const router = express.Router()
 const supabase = makeAdminClient()
@@ -10,34 +11,7 @@ function bearer(req) {
   return h.startsWith('Bearer ') ? h.slice(7) : null
 }
 
-// Middleware to check admin role
-const requireAdmin = async (req, res, next) => {
-  try {
-    const token = bearer(req)
-    if (!token) return res.status(401).json({ error: 'Authentication required' })
 
-    const supaUser = makeUserClientFromToken(token)
-    const { data: { user } } = await supaUser.auth.getUser()
-    
-    if (!user) return res.status(401).json({ error: 'Invalid token' })
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' })
-    }
-
-    req.user = user
-    next()
-  } catch (error) {
-    console.error('Admin auth error:', error)
-    res.status(401).json({ error: 'Authentication failed' })
-  }
-}
 
 // Auto-tag a specific deal
 router.post('/api/deals/:id/auto-tag', requireAdmin, async (req, res) => {
@@ -460,6 +434,126 @@ router.get('/api/admin/auto-tagging-stats', requireAdmin, async (req, res) => {
     })
   } catch (error) {
     console.error('Error fetching auto-tagging stats:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin: Get auto-tagging stats
+router.get('/api/admin/auto-tagging/stats', requireAdmin, async (req, res) => {
+  try {
+    // Get total patterns
+    const { count: totalMerchantPatterns } = await supabase
+      .from('merchant_patterns')
+      .select('*', { count: 'exact', head: true })
+
+    const { count: totalCategoryPatterns } = await supabase
+      .from('category_patterns')
+      .select('*', { count: 'exact', head: true })
+
+    // Get recent tagging logs
+    const { data: recentLogs } = await supabase
+      .from('auto_tagging_log')
+      .select(`
+        *,
+        deal:deals(id, title)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    res.json({
+      patterns: {
+        merchant: totalMerchantPatterns || 0,
+        category: totalCategoryPatterns || 0
+      },
+      recent_logs: recentLogs || []
+    })
+  } catch (error) {
+    console.error('Error fetching auto-tagging stats:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin: Get merchant patterns (updated endpoint)
+router.get('/api/admin/auto-tagging/merchant-patterns', requireAdmin, async (req, res) => {
+  try {
+    const { data: patterns, error } = await supabase
+      .from('merchant_patterns')
+      .select('*')
+      .order('confidence_score', { ascending: false })
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(patterns || [])
+  } catch (error) {
+    console.error('Error fetching merchant patterns:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin: Create merchant pattern (updated endpoint)
+router.post('/api/admin/auto-tagging/merchant-patterns', requireAdmin, async (req, res) => {
+  try {
+    const patternData = req.body
+
+    const { data: pattern, error } = await supabase
+      .from('merchant_patterns')
+      .insert(patternData)
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.status(201).json(pattern)
+  } catch (error) {
+    console.error('Error creating merchant pattern:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin: Get category patterns
+router.get('/api/admin/auto-tagging/category-patterns', requireAdmin, async (req, res) => {
+  try {
+    const { data: patterns, error } = await supabase
+      .from('category_patterns')
+      .select(`
+        *,
+        category:categories(id, name)
+      `)
+      .order('confidence_score', { ascending: false })
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(patterns || [])
+  } catch (error) {
+    console.error('Error fetching category patterns:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin: Create category pattern
+router.post('/api/admin/auto-tagging/category-patterns', requireAdmin, async (req, res) => {
+  try {
+    const patternData = req.body
+
+    const { data: pattern, error } = await supabase
+      .from('category_patterns')
+      .insert(patternData)
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.status(201).json(pattern)
+  } catch (error) {
+    console.error('Error creating category pattern:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 })

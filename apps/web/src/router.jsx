@@ -34,6 +34,7 @@ const SavedSearches = React.lazy(() => import('./pages/SavedSearches'))
 const PriceAlerts = React.lazy(() => import('./pages/PriceAlerts'))
 const Achievements = React.lazy(() => import('./pages/Achievements'))
 const EnhancedLeaderboard = React.lazy(() => import('./pages/EnhancedLeaderboard'))
+const Settings = React.lazy(() => import('./pages/Settings'))
 
 const PageLoader = () => (
   <div className="container mx-auto px-4 py-8">
@@ -144,6 +145,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <Achievements />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'settings',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <Settings />
           </Suspense>
         ),
       },

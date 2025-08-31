@@ -1,6 +1,7 @@
 import express from 'express'
 import { makeAdminClient } from '../lib/supa.js'
 import { makeUserClientFromToken } from '../lib/supaUser.js'
+import { requireAdmin } from '../middleware/requireAdmin.js'
 
 const router = express.Router()
 const supabase = makeAdminClient()
@@ -29,17 +30,20 @@ const requireAuth = async (req, res, next) => {
   }
 }
 
+
+
 // Get price history for a deal
-router.get('/api/deals/:id/price-history', async (req, res) => {
+router.get('/api/price-tracking/deals/:dealId/history', requireAuth, async (req, res) => {
   try {
-    const { id } = req.params
+    const { dealId } = req.params
     const { days = 30 } = req.query
 
     const { data: history, error } = await supabase
-      .rpc('get_price_sparkline', {
-        deal_id_param: parseInt(id),
-        days_back: parseInt(days)
-      })
+      .from('deal_price_history')
+      .select('*')
+      .eq('deal_id', dealId)
+      .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
+      .order('created_at', { ascending: true })
 
     if (error) {
       return res.status(400).json({ error: error.message })
@@ -52,115 +56,52 @@ router.get('/api/deals/:id/price-history', async (req, res) => {
   }
 })
 
-// Get deal countdown information
-router.get('/api/deals/:id/countdown', async (req, res) => {
+// Get deal countdown info
+router.get('/api/price-tracking/deals/:dealId/countdown', requireAuth, async (req, res) => {
   try {
-    const { id } = req.params
+    const { dealId } = req.params
 
-    const { data: countdown, error } = await supabase
-      .rpc('get_deal_countdown', {
-        deal_id_param: parseInt(id)
-      })
+    const { data: deal, error } = await supabase
+      .from('deals')
+      .select('id, title, expires_at, stock_status')
+      .eq('id', dealId)
+      .single()
 
     if (error) {
       return res.status(400).json({ error: error.message })
     }
 
-    res.json(countdown?.[0] || { status: 'no_expiration', urgency_level: 0 })
+    if (!deal) {
+      return res.status(404).json({ error: 'Deal not found' })
+    }
+
+    const now = new Date()
+    const expiresAt = deal.expires_at ? new Date(deal.expires_at) : null
+    const timeLeft = expiresAt ? expiresAt.getTime() - now.getTime() : null
+
+    res.json({
+      deal_id: deal.id,
+      title: deal.title,
+      expires_at: deal.expires_at,
+      stock_status: deal.stock_status,
+      time_left_ms: timeLeft,
+      is_expired: timeLeft ? timeLeft <= 0 : false,
+      days_left: timeLeft ? Math.ceil(timeLeft / (1000 * 60 * 60 * 24)) : null
+    })
   } catch (error) {
     console.error('Error fetching deal countdown:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 })
 
-// Record price change (admin or automated)
-router.post('/api/deals/:id/price-update', requireAuth, async (req, res) => {
-  try {
-    const { id } = req.params
-    const {
-      price,
-      original_price,
-      stock_status,
-      stock_quantity,
-      source = 'manual',
-      notes
-    } = req.body
-
-    // Check if user is admin or if this is an automated update
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', req.user.id)
-      .single()
-
-    if (source === 'manual' && profile?.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required for manual price updates' })
-    }
-
-    const { data: historyId, error } = await supabase
-      .rpc('record_price_change', {
-        deal_id_param: parseInt(id),
-        new_price: price,
-        new_original_price: original_price,
-        new_stock_status: stock_status,
-        new_stock_quantity: stock_quantity,
-        source_param: source,
-        notes_param: notes
-      })
-
-    if (error) {
-      return res.status(400).json({ error: error.message })
-    }
-
-    res.json({ 
-      success: true, 
-      history_id: historyId,
-      message: 'Price update recorded successfully'
-    })
-  } catch (error) {
-    console.error('Error recording price update:', error)
-    res.status(500).json({ error: 'Internal server error' })
-  }
-})
-
-// Get user's price alerts
-router.get('/api/price-alerts', requireAuth, async (req, res) => {
-  try {
-    const { deal_id } = req.query
-
-    let query = supabase
-      .from('price_alerts')
-      .select(`
-        *,
-        deal:deals(id, title, price, merchant, image_url)
-      `)
-      .eq('user_id', req.user.id)
-      .order('created_at', { ascending: false })
-
-    if (deal_id) {
-      query = query.eq('deal_id', deal_id)
-    }
-
-    const { data: alerts, error } = await query
-
-    if (error) {
-      return res.status(400).json({ error: error.message })
-    }
-
-    res.json(alerts || [])
-  } catch (error) {
-    console.error('Error fetching price alerts:', error)
-    res.status(500).json({ error: 'Internal server error' })
-  }
-})
-
 // Create price alert
-router.post('/api/price-alerts', requireAuth, async (req, res) => {
+router.post('/api/price-tracking/alerts', requireAuth, async (req, res) => {
   try {
     const {
       deal_id,
       target_price,
-      alert_type = 'price_drop'
+      alert_type = 'price_drop',
+      notification_methods = ['in_app']
     } = req.body
 
     if (!deal_id || !target_price) {
@@ -173,12 +114,11 @@ router.post('/api/price-alerts', requireAuth, async (req, res) => {
         user_id: req.user.id,
         deal_id,
         target_price,
-        alert_type
+        alert_type,
+        notification_methods,
+        status: 'active'
       })
-      .select(`
-        *,
-        deal:deals(id, title, price, merchant)
-      `)
+      .select()
       .single()
 
     if (error) {
@@ -192,21 +132,41 @@ router.post('/api/price-alerts', requireAuth, async (req, res) => {
   }
 })
 
-// Update price alert
-router.put('/api/price-alerts/:id', requireAuth, async (req, res) => {
+// Get user's price alerts
+router.get('/api/price-tracking/alerts', requireAuth, async (req, res) => {
   try {
-    const { id } = req.params
+    const { data: alerts, error } = await supabase
+      .from('price_alerts')
+      .select(`
+        *,
+        deal:deals(id, title, price, original_price, merchant, url)
+      `)
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(alerts || [])
+  } catch (error) {
+    console.error('Error fetching price alerts:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Update price alert
+router.put('/api/price-tracking/alerts/:alertId', requireAuth, async (req, res) => {
+  try {
+    const { alertId } = req.params
     const updates = req.body
 
     const { data: alert, error } = await supabase
       .from('price_alerts')
       .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', id)
+      .eq('id', alertId)
       .eq('user_id', req.user.id)
-      .select(`
-        *,
-        deal:deals(id, title, price, merchant)
-      `)
+      .select()
       .single()
 
     if (error) {
@@ -225,14 +185,14 @@ router.put('/api/price-alerts/:id', requireAuth, async (req, res) => {
 })
 
 // Delete price alert
-router.delete('/api/price-alerts/:id', requireAuth, async (req, res) => {
+router.delete('/api/price-tracking/alerts/:alertId', requireAuth, async (req, res) => {
   try {
-    const { id } = req.params
+    const { alertId } = req.params
 
     const { error } = await supabase
       .from('price_alerts')
       .delete()
-      .eq('id', id)
+      .eq('id', alertId)
       .eq('user_id', req.user.id)
 
     if (error) {
@@ -246,64 +206,48 @@ router.delete('/api/price-alerts/:id', requireAuth, async (req, res) => {
   }
 })
 
-// Get deals expiring soon
-router.get('/api/deals/expiring-soon', async (req, res) => {
+// Get expiring deals
+router.get('/api/price-tracking/expiring', requireAuth, async (req, res) => {
   try {
-    const { hours = 24, limit = 20 } = req.query
+    const { days = 7 } = req.query
+    const cutoffDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
 
     const { data: deals, error } = await supabase
       .from('deals')
-      .select(`
-        id, title, url, price, original_price, merchant, expires_at,
-        discount_percentage, image_url, featured_image
-      `)
+      .select('id, title, price, original_price, merchant, expires_at, stock_status')
       .not('expires_at', 'is', null)
-      .gte('expires_at', new Date().toISOString())
-      .lte('expires_at', new Date(Date.now() + hours * 60 * 60 * 1000).toISOString())
+      .lte('expires_at', cutoffDate)
       .eq('status', 'approved')
       .order('expires_at', { ascending: true })
-      .limit(limit)
 
     if (error) {
       return res.status(400).json({ error: error.message })
     }
 
-    // Add countdown information to each deal
-    const dealsWithCountdown = await Promise.all(
-      (deals || []).map(async (deal) => {
-        const { data: countdown } = await supabase
-          .rpc('get_deal_countdown', { deal_id_param: deal.id })
-
-        return {
-          ...deal,
-          countdown: countdown?.[0] || { status: 'active', urgency_level: 1 }
-        }
-      })
-    )
-
-    res.json(dealsWithCountdown)
+    res.json(deals || [])
   } catch (error) {
     console.error('Error fetching expiring deals:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 })
 
-// Auto-expire deals (admin endpoint)
-router.post('/api/admin/deals/auto-expire', requireAuth, async (req, res) => {
+// Mark deals as expired
+router.post('/api/price-tracking/mark-expired', requireAuth, requireAdmin, async (req, res) => {
   try {
-    // Check admin permissions
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', req.user.id)
-      .single()
+    const { deal_ids } = req.body
 
-    if (profile?.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' })
+    if (!deal_ids || !Array.isArray(deal_ids)) {
+      return res.status(400).json({ error: 'deal_ids array is required' })
     }
 
-    const { data: expiredCount, error } = await supabase
-      .rpc('auto_expire_deals')
+    const { data: deals, error } = await supabase
+      .from('deals')
+      .update({ 
+        status: 'expired',
+        updated_at: new Date().toISOString()
+      })
+      .in('id', deal_ids)
+      .select()
 
     if (error) {
       return res.status(400).json({ error: error.message })
@@ -311,56 +255,87 @@ router.post('/api/admin/deals/auto-expire', requireAuth, async (req, res) => {
 
     res.json({ 
       success: true, 
-      expired_count: expiredCount,
-      message: `${expiredCount} deals expired automatically`
+      updated_count: deals?.length || 0,
+      deals: deals || []
     })
   } catch (error) {
-    console.error('Error auto-expiring deals:', error)
+    console.error('Error marking deals as expired:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 })
 
-// Get price trend analysis
-router.get('/api/deals/:id/price-trend', async (req, res) => {
+// Admin: Get price tracking stats
+router.get('/api/admin/price-tracking/stats', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { id } = req.params
+    // Get price history stats
+    const { count: priceHistoryCount } = await supabase
+      .from('deal_price_history')
+      .select('*', { count: 'exact', head: true })
 
-    const { data: deal, error } = await supabase
-      .from('deals')
-      .select('price_trend, last_price_check, stock_status')
-      .eq('id', id)
-      .single()
+    // Get price alerts stats
+    const { count: totalAlerts } = await supabase
+      .from('price_alerts')
+      .select('*', { count: 'exact', head: true })
+
+    const { count: activeAlerts } = await supabase
+      .from('price_alerts')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'active')
+
+    // Get recent price changes
+    const { data: recentChanges } = await supabase
+      .from('deal_price_history')
+      .select(`
+        *,
+        deal:deals(id, title, merchant)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    res.json({
+      price_history: {
+        total: priceHistoryCount || 0
+      },
+      price_alerts: {
+        total: totalAlerts || 0,
+        active: activeAlerts || 0
+      },
+      recent_changes: recentChanges || []
+    })
+  } catch (error) {
+    console.error('Error fetching price tracking stats:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin: Get all price alerts
+router.get('/api/admin/price-tracking/alerts', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { limit = 50, offset = 0, status } = req.query
+
+    let query = supabase
+      .from('price_alerts')
+      .select(`
+        *,
+        deal:deals(id, title, price, merchant),
+        user:profiles!price_alerts_user_id_fkey(handle, email)
+      `)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (status) {
+      query = query.eq('status', status)
+    }
+
+    const { data: alerts, error } = await query
 
     if (error) {
       return res.status(400).json({ error: error.message })
     }
 
-    if (!deal) {
-      return res.status(404).json({ error: 'Deal not found' })
-    }
-
-    // Get recent price points for trend analysis
-    const { data: recentPrices, error: pricesError } = await supabase
-      .from('deal_price_history')
-      .select('price, created_at')
-      .eq('deal_id', id)
-      .not('price', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(10)
-
-    if (pricesError) {
-      return res.status(400).json({ error: pricesError.message })
-    }
-
-    res.json({
-      trend: deal.price_trend,
-      last_check: deal.last_price_check,
-      stock_status: deal.stock_status,
-      recent_prices: recentPrices || [],
-      price_points: recentPrices?.length || 0
-    })
+    res.json(alerts || [])
   } catch (error) {
-    console.error('Error fetching price trend:', error)
+    console.error('Error fetching price alerts:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 })

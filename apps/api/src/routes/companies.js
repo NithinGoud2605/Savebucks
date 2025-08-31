@@ -1,6 +1,7 @@
 import express from 'express'
 import { makeAdminClient } from '../lib/supa.js'
 import { makeUserClientFromToken } from '../lib/supaUser.js'
+import { requireAdmin } from '../middleware/requireAdmin.js'
 import multer from 'multer'
 import path from 'path'
 
@@ -38,34 +39,7 @@ const requireAuth = (req, res, next) => {
   next()
 }
 
-// Admin middleware
-const requireAdmin = async (req, res, next) => {
-  try {
-    const token = bearer(req)
-    if (!token) return res.status(401).json({ error: 'Authentication required' })
 
-    const supaUser = makeUserClientFromToken(token)
-    const { data: { user } } = await supaUser.auth.getUser()
-    
-    if (!user) return res.status(401).json({ error: 'Invalid token' })
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' })
-    }
-
-    req.user = user
-    next()
-  } catch (error) {
-    console.error('Admin auth error:', error)
-    res.status(401).json({ error: 'Authentication failed' })
-  }
-}
 
 // Get all companies
 router.get('/api/companies', async (req, res) => {

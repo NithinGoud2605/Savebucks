@@ -685,16 +685,16 @@ export const api = {
   },
 
   notifications: {
-    getPreferences: () => apiRequest('/api/notifications/preferences'),
+    getPreferences: () => apiRequest('/api/notification-preferences'),
     
-    updatePreferences: (preferences) => apiRequest('/api/notifications/preferences', {
+    updatePreferences: (preferences) => apiRequest('/api/notification-preferences', {
       method: 'PUT',
       body: preferences,
     }),
     
     getQueue: (params = {}) => {
       const searchParams = new URLSearchParams(params)
-      return apiRequest(`/api/notifications/queue?${searchParams}`)
+      return apiRequest(`/api/notifications?${searchParams}`)
     },
     
     markAsRead: (notificationIds) => apiRequest('/api/notifications/mark-read', {
