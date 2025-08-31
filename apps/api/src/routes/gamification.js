@@ -233,6 +233,28 @@ router.get('/api/leaderboard/enhanced', async (req, res) => {
   }
 })
 
+// Simple alias used by frontend: /api/leaderboard?period=...&limit=...
+router.get('/api/leaderboard', async (req, res) => {
+  try {
+    const { period = 'all_time', limit = 50 } = req.query
+
+    const { data: leaderboard, error } = await supabase
+      .rpc('get_leaderboard', {
+        period_type: period,
+        limit_count: parseInt(limit)
+      })
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(leaderboard || [])
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 // Award XP manually (admin only)
 router.post('/api/admin/award-xp', requireAdmin, async (req, res) => {
   try {

@@ -94,10 +94,26 @@ r.get('/api/admin/dashboard', requireAdmin, async (req, res) => {
   }
 });
 
-// Get pending deals for approval
-r.get('/api/admin/deals/pending', requireAdmin, async (req, res) => {
+// Who am I (admin check)
+r.get('/api/admin/whoami', async (req, res) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
+    const user = req.user;
+    if (!user?.id) return res.json({ isAdmin: false });
+    const { data: prof } = await supaAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    res.json({ isAdmin: prof?.role === 'admin' });
+  } catch (_) {
+    res.json({ isAdmin: false });
+  }
+});
+
+// Get deals with status filter (pending by default)
+r.get('/api/admin/deals', requireAdmin, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status = 'pending' } = req.query;
     const offset = (page - 1) * limit;
 
     const { data: deals, error } = await supaAdmin
@@ -108,7 +124,7 @@ r.get('/api/admin/deals/pending', requireAdmin, async (req, res) => {
         categories(id, name, slug, color),
         profiles!submitter_id(handle, avatar_url, karma, created_at)
       `)
-      .eq('status', 'pending')
+      .eq('status', status)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -152,29 +168,15 @@ r.get('/api/admin/coupons/pending', requireAdmin, async (req, res) => {
   }
 });
 
-// Approve/Reject Deal
-r.post('/api/admin/deals/:id/review', requireAdmin, async (req, res) => {
+// Approve deal (alias)
+r.post('/api/admin/deals/:id/approve', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { action, rejection_reason } = req.body;
-
-    if (!['approve', 'reject'].includes(action)) {
-      return res.status(400).json({ error: 'Invalid action. Use "approve" or "reject"' });
-    }
-
-    if (action === 'reject' && !rejection_reason) {
-      return res.status(400).json({ error: 'Rejection reason is required' });
-    }
-
     const updateData = {
-      status: action === 'approve' ? 'approved' : 'rejected',
+      status: 'approved',
       approved_by: req.user.id,
       approved_at: new Date().toISOString()
     };
-
-    if (action === 'reject') {
-      updateData.rejection_reason = rejection_reason;
-    }
 
     const { data: deal, error } = await supaAdmin
       .from('deals')
@@ -194,6 +196,42 @@ r.post('/api/admin/deals/:id/review', requireAdmin, async (req, res) => {
     res.json({ success: true, deal });
   } catch (error) {
     console.error('Error reviewing deal:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Reject deal (alias)
+r.post('/api/admin/deals/:id/reject', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body || {};
+    if (!reason) return res.status(400).json({ error: 'Rejection reason is required' });
+
+    const updateData = {
+      status: 'rejected',
+      approved_by: req.user.id,
+      approved_at: new Date().toISOString(),
+      rejection_reason: reason,
+    };
+
+    const { data: deal, error } = await supaAdmin
+      .from('deals')
+      .update(updateData)
+      .eq('id', id)
+      .select(`
+        *,
+        companies(name),
+        profiles!submitter_id(handle)
+      `)
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ success: true, deal });
+  } catch (error) {
+    console.error('Error rejecting deal:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -878,6 +916,39 @@ r.get('/api/admin/system/health', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('System health check error:', error);
     res.status(500).json({ error: 'Failed to check system health' });
+  }
+});
+
+// Admin: list reports with deal info
+r.get('/api/admin/reports', requireAdmin, async (_req, res) => {
+  try {
+    const { data: reports, error } = await supaAdmin
+      .from('reports')
+      .select(`
+        *,
+        deals(title)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json(reports || []);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to fetch reports' });
+  }
+});
+
+// Admin: delete report
+r.delete('/api/admin/reports/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supaAdmin
+      .from('reports')
+      .delete()
+      .eq('id', id);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to delete report' });
   }
 });
 

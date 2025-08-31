@@ -177,7 +177,8 @@ async function listDeals(tab, filters = {}) {
 
 r.get('/api/deals', async (req, res) => {
   try {
-    const tab = (req.query.tab || 'hot').toString();
+    // Support both tab= and sort= aliases from frontend
+    const tab = (req.query.tab || req.query.sort || 'hot').toString().replace('newest','new').replace('top_rated','hot');
     const filters = {
       category_id: req.query.category_id ? parseInt(req.query.category_id) : null,
       merchant: req.query.merchant,
@@ -188,7 +189,19 @@ r.get('/api/deals', async (req, res) => {
     };
     
     const items = await listDeals(tab, filters);
-    res.json(items);
+    // Featured filter if requested
+    let out = items;
+    if (req.query.featured === 'true') {
+      const { data: featuredIds } = await supaAdmin
+        .from('deals')
+        .select('id')
+        .eq('is_featured', true)
+        .eq('status', 'approved');
+      const set = new Set((featuredIds||[]).map(d=>d.id));
+      out = items.filter(d => set.has(d.id));
+    }
+    const limit = req.query.limit ? parseInt(req.query.limit) : null;
+    res.json(limit ? out.slice(0, Math.max(0, limit)) : out);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -204,6 +217,9 @@ r.get('/api/deals/:id', async (req, res) => {
       .eq('id', id)
       .single();
     if (dErr) return res.status(404).json({ error: 'not found' });
+
+    // Increment view counter best-effort
+    try { await supaAdmin.rpc('increment_deal_views', { deal_id: id }); } catch (_) {}
 
     const { data: comments = [] } = await supaAdmin
       .from('comments')
