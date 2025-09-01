@@ -7,8 +7,10 @@ import { Skeleton } from './components/Loader/Skeleton'
 const ListPage = React.lazy(() => import('./pages/ListPage'))
 const NewHomepage = React.lazy(() => import('./pages/NewHomepage'))
 const EnhancedHomepage = React.lazy(() => import('./pages/EnhancedHomepage'))
+const ModernHomepage = React.lazy(() => import('./pages/ModernHomepage'))
 const SearchResults = React.lazy(() => import('./pages/SearchResults'))
 const DealPage = React.lazy(() => import('./pages/EnhancedDealPage'))
+const ModernDealPage = React.lazy(() => import('./pages/ModernDealPage'))
 const PostDeal = React.lazy(() => import('./pages/PostDeal'))
 const AdminPage = React.lazy(() => import('./pages/Admin/AdminPage'))
 const TagManagement = React.lazy(() => import('./pages/Admin/TagManagement'))
@@ -21,6 +23,7 @@ const ThreadPage = React.lazy(() => import('./pages/Forums/ThreadPage'))
 const CategoryPage = React.lazy(() => import('./pages/CategoryPage'))
 const CategoriesPage = React.lazy(() => import('./pages/CategoriesPage'))
 const CouponsPage = React.lazy(() => import('./pages/CouponsPage'))
+const ModernCouponsPage = React.lazy(() => import('./pages/ModernCouponsPage'))
 const PostCoupon = React.lazy(() => import('./pages/PostCoupon'))
 const About = React.lazy(() => import('./pages/About'))
 const Privacy = React.lazy(() => import('./pages/Privacy'))
@@ -57,7 +60,7 @@ export const router = createBrowserRouter([
         path: '',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <EnhancedHomepage />
+            <ModernHomepage />
           </Suspense>
         ),
       },
@@ -137,7 +140,7 @@ export const router = createBrowserRouter([
         path: 'deal/:id',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <DealPage />
+            <ModernDealPage />
           </Suspense>
         ),
       },
@@ -305,7 +308,7 @@ export const router = createBrowserRouter([
         path: 'coupons',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <CouponsPage />
+            <ModernCouponsPage />
           </Suspense>
         ),
       },
