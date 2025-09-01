@@ -6,6 +6,7 @@ import { Skeleton } from './components/Loader/Skeleton'
 // Lazy load components for code splitting
 const ListPage = React.lazy(() => import('./pages/ListPage'))
 const NewHomepage = React.lazy(() => import('./pages/NewHomepage'))
+const EnhancedHomepage = React.lazy(() => import('./pages/EnhancedHomepage'))
 const SearchResults = React.lazy(() => import('./pages/SearchResults'))
 const DealPage = React.lazy(() => import('./pages/EnhancedDealPage'))
 const PostDeal = React.lazy(() => import('./pages/PostDeal'))
@@ -56,7 +57,7 @@ export const router = createBrowserRouter([
         path: '',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <NewHomepage />
+            <EnhancedHomepage />
           </Suspense>
         ),
       },

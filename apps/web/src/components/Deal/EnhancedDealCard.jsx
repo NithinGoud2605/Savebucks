@@ -1,353 +1,379 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Card, CardContent } from '../ui/Card'
+import { Button, IconButton } from '../ui/Button'
+import { Badge, StatusBadge, TrendBadge } from '../ui/Badge'
+import { Icon } from '../ui/Icon'
 import { VoteButton } from './VoteButton'
 import { AffiliateButton } from './AffiliateButton'
-import { InlineDisclosure } from './InlineDisclosure'
-import { TagChips } from './TagChips'
 import { ShareButton } from './ShareButton'
 import { BookmarkButton } from './BookmarkButton'
-import { PriceHistory } from './PriceHistory'
-import { DealScore } from './DealScore'
 import { ExpirationTimer } from './ExpirationTimer'
-import { CompactCouponCode } from './CouponCode.jsx'
-import { useToast } from '../Toast'
-import { api } from '../../lib/api'
 import { formatPrice, dateAgo, truncate } from '../../lib/format'
 import { clsx } from 'clsx'
 
-export function EnhancedDealCard({ deal, compact = false, enhanced = true, className }) {
-  const [showDetails, setShowDetails] = useState(false)
+export function EnhancedDealCard({ 
+  deal, 
+  className, 
+  compact = false,
+  featured = false,
+  showActions = true,
+  showStats = true,
+  variant = 'default'
+}) {
+  const [showFullDescription, setShowFullDescription] = useState(false)
   const [imageError, setImageError] = useState(false)
-  const queryClient = useQueryClient()
-  const toast = useToast()
-
-  const tags = [deal.merchant, deal.category].filter(Boolean)
+  const [imageLoaded, setImageLoaded] = useState(false)
+  
   const score = (deal.ups || 0) - (deal.downs || 0)
   const commentCount = deal.comments?.length || 0
+  const viewCount = deal.views || 0
   
-  // Calculate deal temperature (hotness score)
+  // Calculate deal temperature/hotness
   const temperature = React.useMemo(() => {
     const hoursOld = (Date.now() - new Date(deal.created_at).getTime()) / (1000 * 60 * 60)
-    const ageMultiplier = Math.max(0.1, 1 / (1 + hoursOld / 6)) // Decay over 6 hours
+    const ageMultiplier = Math.max(0.1, 1 / (1 + hoursOld / 6))
     const baseScore = score * ageMultiplier
-    const commentBonus = commentCount * 2
-    const viewBonus = (deal.views || 0) * 0.1
+    const commentBonus = commentCount * 3
+    const viewBonus = viewCount * 0.1
     return Math.round(baseScore + commentBonus + viewBonus)
-  }, [score, commentCount, deal.views, deal.created_at])
+  }, [score, commentCount, viewCount, deal.created_at])
 
-  // Quick actions mutations
-  const reportMutation = useMutation({
-    mutationFn: (reason) => api.reportDeal(deal.id, reason),
-    onSuccess: () => toast.success('Deal reported successfully'),
-    onError: () => toast.error('Failed to report deal')
-  })
-
-  const hideMutation = useMutation({
-    mutationFn: () => api.hideDeal(deal.id),
-    onSuccess: () => {
-      queryClient.setQueryData(['deals'], (old) => 
-        old?.pages?.map(page => ({
-          ...page,
-          data: page.data.filter(d => d.id !== deal.id)
-        }))
-      )
-      toast.success('Deal hidden')
-    },
-    onError: () => toast.error('Failed to hide deal')
-  })
-
-  const handleQuickReport = () => {
-    const reason = prompt('Why are you reporting this deal?')
-    if (reason) {
-      reportMutation.mutate(reason)
+  // Get deal type and styling
+  const getDealType = () => {
+    if (deal.price === 0) return { 
+      label: 'FREE', 
+      variant: 'gradient',
+      icon: 'gift',
+      gradient: 'from-green-500 to-emerald-600'
+    }
+    if (deal.coupon_code) return { 
+      label: 'COUPON', 
+      variant: 'primary',
+      icon: 'ticket',
+      gradient: 'from-purple-500 to-pink-500'
+    }
+    if (deal.discount_percentage >= 70) return { 
+      label: 'HOT DEAL', 
+      variant: 'danger',
+      icon: 'fire',
+      gradient: 'from-red-500 to-orange-500'
+    }
+    if (deal.discount_percentage >= 50) return { 
+      label: 'GREAT DEAL', 
+      variant: 'warning',
+      icon: 'zap',
+      gradient: 'from-orange-500 to-yellow-500'
+    }
+    if (deal.discount_percentage >= 30) return { 
+      label: 'GOOD DEAL', 
+      variant: 'success',
+      icon: 'tag',
+      gradient: 'from-blue-500 to-indigo-500'
+    }
+    return { 
+      label: 'DEAL', 
+      variant: 'secondary',
+      icon: 'tag',
+      gradient: 'from-gray-500 to-gray-600'
     }
   }
 
-  const handleImageError = () => {
-    setImageError(true)
+  const dealType = getDealType()
+
+  // Temperature styling
+  const getTemperatureStyle = () => {
+    if (temperature >= 100) return { color: 'from-red-500 to-pink-500', text: 'text-white' }
+    if (temperature >= 50) return { color: 'from-orange-500 to-red-500', text: 'text-white' }
+    if (temperature >= 20) return { color: 'from-yellow-500 to-orange-500', text: 'text-white' }
+    return { color: 'from-blue-500 to-purple-500', text: 'text-white' }
   }
 
-  const getTemperatureColor = () => {
-    if (temperature >= 100) return 'text-red-500 bg-red-50'
-    if (temperature >= 50) return 'text-orange-500 bg-orange-50'
-    if (temperature >= 20) return 'text-yellow-500 bg-yellow-50'
-    return 'text-blue-500 bg-blue-50'
-  }
+  const tempStyle = getTemperatureStyle()
 
-  const getDealTypeIcon = () => {
-    if (deal.price === 0) return 'FREE'
-    if (deal.coupon_code) return 'COUPON'
-    if (deal.cashback) return 'CASHBACK'
-    if (deal.is_flash_sale) return 'FLASH'
-    return 'DEAL'
+  // Card variants
+  const cardVariants = {
+    default: 'bg-white border-secondary-200',
+    featured: 'bg-gradient-to-br from-white to-primary-50 border-primary-200 ring-1 ring-primary-200',
+    hot: 'bg-gradient-to-br from-white to-red-50 border-red-200 ring-1 ring-red-200',
+    trending: 'bg-gradient-to-br from-white to-orange-50 border-orange-200 ring-1 ring-orange-200'
   }
 
   return (
-    <article className={clsx(
-      'card hover:shadow-lg transition-all duration-200 group relative overflow-hidden',
-      compact ? 'p-4' : 'p-6',
-      className
-    )}>
-      {/* Deal Temperature Indicator */}
-      {enhanced && temperature > 20 && (
-        <div className={clsx(
-          'absolute top-3 right-3 z-10 px-2 py-1 rounded-full text-xs font-bold',
-          getTemperatureColor()
-        )}>
-          {temperature}° HOT
-        </div>
-      )}
-
-      <div className="flex items-start space-x-4">
-        {/* Vote Section */}
-        <VoteButton 
-          dealId={deal.id} 
-          votes={score}
-          userVote={deal.user_vote}
-          className="flex-shrink-0"
-        />
-
-        {/* Main Content */}
-        <div className="flex-1 min-w-0">
-          {/* Header */}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      whileHover={{ y: -2 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      className={clsx('group', className)}
+    >
+      <Card
+        variant="elevated"
+        padding="none"
+        className={clsx(
+          'overflow-hidden transition-all duration-300',
+          'hover:shadow-2xl hover:ring-1 hover:ring-primary-200',
+          cardVariants[variant],
+          featured && 'ring-2 ring-primary-300',
+          className
+        )}
+        hover
+      >
+        {/* Top gradient bar */}
+        <div className={`h-1 bg-gradient-to-r ${dealType.gradient}`} />
+        
+        {/* Card Header with badges */}
+        <div className="relative p-4 pb-2">
           <div className="flex items-start justify-between mb-3">
-            <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="text-lg" title={deal.deal_type}>
-                  {getDealTypeIcon()}
-                </span>
-                
-                {deal.coupon_code && (
-                  <CompactCouponCode 
-                    code={deal.coupon_code}
-                    type={deal.coupon_type || 'code'}
-                    discount={deal.discount_percentage}
-                  />
-                )}
-                
-                {deal.is_verified && (
-                  <span className="text-green-500" title="Verified deal">
-                    VERIFIED
-                  </span>
-                )}
-              </div>
+            {/* Deal type badge */}
+            <Badge 
+              variant={dealType.variant}
+              leftIcon={dealType.icon}
+              className="shadow-sm"
+            >
+              {dealType.label}
+            </Badge>
 
-              <h2 className={clsx(
-                'font-semibold text-gray-900 mb-2 leading-tight',
-                compact ? 'text-base' : 'text-lg'
-              )}>
-                <Link 
-                  to={`/deal/${deal.id}`}
-                  className="hover:text-blue-600 focus-ring rounded"
-                >
-                  {deal.title}
-                </Link>
-              </h2>
-
-              {/* Deal Metadata */}
-              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
-                {deal.merchant && (
-                  <div className="flex items-center space-x-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m4 0v-4a1 1 0 011-1h4a1 1 0 011 1v4M7 7h10M7 10h10M7 13h10" />
-                    </svg>
-                    <span className="font-medium">{deal.merchant}</span>
-                    {deal.merchant_rating && (
-                      <span className="text-yellow-500">
-                        ★{deal.merchant_rating.toFixed(1)}
-                      </span>
-                    )}
-                  </div>
+            {/* Temperature badge */}
+            {temperature > 20 && (
+              <Badge
+                variant="gradient"
+                className={clsx(
+                  'bg-gradient-to-r shadow-lg animate-pulse',
+                  tempStyle.color,
+                  tempStyle.text
                 )}
-                
-                <span>{dateAgo(deal.created_at)}</span>
-                
-                {deal.views > 0 && (
-                  <div className="flex items-center space-x-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <span>{deal.views.toLocaleString()}</span>
-                  </div>
-                )}
-
-                {commentCount > 0 && (
-                  <Link 
-                    to={`/deal/${deal.id}#comments`}
-                    className="flex items-center space-x-1 hover:text-blue-600"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    <span>{commentCount}</span>
-                  </Link>
-                )}
-
-                {deal.expires_at && (
-                  <ExpirationTimer expiresAt={deal.expires_at} />
-                )}
-              </div>
-            </div>
-
-            {/* Deal Image */}
-            {deal.image_url && !imageError && (
-              <div className={clsx(
-                'flex-shrink-0 rounded-lg overflow-hidden bg-gray-100',
-                compact ? 'w-16 h-16 ml-3' : 'w-20 h-20 ml-4'
-              )}>
-                <img
-                  src={deal.image_url}
-                  alt={deal.title}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
-                  loading="lazy"
-                  onError={handleImageError}
-                />
-              </div>
+                leftIcon="fire"
+              >
+                {temperature}°
+              </Badge>
             )}
           </div>
 
-          {/* Price Section */}
-          {deal.price !== undefined && (
-            <div className="flex items-baseline space-x-3 mb-4">
-              <div className="flex items-baseline space-x-2">
-                <span className={clsx(
-                  'font-bold text-green-600',
-                  compact ? 'text-lg' : 'text-2xl'
-                )}>
-                  {deal.price === 0 ? 'FREE' : formatPrice(deal.price, deal.currency)}
-                </span>
-                
-                {deal.list_price && deal.list_price > deal.price && (
-                  <>
-                    <span className="text-gray-500 line-through">
-                      {formatPrice(deal.list_price, deal.currency)}
-                    </span>
-                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-bold">
-                      -{Math.round(((deal.list_price - deal.price) / deal.list_price) * 100)}%
-                    </span>
-                  </>
-                )}
-              </div>
+          {/* Deal title */}
+          <Link 
+            to={`/deals/${deal.id}`}
+            className="block group-hover:text-primary-600 transition-colors"
+          >
+            <h3 className={clsx(
+              'font-bold leading-tight mb-2',
+              compact ? 'text-lg' : 'text-xl'
+            )}>
+              {deal.title}
+            </h3>
+          </Link>
 
-              {enhanced && deal.price_history && (
-                <PriceHistory history={deal.price_history} currentPrice={deal.price} />
+          {/* Company and category */}
+          <div className="flex items-center gap-2 text-sm text-secondary-600 mb-3">
+            {deal.company && (
+              <Link 
+                to={`/companies/${deal.company.slug}`}
+                className="font-medium hover:text-primary-600 transition-colors"
+              >
+                {deal.company.name}
+              </Link>
+            )}
+            {deal.category && (
+              <>
+                <span>•</span>
+                <Link 
+                  to={`/categories/${deal.category.slug}`}
+                  className="hover:text-primary-600 transition-colors"
+                >
+                  {deal.category.name}
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Deal image */}
+        {deal.image_url && !imageError && (
+          <div className="relative mx-4 mb-4 rounded-xl overflow-hidden bg-secondary-100">
+            <div className={clsx(
+              'aspect-video w-full transition-all duration-300',
+              !imageLoaded && 'animate-pulse bg-secondary-200'
+            )}>
+              <img
+                src={deal.image_url}
+                alt={deal.title}
+                className={clsx(
+                  'w-full h-full object-cover transition-all duration-300',
+                  'group-hover:scale-105',
+                  imageLoaded ? 'opacity-100' : 'opacity-0'
+                )}
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageError(true)}
+              />
+            </div>
+            
+            {/* Image overlay with quick actions */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-3 right-3 flex gap-2">
+                <IconButton
+                  icon="eye"
+                  size="sm"
+                  variant="glass"
+                  className="text-white hover:bg-white/20"
+                />
+                <IconButton
+                  icon="share"
+                  size="sm"
+                  variant="glass"
+                  className="text-white hover:bg-white/20"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Deal content */}
+        <CardContent className="pt-0">
+          {/* Price section */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-baseline gap-2">
+              {deal.original_price && deal.original_price > deal.price && (
+                <span className="text-lg text-secondary-500 line-through">
+                  {formatPrice(deal.original_price)}
+                </span>
+              )}
+              <span className={clsx(
+                'font-bold text-primary-600',
+                compact ? 'text-xl' : 'text-2xl'
+              )}>
+                {deal.price === 0 ? 'FREE' : formatPrice(deal.price)}
+              </span>
+              {deal.discount_percentage > 0 && (
+                <Badge variant="success" size="sm">
+                  -{deal.discount_percentage}%
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Description */}
+          {deal.description && (
+            <div className="mb-4">
+              <p className={clsx(
+                'text-secondary-700 leading-relaxed',
+                compact ? 'text-sm' : 'text-base'
+              )}>
+                {showFullDescription 
+                  ? deal.description 
+                  : truncate(deal.description, compact ? 80 : 120)
+                }
+              </p>
+              {deal.description.length > (compact ? 80 : 120) && (
+                <button
+                  onClick={() => setShowFullDescription(!showFullDescription)}
+                  className="text-primary-600 hover:text-primary-700 text-sm font-medium mt-1 transition-colors"
+                >
+                  {showFullDescription ? 'Show less' : 'Show more'}
+                </button>
               )}
             </div>
           )}
 
-          {/* Description Preview */}
-          {!compact && deal.description && (
-            <div className="mb-4">
-              <p className="text-gray-700 text-sm leading-relaxed">
-                {truncate(deal.description, 150)}
-                {deal.description.length > 150 && (
-                  <button
-                    onClick={() => setShowDetails(!showDetails)}
-                    className="ml-1 text-blue-600 hover:text-blue-700"
-                  >
-                    {showDetails ? 'Show less' : 'Show more'}
-                  </button>
-                )}
-              </p>
-              
-              {showDetails && deal.description.length > 150 && (
-                <p className="text-gray-700 text-sm leading-relaxed mt-2">
-                  {deal.description.substring(150)}
-                </p>
-              )}
+          {/* Coupon code */}
+          {deal.coupon_code && (
+            <div className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-purple-900 mb-1">Coupon Code</p>
+                  <code className="text-lg font-mono font-bold text-purple-700">
+                    {deal.coupon_code}
+                  </code>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  leftIcon="copy"
+                  onClick={() => navigator.clipboard.writeText(deal.coupon_code)}
+                  className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                >
+                  Copy
+                </Button>
+              </div>
             </div>
           )}
 
           {/* Tags */}
-          {tags.length > 0 && (
-            <TagChips tags={tags} className="mb-4" />
+          {deal.tags && deal.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-4">
+              {deal.tags.slice(0, compact ? 3 : 5).map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  size="xs"
+                  className="text-xs"
+                >
+                  {tag}
+                </Badge>
+              ))}
+              {deal.tags.length > (compact ? 3 : 5) && (
+                <Badge variant="secondary" size="xs">
+                  +{deal.tags.length - (compact ? 3 : 5)}
+                </Badge>
+              )}
+            </div>
           )}
 
-          {/* Actions */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center space-x-3">
-              <AffiliateButton 
-                dealId={deal.id} 
-                className={clsx(compact ? 'text-sm px-3 py-1.5' : 'px-4 py-2')}
-              >
-                {deal.action_text || 'Go to Deal'}
-              </AffiliateButton>
-              
-              <InlineDisclosure />
+          {/* Expiration timer */}
+          {deal.expires_at && (
+            <div className="mb-4">
+              <ExpirationTimer expiresAt={deal.expires_at} />
             </div>
+          )}
+        </CardContent>
 
-            {/* Quick Actions */}
-            <div className="flex items-center space-x-2">
-              {enhanced && (
-                <>
-                  <BookmarkButton dealId={deal.id} />
-                  <ShareButton deal={deal} />
-                </>
+        {/* Card Footer */}
+        {showActions && (
+          <div className="px-4 pb-4">
+            <div className="flex items-center justify-between pt-4 border-t border-secondary-100">
+              {/* Stats */}
+              {showStats && (
+                <div className="flex items-center gap-4 text-sm text-secondary-600">
+                  <div className="flex items-center gap-1">
+                    <Icon name="thumbsUp" size="sm" />
+                    <span>{score}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Icon name="messageCircle" size="sm" />
+                    <span>{commentCount}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Icon name="eye" size="sm" />
+                    <span>{viewCount}</span>
+                  </div>
+                  <span className="text-xs">
+                    {dateAgo(deal.created_at)}
+                  </span>
+                </div>
               )}
 
-              {/* More Actions Dropdown */}
-              <div className="relative group">
-                <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                  </svg>
-                </button>
-
-                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20">
-                  <div className="py-1">
-                    <button
-                      onClick={handleQuickReport}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      🚩 Report Deal
-                    </button>
-                    <button
-                      onClick={() => hideMutation.mutate()}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Hide Deal
-                    </button>
-                    <Link
-                      to={`/deal/${deal.id}`}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      🔗 Permalink
-                    </Link>
-                  </div>
-                </div>
+              {/* Action buttons */}
+              <div className="flex items-center gap-2">
+                <VoteButton deal={deal} />
+                <BookmarkButton deal={deal} />
+                <ShareButton deal={deal} />
+                <AffiliateButton 
+                  deal={deal}
+                  variant="primary"
+                  size="sm"
+                  className="ml-2"
+                >
+                  Get Deal
+                </AffiliateButton>
               </div>
             </div>
           </div>
-
-          {/* Status Badge */}
-          {deal.status && deal.status !== 'active' && (
-            <div className="mt-3">
-              <span className={clsx(
-                'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
-                deal.status === 'expired' && 'bg-red-100 text-red-800',
-                deal.status === 'pending' && 'bg-yellow-100 text-yellow-800',
-                deal.status === 'out_of_stock' && 'bg-gray-100 text-gray-800'
-              )}>
-                {deal.status === 'expired' && 'Expired'}
-                {deal.status === 'pending' && 'Pending'}
-                {deal.status === 'out_of_stock' && 'Out of Stock'}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Enhanced Deal Score (only for enhanced mode) */}
-      {enhanced && !compact && (
-        <DealScore 
-          score={score}
-          comments={commentCount}
-          views={deal.views || 0}
-          temperature={temperature}
-        />
-      )}
-    </article>
+        )}
+      </Card>
+    </motion.div>
   )
 }
+
+export default EnhancedDealCard
