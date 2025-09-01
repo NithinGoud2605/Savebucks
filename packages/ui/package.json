@@ -1,0 +1,11 @@
+{
+  "name": "@app/ui",
+  "version": "0.1.0",
+  "description": "Reusable React UI components shared across frontend apps.",
+  "main": "index.js",
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "license": "MIT"
+}
