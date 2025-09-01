@@ -2,6 +2,7 @@ import React from 'react'
 import { setPageMeta } from '../lib/head.js'
 import { DealsFeed } from '../components/Homepage/DealsFeed.jsx'
 import { RightSidebar } from '../components/Layout/RightSidebar.jsx'
+import { DealGrid } from '../components/Deal/DealGrid.jsx'
 
 export default function NewHomepage() {
   React.useEffect(() => {
@@ -18,7 +19,13 @@ export default function NewHomepage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <DealsFeed />
+              {/* Display deals in an attractive responsive grid */}
+              <DealGrid
+                viewMode="grid"
+                showFilters={false}
+                showViewModes={false}
+                className="pt-2"
+              />
             </div>
             <RightSidebar />
           </div>
