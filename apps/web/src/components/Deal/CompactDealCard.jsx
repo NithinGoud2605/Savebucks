@@ -6,6 +6,10 @@ import { clsx } from 'clsx'
 
 export function CompactDealCard({ deal, className }) {
   const score = (deal.ups || 0) - (deal.downs || 0)
+  
+  // Get images array - prioritize deal_images, fallback to image_url
+  const images = deal.deal_images?.length > 0 ? deal.deal_images : (deal.image_url ? [deal.image_url] : [])
+  const currentImage = images[0] || deal.image_url
 
   return (
     <article className={clsx('bg-white dark:bg-secondary-900 border border-secondary-200 dark:border-secondary-800 rounded-xl p-4 hover:shadow-medium transition-shadow', className)}>
@@ -22,8 +26,8 @@ export function CompactDealCard({ deal, className }) {
             )}
           </div>
         </div>
-        {deal.image_url && (
-          <img src={deal.image_url} alt="" className="w-14 h-14 rounded-lg object-cover hidden sm:block" loading="lazy" />
+        {currentImage && (
+          <img src={currentImage} alt="" className="w-14 h-14 rounded-lg object-cover hidden sm:block" loading="lazy" />
         )}
       </div>
     </article>

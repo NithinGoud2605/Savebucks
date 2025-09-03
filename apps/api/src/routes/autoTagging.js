@@ -1,6 +1,5 @@
 import express from 'express'
 import { makeAdminClient } from '../lib/supa.js'
-import { makeUserClientFromToken } from '../lib/supaUser.js'
 import { requireAdmin } from '../middleware/requireAdmin.js'
 
 const router = express.Router()
@@ -14,7 +13,7 @@ function bearer(req) {
 
 
 // Auto-tag a specific deal
-router.post('/api/deals/:id/auto-tag', requireAdmin, async (req, res) => {
+router.post('/deals/:id/auto-tag', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params
 
@@ -33,7 +32,7 @@ router.post('/api/deals/:id/auto-tag', requireAdmin, async (req, res) => {
 })
 
 // Auto-tag all untagged deals
-router.post('/api/admin/auto-tag-all', requireAdmin, async (req, res) => {
+router.post('/admin/auto-tag-all', requireAdmin, async (req, res) => {
   try {
     const { limit = 100 } = req.body
 
@@ -52,7 +51,7 @@ router.post('/api/admin/auto-tag-all', requireAdmin, async (req, res) => {
 })
 
 // Get merchant patterns
-router.get('/api/admin/merchant-patterns', requireAdmin, async (req, res) => {
+router.get('/admin/merchant-patterns', requireAdmin, async (req, res) => {
   try {
     const { data: patterns, error } = await supabase
       .from('merchant_patterns')
@@ -71,7 +70,7 @@ router.get('/api/admin/merchant-patterns', requireAdmin, async (req, res) => {
 })
 
 // Create merchant pattern
-router.post('/api/admin/merchant-patterns', requireAdmin, async (req, res) => {
+router.post('/admin/merchant-patterns', requireAdmin, async (req, res) => {
   try {
     const {
       merchant_name,
@@ -115,7 +114,7 @@ router.post('/api/admin/merchant-patterns', requireAdmin, async (req, res) => {
 })
 
 // Update merchant pattern
-router.put('/api/admin/merchant-patterns/:id', requireAdmin, async (req, res) => {
+router.put('/admin/merchant-patterns/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params
     const updates = req.body
@@ -143,7 +142,7 @@ router.put('/api/admin/merchant-patterns/:id', requireAdmin, async (req, res) =>
 })
 
 // Delete merchant pattern
-router.delete('/api/admin/merchant-patterns/:id', requireAdmin, async (req, res) => {
+router.delete('/admin/merchant-patterns/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params
 
@@ -164,7 +163,7 @@ router.delete('/api/admin/merchant-patterns/:id', requireAdmin, async (req, res)
 })
 
 // Get category patterns
-router.get('/api/admin/category-patterns', requireAdmin, async (req, res) => {
+router.get('/admin/category-patterns', requireAdmin, async (req, res) => {
   try {
     const { data: patterns, error } = await supabase
       .from('category_patterns')
@@ -186,7 +185,7 @@ router.get('/api/admin/category-patterns', requireAdmin, async (req, res) => {
 })
 
 // Create category pattern
-router.post('/api/admin/category-patterns', requireAdmin, async (req, res) => {
+router.post('/admin/category-patterns', requireAdmin, async (req, res) => {
   try {
     const {
       category_name,
@@ -232,7 +231,7 @@ router.post('/api/admin/category-patterns', requireAdmin, async (req, res) => {
 })
 
 // Update category pattern
-router.put('/api/admin/category-patterns/:id', requireAdmin, async (req, res) => {
+router.put('/admin/category-patterns/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params
     const updates = req.body
@@ -260,7 +259,7 @@ router.put('/api/admin/category-patterns/:id', requireAdmin, async (req, res) =>
 })
 
 // Delete category pattern
-router.delete('/api/admin/category-patterns/:id', requireAdmin, async (req, res) => {
+router.delete('/admin/category-patterns/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params
 
@@ -281,7 +280,7 @@ router.delete('/api/admin/category-patterns/:id', requireAdmin, async (req, res)
 })
 
 // Test merchant detection
-router.post('/api/admin/test-merchant-detection', requireAdmin, async (req, res) => {
+router.post('/admin/test-merchant-detection', requireAdmin, async (req, res) => {
   try {
     const { url, title = '' } = req.body
 
@@ -307,7 +306,7 @@ router.post('/api/admin/test-merchant-detection', requireAdmin, async (req, res)
 })
 
 // Test category detection
-router.post('/api/admin/test-category-detection', requireAdmin, async (req, res) => {
+router.post('/admin/test-category-detection', requireAdmin, async (req, res) => {
   try {
     const { title, description = '' } = req.body
 
@@ -333,7 +332,7 @@ router.post('/api/admin/test-category-detection', requireAdmin, async (req, res)
 })
 
 // Get auto-tagging log
-router.get('/api/admin/auto-tagging-log', requireAdmin, async (req, res) => {
+router.get('/admin/auto-tagging-log', requireAdmin, async (req, res) => {
   try {
     const { limit = 100, offset = 0 } = req.query
 
@@ -360,7 +359,7 @@ router.get('/api/admin/auto-tagging-log', requireAdmin, async (req, res) => {
 })
 
 // Review auto-tagging result
-router.put('/api/admin/auto-tagging-log/:id/review', requireAdmin, async (req, res) => {
+router.put('/admin/auto-tagging-log/:id/review', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params
     const { status, notes } = req.body
@@ -397,7 +396,7 @@ router.put('/api/admin/auto-tagging-log/:id/review', requireAdmin, async (req, r
 })
 
 // Get auto-tagging statistics
-router.get('/api/admin/auto-tagging-stats', requireAdmin, async (req, res) => {
+router.get('/admin/auto-tagging-stats', requireAdmin, async (req, res) => {
   try {
     const { days = 30 } = req.query
 
@@ -439,7 +438,7 @@ router.get('/api/admin/auto-tagging-stats', requireAdmin, async (req, res) => {
 })
 
 // Admin: Get auto-tagging stats
-router.get('/api/admin/auto-tagging/stats', requireAdmin, async (req, res) => {
+router.get('/admin/auto-tagging/stats', requireAdmin, async (req, res) => {
   try {
     // Get total patterns
     const { count: totalMerchantPatterns } = await supabase
@@ -474,7 +473,7 @@ router.get('/api/admin/auto-tagging/stats', requireAdmin, async (req, res) => {
 })
 
 // Admin: Get merchant patterns (updated endpoint)
-router.get('/api/admin/auto-tagging/merchant-patterns', requireAdmin, async (req, res) => {
+router.get('/admin/auto-tagging/merchant-patterns', requireAdmin, async (req, res) => {
   try {
     const { data: patterns, error } = await supabase
       .from('merchant_patterns')
@@ -493,7 +492,7 @@ router.get('/api/admin/auto-tagging/merchant-patterns', requireAdmin, async (req
 })
 
 // Admin: Create merchant pattern (updated endpoint)
-router.post('/api/admin/auto-tagging/merchant-patterns', requireAdmin, async (req, res) => {
+router.post('/admin/auto-tagging/merchant-patterns', requireAdmin, async (req, res) => {
   try {
     const patternData = req.body
 
@@ -515,7 +514,7 @@ router.post('/api/admin/auto-tagging/merchant-patterns', requireAdmin, async (re
 })
 
 // Admin: Get category patterns
-router.get('/api/admin/auto-tagging/category-patterns', requireAdmin, async (req, res) => {
+router.get('/admin/auto-tagging/category-patterns', requireAdmin, async (req, res) => {
   try {
     const { data: patterns, error } = await supabase
       .from('category_patterns')
@@ -537,7 +536,7 @@ router.get('/api/admin/auto-tagging/category-patterns', requireAdmin, async (req
 })
 
 // Admin: Create category pattern
-router.post('/api/admin/auto-tagging/category-patterns', requireAdmin, async (req, res) => {
+router.post('/admin/auto-tagging/category-patterns', requireAdmin, async (req, res) => {
   try {
     const patternData = req.body
 

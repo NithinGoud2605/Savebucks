@@ -13,20 +13,25 @@ function getAuthHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-export async function apiRequest(endpoint, options = {}) {
+export async function apiRequest(endpoint, options = {}, retryCount = 0) {
   const url = `${API_BASE}${endpoint}`
   
   const config = {
     headers: {
-      'Content-Type': 'application/json',
       ...getAuthHeaders(),
       ...options.headers,
     },
     ...options,
   }
 
-  if (config.body && typeof config.body !== 'string') {
-    config.body = JSON.stringify(config.body)
+  // Only set Content-Type and stringify if it's not FormData
+  if (config.body && !(config.body instanceof FormData)) {
+    if (!config.headers['Content-Type']) {
+      config.headers['Content-Type'] = 'application/json'
+    }
+    if (typeof config.body !== 'string') {
+      config.body = JSON.stringify(config.body)
+    }
   }
 
   try {
@@ -34,6 +39,51 @@ export async function apiRequest(endpoint, options = {}) {
     
     if (!response.ok) {
       const error = await response.text()
+      
+      // Check if it's a JWT expiration error and we haven't retried yet
+      if ((error.includes('JWT expired') || error.includes('expired')) && retryCount === 0) {
+        console.log('🔄 JWT expired, attempting token refresh...')
+        
+        // Try to refresh the token
+        try {
+          const refreshToken = localStorage.getItem('refresh_token')
+          if (refreshToken) {
+            const refreshResponse = await fetch(`${API_BASE}/api/auth/refresh`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ refresh_token: refreshToken }),
+            })
+            
+            if (refreshResponse.ok) {
+              const refreshData = await refreshResponse.json()
+              localStorage.setItem('access_token', refreshData.session.access_token)
+              localStorage.setItem('refresh_token', refreshData.session.refresh_token)
+              
+              // Also update Supabase token if it exists
+              const supabaseToken = localStorage.getItem('sb-ixkhkzjhelyumdplutbz-auth-token')
+              if (supabaseToken) {
+                try {
+                  const tokenData = JSON.parse(supabaseToken)
+                  tokenData.access_token = refreshData.session.access_token
+                  tokenData.refresh_token = refreshData.session.refresh_token
+                  localStorage.setItem('sb-ixkhkzjhelyumdplutbz-auth-token', JSON.stringify(tokenData))
+                } catch (e) {
+                  console.warn('Failed to update Supabase token:', e)
+                }
+              }
+              
+              console.log('✅ Token refresh successful, retrying request...')
+              // Retry the original request with new token
+              return apiRequest(endpoint, options, retryCount + 1)
+            }
+          }
+        } catch (refreshError) {
+          console.warn('Token refresh failed:', refreshError)
+        }
+      }
+      
       throw new ApiError(error || 'Request failed', response.status)
     }
 
@@ -259,14 +309,22 @@ export const api = {
 
   // Deal Images
   uploadDealImages: (dealId, files) => {
+    console.log('🖼️ Uploading deal images:', { dealId, fileCount: files.length, files })
     const formData = new FormData()
     files.forEach((file, index) => {
+      console.log(`📎 Appending file ${index}:`, { name: file.name, size: file.size, type: file.type })
       formData.append('images', file)
     })
+    
+    // Debug FormData contents
+    for (let [key, value] of formData.entries()) {
+      console.log(`🔍 FormData entry: ${key} =`, value)
+    }
+    
     return apiRequest(`/api/deals/${dealId}/images`, {
       method: 'POST',
       body: formData,
-      headers: {} // Remove Content-Type to let browser set it with boundary
+      // Don't override headers - let apiRequest handle auth and Content-Type
     })
   },
 
@@ -289,14 +347,22 @@ export const api = {
   }),
 
   uploadCouponImages: (couponId, files) => {
+    console.log('🖼️ Uploading coupon images:', { couponId, fileCount: files.length, files })
     const formData = new FormData()
     files.forEach((file, index) => {
+      console.log(`📎 Appending file ${index}:`, { name: file.name, size: file.size, type: file.type })
       formData.append('images', file)
     })
+    
+    // Debug FormData contents
+    for (let [key, value] of formData.entries()) {
+      console.log(`🔍 FormData entry: ${key} =`, value)
+    }
+    
     return apiRequest(`/api/coupons/${couponId}/images`, {
       method: 'POST',
       body: formData,
-      headers: {} // Remove Content-Type to let browser set it with boundary
+      // Don't override headers - let apiRequest handle auth and Content-Type
     })
   },
 
@@ -354,8 +420,8 @@ export const api = {
   getAdminDashboard: () => apiRequest('/api/admin/dashboard'),
   
   getPendingDeals: (page = 1) => {
-    const params = new URLSearchParams({ page: page.toString() })
-    return apiRequest(`/api/admin/deals/pending?${params}`)
+    const params = new URLSearchParams({ page: page.toString(), status: 'pending' })
+    return apiRequest(`/api/admin/deals?${params}`)
   },
   
   getPendingCoupons: (page = 1) => {
@@ -501,6 +567,14 @@ export const api = {
   // Users
   getUserProfile: async (handle) => {
     return await apiRequest(`/api/users/${handle}`)
+  },
+  
+  getUserDeals: async (handle, status = 'all') => {
+    const params = new URLSearchParams()
+    if (status !== 'all') {
+      params.append('status', status)
+    }
+    return await apiRequest(`/api/users/${handle}/deals?${params}`)
   },
   
   followUser: (userId) => apiRequest(`/api/users/${userId}/follow`, {

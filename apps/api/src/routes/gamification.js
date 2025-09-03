@@ -1,6 +1,7 @@
 import express from 'express'
 import { makeAdminClient } from '../lib/supa.js'
 import { makeUserClientFromToken } from '../lib/supaUser.js'
+import { createSafeUserClient } from '../lib/authUtils.js'
 import { requireAdmin } from '../middleware/requireAdmin.js'
 
 const router = express.Router()
@@ -17,7 +18,9 @@ const requireAuth = async (req, res, next) => {
     const token = bearer(req)
     if (!token) return res.status(401).json({ error: 'Authentication required' })
 
-    const supaUser = makeUserClientFromToken(token)
+    const supaUser = await createSafeUserClient(token, res)
+    if (!supaUser) return; // Exit if client creation failed
+    
     const { data: { user } } = await supaUser.auth.getUser()
     
     if (!user) return res.status(401).json({ error: 'Invalid token' })
@@ -33,7 +36,7 @@ const requireAuth = async (req, res, next) => {
 
 
 // Get user's XP and level information
-router.get('/api/users/:handle/xp', async (req, res) => {
+router.get('/users/:handle/xp', async (req, res) => {
   try {
     const { handle } = req.params
 
@@ -78,7 +81,7 @@ router.get('/api/users/:handle/xp', async (req, res) => {
 })
 
 // Get user's XP events history
-router.get('/api/users/:handle/xp-events', requireAuth, async (req, res) => {
+router.get('/users/:handle/xp-events', requireAuth, async (req, res) => {
   try {
     const { handle } = req.params
     const { limit = 50, offset = 0, event_type } = req.query
@@ -132,7 +135,7 @@ router.get('/api/users/:handle/xp-events', requireAuth, async (req, res) => {
 })
 
 // Get all achievements
-router.get('/api/achievements', async (req, res) => {
+router.get('/achievements', async (req, res) => {
   try {
     const { category, rarity, hidden = false } = req.query
 
@@ -169,7 +172,7 @@ router.get('/api/achievements', async (req, res) => {
 })
 
 // Get user's achievements
-router.get('/api/users/:handle/achievements', async (req, res) => {
+router.get('/users/:handle/achievements', async (req, res) => {
   try {
     const { handle } = req.params
     const { completed_only = false } = req.query
@@ -212,7 +215,7 @@ router.get('/api/users/:handle/achievements', async (req, res) => {
 })
 
 // Get enhanced leaderboard
-router.get('/api/leaderboard/enhanced', async (req, res) => {
+router.get('/leaderboard/enhanced', async (req, res) => {
   try {
     const { period = 'all_time', limit = 50 } = req.query
 
@@ -234,7 +237,7 @@ router.get('/api/leaderboard/enhanced', async (req, res) => {
 })
 
 // Simple alias used by frontend: /api/leaderboard?period=...&limit=...
-router.get('/api/leaderboard', async (req, res) => {
+router.get('/leaderboard', async (req, res) => {
   try {
     const { period = 'all_time', limit = 50 } = req.query
 
@@ -256,7 +259,7 @@ router.get('/api/leaderboard', async (req, res) => {
 })
 
 // Award XP manually (admin only)
-router.post('/api/admin/award-xp', requireAdmin, async (req, res) => {
+router.post('/admin/award-xp', requireAdmin, async (req, res) => {
   try {
     const {
       user_handle,
@@ -309,7 +312,7 @@ router.post('/api/admin/award-xp', requireAdmin, async (req, res) => {
 })
 
 // Get XP configuration (admin only)
-router.get('/api/admin/xp-config', requireAdmin, async (req, res) => {
+router.get('/admin/xp-config', requireAdmin, async (req, res) => {
   try {
     const { data: config, error } = await supabase
       .from('xp_config')
@@ -328,7 +331,7 @@ router.get('/api/admin/xp-config', requireAdmin, async (req, res) => {
 })
 
 // Update XP configuration (admin only)
-router.put('/api/admin/xp-config/:event_type', requireAdmin, async (req, res) => {
+router.put('/admin/xp-config/:event_type', requireAdmin, async (req, res) => {
   try {
     const { event_type } = req.params
     const { base_xp, max_daily, description, is_active } = req.body
@@ -361,7 +364,7 @@ router.put('/api/admin/xp-config/:event_type', requireAdmin, async (req, res) =>
 })
 
 // Create new achievement (admin only)
-router.post('/api/admin/achievements', requireAdmin, async (req, res) => {
+router.post('/admin/achievements', requireAdmin, async (req, res) => {
   try {
     const {
       name,
@@ -413,7 +416,7 @@ router.post('/api/admin/achievements', requireAdmin, async (req, res) => {
 })
 
 // Update achievement (admin only)
-router.put('/api/admin/achievements/:id', requireAdmin, async (req, res) => {
+router.put('/admin/achievements/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params
     const updates = req.body
@@ -441,7 +444,7 @@ router.put('/api/admin/achievements/:id', requireAdmin, async (req, res) => {
 })
 
 // Check achievements for user (admin only - for testing)
-router.post('/api/admin/check-achievements/:handle', requireAdmin, async (req, res) => {
+router.post('/admin/check-achievements/:handle', requireAdmin, async (req, res) => {
   try {
     const { handle } = req.params
 
@@ -477,7 +480,7 @@ router.post('/api/admin/check-achievements/:handle', requireAdmin, async (req, r
 })
 
 // Get gamification statistics (admin only)
-router.get('/api/admin/gamification-stats', requireAdmin, async (req, res) => {
+router.get('/admin/gamification-stats', requireAdmin, async (req, res) => {
   try {
     const { days = 30 } = req.query
 
@@ -538,7 +541,7 @@ router.get('/api/admin/gamification-stats', requireAdmin, async (req, res) => {
 })
 
 // Admin: Get gamification stats
-router.get('/api/admin/gamification/stats', requireAdmin, async (req, res) => {
+router.get('/admin/gamification/stats', requireAdmin, async (req, res) => {
   try {
     // Get total XP events
     const { count: totalXpEvents } = await supabase
@@ -591,7 +594,7 @@ router.get('/api/admin/gamification/stats', requireAdmin, async (req, res) => {
 })
 
 // Admin: Get all achievements
-router.get('/api/admin/gamification/achievements', requireAdmin, async (req, res) => {
+router.get('/admin/gamification/achievements', requireAdmin, async (req, res) => {
   try {
     const { data: achievements, error } = await supabase
       .from('achievements')
@@ -610,7 +613,7 @@ router.get('/api/admin/gamification/achievements', requireAdmin, async (req, res
 })
 
 // Admin: Create achievement
-router.post('/api/admin/gamification/achievements', requireAdmin, async (req, res) => {
+router.post('/admin/gamification/achievements', requireAdmin, async (req, res) => {
   try {
     const achievementData = req.body
 
@@ -632,7 +635,7 @@ router.post('/api/admin/gamification/achievements', requireAdmin, async (req, re
 })
 
 // Admin: Update achievement
-router.put('/api/admin/gamification/achievements/:id', requireAdmin, async (req, res) => {
+router.put('/admin/gamification/achievements/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params
     const updates = req.body
@@ -660,7 +663,7 @@ router.put('/api/admin/gamification/achievements/:id', requireAdmin, async (req,
 })
 
 // Admin: Get XP configuration
-router.get('/api/admin/gamification/xp-config', requireAdmin, async (req, res) => {
+router.get('/admin/gamification/xp-config', requireAdmin, async (req, res) => {
   try {
     const { data: xpConfig, error } = await supabase
       .from('xp_config')
@@ -679,7 +682,7 @@ router.get('/api/admin/gamification/xp-config', requireAdmin, async (req, res) =
 })
 
 // Admin: Update XP configuration
-router.put('/api/admin/gamification/xp-config/:id', requireAdmin, async (req, res) => {
+router.put('/admin/gamification/xp-config/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params
     const updates = req.body

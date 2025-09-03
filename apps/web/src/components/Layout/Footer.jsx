@@ -84,7 +84,7 @@ export function Footer() {
                     to="/post" 
                     className="text-sm text-gray-600 hover:text-gray-900 focus-ring rounded dark:text-secondary-300 dark:hover:text-white"
                   >
-                    Post a Deal
+                    Post Deal/Coupon
                   </Link>
                 </li>
                 <li>

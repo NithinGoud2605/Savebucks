@@ -1,6 +1,5 @@
 import express from 'express'
 import { makeAdminClient } from '../lib/supa.js'
-import { makeUserClientFromToken } from '../lib/supaUser.js'
 import { requireAdmin } from '../middleware/requireAdmin.js'
 import multer from 'multer'
 import path from 'path'
@@ -42,7 +41,7 @@ const requireAuth = (req, res, next) => {
 
 
 // Get all companies
-router.get('/api/companies', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { 
       category, 
@@ -103,7 +102,7 @@ router.get('/api/companies', async (req, res) => {
 })
 
 // Get single company
-router.get('/api/companies/:slug', async (req, res) => {
+router.get('/:slug', async (req, res) => {
   try {
     const { slug } = req.params
 
@@ -140,7 +139,7 @@ router.get('/api/companies/:slug', async (req, res) => {
 })
 
 // Create new company (Admin only)
-router.post('/api/companies', requireAdmin, async (req, res) => {
+router.post('/', requireAdmin, async (req, res) => {
   try {
     const {
       name,
@@ -192,7 +191,7 @@ router.post('/api/companies', requireAdmin, async (req, res) => {
 })
 
 // Update company (Admin only)
-router.put('/api/companies/:id', requireAdmin, async (req, res) => {
+router.put('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params
     const {
@@ -234,7 +233,7 @@ router.put('/api/companies/:id', requireAdmin, async (req, res) => {
 })
 
 // Upload company logo (Admin only)
-router.post('/api/companies/:id/logo', requireAdmin, upload.single('logo'), async (req, res) => {
+router.post('/:id/logo', requireAdmin, upload.single('logo'), async (req, res) => {
   try {
     const { id } = req.params
 
@@ -320,7 +319,7 @@ router.post('/api/companies/:id/logo', requireAdmin, upload.single('logo'), asyn
 })
 
 // Get company deals
-router.get('/api/companies/:slug/deals', async (req, res) => {
+router.get('/:slug/deals', async (req, res) => {
   try {
     const { slug } = req.params
     const { page = 1, limit = 20 } = req.query
@@ -362,7 +361,7 @@ router.get('/api/companies/:slug/deals', async (req, res) => {
 })
 
 // Get company coupons
-router.get('/api/companies/:slug/coupons', async (req, res) => {
+router.get('/:slug/coupons', async (req, res) => {
   try {
     const { slug } = req.params
     const { page = 1, limit = 20 } = req.query
@@ -404,7 +403,7 @@ router.get('/api/companies/:slug/coupons', async (req, res) => {
 })
 
 // Get company categories
-router.get('/api/companies/categories', async (req, res) => {
+router.get('/categories', async (req, res) => {
   try {
     const { data: categories, error } = await supabase
       .from('companies')

@@ -5,16 +5,12 @@ import { Skeleton } from './components/Loader/Skeleton'
 
 // Lazy load components for code splitting
 const ListPage = React.lazy(() => import('./pages/ListPage'))
-const NewHomepage = React.lazy(() => import('./pages/NewHomepage'))
-const EnhancedHomepage = React.lazy(() => import('./pages/EnhancedHomepage'))
-const ModernHomepage = React.lazy(() => import('./pages/ModernHomepage'))
 const SearchResults = React.lazy(() => import('./pages/SearchResults'))
-const DealPage = React.lazy(() => import('./pages/EnhancedDealPage'))
-const ModernDealPage = React.lazy(() => import('./pages/ModernDealPage'))
-const PostDeal = React.lazy(() => import('./pages/PostDeal'))
+const ModernHomepage = React.lazy(() => import('./pages/ModernHomepage'))
+const CompactDealPage = React.lazy(() => import('./pages/CompactDealPage'))
+const PostItem = React.lazy(() => import('./pages/PostItem'))
 const AdminPage = React.lazy(() => import('./pages/Admin/AdminPage'))
 const TagManagement = React.lazy(() => import('./pages/Admin/TagManagement'))
-const Leaderboard = React.lazy(() => import('./pages/Leaderboard'))
 const Profile = React.lazy(() => import('./pages/Profile'))
 const ForumsHome = React.lazy(() => import('./pages/Forums/ForumsHome'))
 const ForumThreads = React.lazy(() => import('./pages/Forums/ForumThreads'))
@@ -24,7 +20,7 @@ const CategoryPage = React.lazy(() => import('./pages/CategoryPage'))
 const CategoriesPage = React.lazy(() => import('./pages/CategoriesPage'))
 const CouponsPage = React.lazy(() => import('./pages/CouponsPage'))
 const ModernCouponsPage = React.lazy(() => import('./pages/ModernCouponsPage'))
-const PostCoupon = React.lazy(() => import('./pages/PostCoupon'))
+
 const About = React.lazy(() => import('./pages/About'))
 const Privacy = React.lazy(() => import('./pages/Privacy'))
 const Terms = React.lazy(() => import('./pages/Terms'))
@@ -140,7 +136,7 @@ export const router = createBrowserRouter([
         path: 'deal/:id',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ModernDealPage />
+            <CompactDealPage />
           </Suspense>
         ),
       },
@@ -148,7 +144,7 @@ export const router = createBrowserRouter([
         path: 'post',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <PostDeal />
+            <PostItem />
           </Suspense>
         ),
       },
@@ -312,14 +308,7 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
-      {
-        path: 'post-coupon',
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <PostCoupon />
-          </Suspense>
-        ),
-      },
+
     ],
   },
   // Authentication routes (outside main app layout)

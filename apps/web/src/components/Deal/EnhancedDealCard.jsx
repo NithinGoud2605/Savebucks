@@ -16,20 +16,22 @@ import { clsx } from 'clsx'
 
 export function EnhancedDealCard({ 
   deal, 
-  className, 
-  compact = false,
-  featured = false,
-  showActions = true,
+  compact = false, 
   showStats = true,
   variant = 'default'
 }) {
   const [showFullDescription, setShowFullDescription] = useState(false)
   const [imageError, setImageError] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   
   const score = (deal.ups || 0) - (deal.downs || 0)
   const commentCount = deal.comments?.length || 0
   const viewCount = deal.views || 0
+  
+  // Get images array - prioritize deal_images, fallback to image_url
+  const images = deal.deal_images?.length > 0 ? deal.deal_images : (deal.image_url ? [deal.image_url] : [])
+  const currentImage = images[selectedImageIndex] || deal.image_url
   
   // Calculate deal temperature/hotness
   const temperature = React.useMemo(() => {
@@ -191,14 +193,14 @@ export function EnhancedDealCard({
         </div>
 
         {/* Deal image */}
-        {deal.image_url && !imageError && (
+        {currentImage && !imageError && (
           <div className="relative mx-4 mb-4 rounded-xl overflow-hidden bg-secondary-100">
             <div className={clsx(
               'aspect-video w-full transition-all duration-300',
               !imageLoaded && 'animate-pulse bg-secondary-200'
             )}>
               <img
-                src={deal.image_url}
+                src={currentImage}
                 alt={deal.title}
                 className={clsx(
                   'w-full h-full object-cover transition-all duration-300',
@@ -208,6 +210,46 @@ export function EnhancedDealCard({
                 onLoad={() => setImageLoaded(true)}
                 onError={() => setImageError(true)}
               />
+              
+              {/* Image Navigation for multiple images */}
+              {images.length > 1 && (
+                <>
+                  {/* Previous button */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setSelectedImageIndex(Math.max(0, selectedImageIndex - 1))
+                      setImageLoaded(false)
+                    }}
+                    disabled={selectedImageIndex === 0}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-white bg-opacity-80 rounded-full shadow-lg disabled:opacity-50 hover:bg-opacity-90 transition-all"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Next button */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setSelectedImageIndex(Math.min(images.length - 1, selectedImageIndex + 1))
+                      setImageLoaded(false)
+                    }}
+                    disabled={selectedImageIndex === images.length - 1}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white bg-opacity-80 rounded-full shadow-lg disabled:opacity-50 hover:bg-opacity-90 transition-all"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Image counter */}
+                  <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded-full">
+                    {selectedImageIndex + 1} / {images.length}
+                  </div>
+                </>
+              )}
             </div>
             
             {/* Image overlay with quick actions */}
@@ -227,6 +269,33 @@ export function EnhancedDealCard({
                 />
               </div>
             </div>
+          </div>
+        )}
+        
+        {/* Thumbnail navigation for multiple images */}
+        {images.length > 1 && (
+          <div className="flex space-x-2 overflow-x-auto mx-4 mb-4">
+            {images.map((image, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setSelectedImageIndex(index)
+                  setImageLoaded(false)
+                }}
+                className={clsx(
+                  'flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all',
+                  selectedImageIndex === index
+                    ? 'border-primary-500 ring-2 ring-primary-200'
+                    : 'border-secondary-200 hover:border-secondary-300'
+                )}
+              >
+                <img
+                  src={image}
+                  alt={`${deal.title} ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            ))}
           </div>
         )}
 

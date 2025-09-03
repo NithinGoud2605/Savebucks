@@ -1,6 +1,7 @@
 import express from 'express'
 import { makeAdminClient } from '../lib/supa.js'
 import { makeUserClientFromToken } from '../lib/supaUser.js'
+import { createSafeUserClient } from '../lib/authUtils.js'
 import { requireAdmin } from '../middleware/requireAdmin.js'
 
 const router = express.Router()
@@ -17,7 +18,9 @@ const requireAuth = async (req, res, next) => {
     const token = bearer(req)
     if (!token) return res.status(401).json({ error: 'Authentication required' })
 
-    const supaUser = makeUserClientFromToken(token)
+    const supaUser = await createSafeUserClient(token, res)
+    if (!supaUser) return; // Exit if client creation failed
+    
     const { data: { user } } = await supaUser.auth.getUser()
     
     if (!user) return res.status(401).json({ error: 'Invalid token' })
@@ -31,7 +34,7 @@ const requireAuth = async (req, res, next) => {
 }
 
 // Get user's saved searches
-router.get('/api/saved-searches', requireAuth, async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     const { data: searches, error } = await supabase
       .from('saved_searches')
@@ -54,7 +57,7 @@ router.get('/api/saved-searches', requireAuth, async (req, res) => {
 })
 
 // Create new saved search
-router.post('/api/saved-searches', requireAuth, async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     const {
       name,
@@ -109,7 +112,7 @@ router.post('/api/saved-searches', requireAuth, async (req, res) => {
 })
 
 // Update saved search
-router.put('/api/saved-searches/:id', requireAuth, async (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params
     const updates = req.body
@@ -138,7 +141,7 @@ router.put('/api/saved-searches/:id', requireAuth, async (req, res) => {
 })
 
 // Delete saved search
-router.delete('/api/saved-searches/:id', requireAuth, async (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params
 
@@ -160,7 +163,7 @@ router.delete('/api/saved-searches/:id', requireAuth, async (req, res) => {
 })
 
 // Test saved search (preview results)
-router.post('/api/saved-searches/test', requireAuth, async (req, res) => {
+router.post('/test', requireAuth, async (req, res) => {
   try {
     const { search_type, query_text, merchant_domain, category_id, filters = {} } = req.body
 
@@ -221,7 +224,7 @@ router.post('/api/saved-searches/test', requireAuth, async (req, res) => {
 })
 
 // Get user's notification preferences
-router.get('/api/notification-preferences', requireAuth, async (req, res) => {
+router.get('/notification-preferences', requireAuth, async (req, res) => {
   try {
     const { data: preferences, error } = await supabase
       .from('user_notification_preferences')
@@ -264,7 +267,7 @@ router.get('/api/notification-preferences', requireAuth, async (req, res) => {
 })
 
 // Update notification preferences
-router.put('/api/notification-preferences', requireAuth, async (req, res) => {
+router.put('/notification-preferences', requireAuth, async (req, res) => {
   try {
     const preferences = req.body
 
@@ -290,7 +293,7 @@ router.put('/api/notification-preferences', requireAuth, async (req, res) => {
 })
 
 // Get user's notifications
-router.get('/api/notifications', requireAuth, async (req, res) => {
+router.get('/notifications', requireAuth, async (req, res) => {
   try {
     const { unread_only = false, limit = 50, offset = 0 } = req.query
 
@@ -325,7 +328,7 @@ router.get('/api/notifications', requireAuth, async (req, res) => {
 })
 
 // Mark notification as read
-router.put('/api/notifications/:id/read', requireAuth, async (req, res) => {
+router.put('/notifications/:id/read', requireAuth, async (req, res) => {
   try {
     const { id } = req.params
 
@@ -356,7 +359,7 @@ router.put('/api/notifications/:id/read', requireAuth, async (req, res) => {
 })
 
 // Mark multiple notifications as read
-router.post('/api/notifications/mark-read', requireAuth, async (req, res) => {
+router.post('/notifications/mark-read', requireAuth, async (req, res) => {
   try {
     const { notification_ids } = req.body
 
@@ -390,7 +393,7 @@ router.post('/api/notifications/mark-read', requireAuth, async (req, res) => {
 })
 
 // Get notification queue (for admin)
-router.get('/api/admin/notifications/queue', requireAuth, async (req, res) => {
+router.get('/admin/notifications/queue', requireAuth, async (req, res) => {
   try {
     // Check if user is admin
     const { data: profile } = await supabase
@@ -436,7 +439,7 @@ router.get('/api/admin/notifications/queue', requireAuth, async (req, res) => {
 })
 
 // Admin: Get saved searches stats
-router.get('/api/admin/saved-searches/stats', requireAuth, requireAdmin, async (req, res) => {
+router.get('/admin/saved-searches/stats', requireAuth, requireAdmin, async (req, res) => {
   try {
     // Get total saved searches
     const { count: totalSearches } = await supabase
@@ -481,7 +484,7 @@ router.get('/api/admin/saved-searches/stats', requireAuth, requireAdmin, async (
 })
 
 // Admin: Get saved searches list
-router.get('/api/admin/saved-searches/list', requireAuth, requireAdmin, async (req, res) => {
+router.get('/admin/saved-searches/list', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { limit = 50, offset = 0 } = req.query
 

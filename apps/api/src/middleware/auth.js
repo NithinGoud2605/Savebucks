@@ -1,4 +1,4 @@
-// Minimal Supabase JWT guard for future use (non-blocking for now).
+// Supabase JWT authentication middleware
 import { createClient } from '@supabase/supabase-js';
 
 export function makeAuth() {
@@ -12,14 +12,33 @@ export function makeAuth() {
   }
   
   return async function auth(req, _res, next) {
-    const auth = req.headers.authorization || '';
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    
     if (token && supabase) {
       try {
+        // Verify the token and get user data
         const { data: { user }, error } = await supabase.auth.getUser(token);
-        if (!error && user) req.user = user;
-      } catch (_) {}
+        
+        if (!error && user) {
+          // Set the user in the request object for middleware that needs it
+          req.user = user;
+          req.user.id = user.id;
+          
+          // Also store the token for use in database operations
+          req.authToken = token;
+          
+          console.log(`🔐 Authenticated user: ${user.id}`);
+        } else {
+          console.warn('⚠️ Invalid or expired token:', error?.message);
+        }
+      } catch (error) {
+        console.warn('Auth middleware error:', error.message);
+      }
+    } else {
+      console.log('🔓 No token provided or Supabase not configured');
     }
+    
     next();
   };
 }

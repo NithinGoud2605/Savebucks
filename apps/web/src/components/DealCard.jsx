@@ -30,7 +30,12 @@ export default function DealCard({ deal, variant = 'default', index = 0 }) {
   const [localVoteScore, setLocalVoteScore] = useState(deal.vote_score || 0);
   const [userVote, setUserVote] = useState(deal.user_vote || 0);
   const [isSaved, setIsSaved] = useState(deal.is_saved || false);
-
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  
+  // Get images array - prioritize deal_images, fallback to image_url
+  const images = deal.deal_images?.length > 0 ? deal.deal_images : (deal.image_url ? [deal.image_url] : [])
+  const currentImage = images[selectedImageIndex] || deal.image_url
+  
   const discountPercentage = deal.discount_percentage || 
     (deal.price && deal.original_price 
       ? Math.round(((deal.original_price - deal.price) / deal.original_price) * 100)
@@ -121,14 +126,54 @@ export default function DealCard({ deal, variant = 'default', index = 0 }) {
       >
         <Link to={`/deal/${deal.id}`} className="block">
           {/* Image */}
-          <div className="aspect-[4/3] overflow-hidden bg-gray-100">
-            {deal.image_url ? (
-              <img 
-                src={deal.image_url} 
-                alt={deal.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                loading="lazy"
-              />
+          <div className="aspect-[4/3] overflow-hidden bg-gray-100 relative">
+            {currentImage ? (
+              <>
+                <img 
+                  src={currentImage} 
+                  alt={deal.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+                
+                {/* Image Navigation for multiple images */}
+                {images.length > 1 && (
+                  <>
+                    {/* Previous button */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setSelectedImageIndex(Math.max(0, selectedImageIndex - 1))
+                      }}
+                      disabled={selectedImageIndex === 0}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-white bg-opacity-80 rounded-full shadow-lg disabled:opacity-50 hover:bg-opacity-90 transition-all"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    
+                    {/* Next button */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setSelectedImageIndex(Math.min(images.length - 1, selectedImageIndex + 1))
+                      }}
+                      disabled={selectedImageIndex === images.length - 1}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white bg-opacity-80 rounded-full shadow-lg disabled:opacity-50 hover:bg-opacity-90 transition-all"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                    
+                    {/* Image counter */}
+                    <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded-full">
+                      {selectedImageIndex + 1} / {images.length}
+                    </div>
+                  </>
+                )}
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <ShoppingCart className="w-12 h-12 text-gray-300" />
@@ -252,10 +297,10 @@ export default function DealCard({ deal, variant = 'default', index = 0 }) {
             </div>
 
             {/* Image Thumbnail */}
-            {deal.image_url && (
+            {currentImage && (
               <div className="ml-4 flex-shrink-0">
                 <img 
-                  src={deal.image_url} 
+                  src={currentImage} 
                   alt={deal.title}
                   className="w-24 h-24 object-cover rounded-lg"
                   loading="lazy"

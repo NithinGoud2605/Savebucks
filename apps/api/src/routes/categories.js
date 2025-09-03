@@ -10,52 +10,14 @@ const supaAdmin = makeAdminClient();
  * GET /api/categories
  * Query params: ?include_subcategories=true&featured_only=true
  */
-r.get('/api/categories', async (req, res) => {
+r.get('/', async (req, res) => {
   try {
-    const { include_subcategories, featured_only } = req.query;
-    
-    let query = supaAdmin
+    const { data: categories, error } = await supaAdmin
       .from('categories')
       .select('*')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true });
-    
-    if (featured_only === 'true') {
-      query = query.eq('is_featured', true);
-    }
-    
-    if (include_subcategories !== 'true') {
-      query = query.is('parent_id', null);
-    }
-    
-    const { data: categories, error } = await query;
+      .order('id', { ascending: true });
     
     if (error) throw error;
-    
-    // If including subcategories, organize into hierarchy
-    if (include_subcategories === 'true') {
-      const categoryMap = new Map();
-      const rootCategories = [];
-      
-      // First pass: create map and identify root categories
-      categories.forEach(cat => {
-        categoryMap.set(cat.id, { ...cat, subcategories: [] });
-        if (!cat.parent_id) {
-          rootCategories.push(cat.id);
-        }
-      });
-      
-      // Second pass: organize hierarchy
-      categories.forEach(cat => {
-        if (cat.parent_id && categoryMap.has(cat.parent_id)) {
-          categoryMap.get(cat.parent_id).subcategories.push(categoryMap.get(cat.id));
-        }
-      });
-      
-      // Return only root categories with their subcategories
-      const hierarchicalCategories = rootCategories.map(id => categoryMap.get(id));
-      return res.json(hierarchicalCategories);
-    }
     
     res.json(categories);
   } catch (error) {
@@ -64,49 +26,14 @@ r.get('/api/categories', async (req, res) => {
   }
 });
 
-/**
- * Get category by slug
- * GET /api/categories/:slug
- */
-r.get('/api/categories/:slug', async (req, res) => {
-  try {
-    const { slug } = req.params;
-    
-    const { data: category, error } = await supaAdmin
-      .from('categories')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single();
-    
-    if (error || !category) {
-      return res.status(404).json({ error: 'Category not found' });
-    }
-    
-    // Get subcategories if this is a parent category
-    const { data: subcategories } = await supaAdmin
-      .from('categories')
-      .select('*')
-      .eq('parent_id', category.id)
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true });
-    
-    res.json({
-      ...category,
-      subcategories: subcategories || []
-    });
-  } catch (error) {
-    log('Get category error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+
 
 /**
  * Get all collections
  * GET /api/collections
  * Query params: ?featured_only=true
  */
-r.get('/api/collections', async (req, res) => {
+r.get('/collections', async (req, res) => {
   try {
     const { featured_only } = req.query;
     
@@ -138,7 +65,7 @@ r.get('/api/collections', async (req, res) => {
  * Get collection by slug with deals
  * GET /api/collections/:slug
  */
-r.get('/api/collections/:slug', async (req, res) => {
+r.get('/collections/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
     const { limit = 20, offset = 0 } = req.query;
@@ -249,7 +176,7 @@ r.get('/api/collections/:slug', async (req, res) => {
  * GET /api/banners
  * Query params: ?position=hero
  */
-r.get('/api/banners', async (req, res) => {
+r.get('/banners', async (req, res) => {
   try {
     const { position } = req.query;
     
@@ -280,7 +207,7 @@ r.get('/api/banners', async (req, res) => {
  * Get deal tags
  * GET /api/deal-tags
  */
-r.get('/api/deal-tags', async (req, res) => {
+r.get('/deal-tags', async (req, res) => {
   try {
     const { data: tags, error } = await supaAdmin
       .from('deal_tags')
@@ -292,6 +219,41 @@ r.get('/api/deal-tags', async (req, res) => {
     res.json(tags);
   } catch (error) {
     log('Get deal tags error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Get category by slug
+ * GET /api/categories/:slug
+ */
+r.get('/:slug', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    
+    const { data: category, error } = await supaAdmin
+      .from('categories')
+      .select('*')
+      .eq('slug', slug)
+      .single();
+    
+    if (error || !category) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    
+    // Get subcategories if this is a parent category
+    const { data: subcategories } = await supaAdmin
+      .from('categories')
+      .select('*')
+      .eq('parent_id', category.id)
+      .order('id', { ascending: true });
+    
+    res.json({
+      ...category,
+      subcategories: subcategories || []
+    });
+  } catch (error) {
+    log('Get category error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

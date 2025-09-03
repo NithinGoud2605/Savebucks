@@ -138,10 +138,11 @@ export function DealComparison({ deals = [], onRemove }) {
                       </button>
                     )}
                     
-                    {deal.image_url && (
+                    {/* Get images array - prioritize deal_images, fallback to image_url */}
+                    {(deal.deal_images?.length > 0 ? deal.deal_images[0] : deal.image_url) && (
                       <div className="w-24 h-24 mx-auto mb-3 rounded-lg overflow-hidden bg-gray-100">
                         <img
-                          src={deal.image_url}
+                          src={deal.deal_images?.length > 0 ? deal.deal_images[0] : deal.image_url}
                           alt={deal.title}
                           className="w-full h-full object-cover"
                         />

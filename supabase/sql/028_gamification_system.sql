@@ -383,11 +383,11 @@ BEGIN
   
   -- Check daily limits
   IF xp_config_record.max_daily IS NOT NULL THEN
-    SELECT COALESCE(SUM(final_xp), 0) INTO daily_xp
-    FROM public.xp_events
-    WHERE user_id = user_id_param 
-      AND event_type = event_type_param
-      AND created_at >= CURRENT_DATE;
+    SELECT COALESCE(SUM(xe.final_xp), 0) INTO daily_xp
+    FROM public.xp_events xe
+    WHERE xe.user_id = user_id_param 
+      AND xe.event_type = event_type_param
+      AND xe.created_at >= CURRENT_DATE;
     
     -- Don't exceed daily limit
     IF daily_xp + final_xp > xp_config_record.max_daily THEN

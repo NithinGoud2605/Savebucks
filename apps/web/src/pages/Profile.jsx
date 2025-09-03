@@ -19,6 +19,7 @@ export default function Profile() {
   const { handle } = useParams()
   const [activeTab, setActiveTab] = useState('overview')
   const [isOwnProfile, setIsOwnProfile] = useState(false)
+  const [dealStatusFilter, setDealStatusFilter] = useState('all')
   const { user: currentUser } = useAuth() // Use proper auth system
 
   // Fetch user profile data
@@ -32,6 +33,19 @@ export default function Profile() {
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
     enabled: !!handle, // Only run query if handle exists
+  })
+
+  // Fetch user deals with status filter
+  const { data: userDeals, isLoading: dealsLoading } = useQuery({
+    queryKey: ['user-deals', handle, dealStatusFilter],
+    queryFn: () => {
+      if (!handle) {
+        throw new Error('No user handle provided')
+      }
+      return api.getUserDeals(handle, dealStatusFilter)
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    enabled: !!handle && isOwnProfile, // Only run query if handle exists and viewing own profile
   })
 
   // Check if viewing own profile
@@ -376,15 +390,92 @@ export default function Profile() {
 
             {activeTab === 'deals' && (
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  All Deals ({formatCompactNumber(profile.stats?.deals_posted || 0)})
-                </h2>
-                {/* Would implement deal filtering and pagination here */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(profile.deals || []).map(deal => (
-                    <DealCard key={deal.id} deal={deal} />
-                  ))}
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    All Deals ({formatCompactNumber(profile.stats?.deals_posted || 0)})
+                  </h2>
+                  {isOwnProfile && (
+                    <Link to="/post" className="btn-primary">
+                      Post New Deal
+                    </Link>
+                  )}
                 </div>
+                {/* Deal Status Tabs */}
+                {isOwnProfile && (
+                  <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6">
+                    <button
+                      onClick={() => setDealStatusFilter('all')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        dealStatusFilter === 'all'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => setDealStatusFilter('pending')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        dealStatusFilter === 'pending'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Pending Review
+                    </button>
+                    <button
+                      onClick={() => setDealStatusFilter('approved')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        dealStatusFilter === 'approved'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Approved
+                    </button>
+                    <button
+                      onClick={() => setDealStatusFilter('rejected')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        dealStatusFilter === 'rejected'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Rejected
+                    </button>
+                  </div>
+                )}
+                
+                {/* Would implement deal filtering and pagination here */}
+                {/* Loading State */}
+                {dealsLoading && (
+                  <div className="space-y-4">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-32 bg-gray-200 rounded-lg"></div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Deals Grid */}
+                {!dealsLoading && userDeals && userDeals.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {userDeals.map(deal => (
+                      <DealCard key={deal.id} deal={deal} />
+                    ))}
+                  </div>
+                )}
+                
+                {/* Fallback to profile deals if no filtered deals */}
+                {!dealsLoading && (!userDeals || userDeals.length === 0) && (profile.deals || []).length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {(profile.deals || []).map(deal => (
+                      <DealCard key={deal.id} deal={deal} />
+                    ))}
+                  </div>
+                )}
+                {/* TODO: Update this to handle filtered deals properly */}
                 {(!profile.deals || profile.deals.length === 0) && (
                   <div className="card p-12 text-center">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">

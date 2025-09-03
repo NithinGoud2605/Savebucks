@@ -88,23 +88,11 @@ const Navbar = () => {
   })
 
   // Get navbar stats (users online, deals today, coupons today)
-  const { data: navbarStats, error: statsError } = useQuery({
-    queryKey: ['navbar-stats'],
-    queryFn: async () => {
-      console.log('Fetching navbar stats...')
-      const response = await apiRequest('/api/navbar/stats')
-      console.log('Navbar stats response:', response)
-      return response
-    },
-    staleTime: 30 * 1000, // Refresh every 30 seconds
-    refetchInterval: 60 * 1000, // Auto-refresh every minute
-    retry: 3,
-    retryDelay: 1000
-  })
+  // Temporarily disabled until backend endpoint is implemented
+  const navbarStats = null
+  const statsError = null
 
-  // Debug logging
-  console.log('Navbar stats data:', navbarStats)
-  console.log('Navbar stats error:', statsError)
+
 
   // Get current pathname for active state
   const location = useLocation()
@@ -579,13 +567,13 @@ const Navbar = () => {
             </NavigationMenu.Root>
 
             {/* Post Deal Button */}
-            <Link
-              to="/post"
-              className="hidden md:inline-flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              <PlusIcon className="h-5 w-5" />
-              <span>Post a Deal</span>
-            </Link>
+                         <Link
+               to="/post"
+               className="hidden md:inline-flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+             >
+               <PlusIcon className="h-5 w-5" />
+               <span>Post Deal/Coupon</span>
+             </Link>
 
             {/* User Menu */}
             {user ? (
@@ -776,7 +764,7 @@ const Navbar = () => {
                        className="w-full inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-5 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
                      >
                        <PlusIcon className="h-5 w-5" />
-                       <span>Post a Deal</span>
+                       <span>Post Deal/Coupon</span>
                      </Link>
 
                     {/* Mobile User Menu */}

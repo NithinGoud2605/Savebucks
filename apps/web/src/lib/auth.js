@@ -10,22 +10,96 @@ class AuthService {
     this.user = null
     this.isAuthenticated = false
     this.listeners = new Set()
+    this.isInitialized = false
     
     // Check for existing session on initialization
     this.initializeAuth()
+    
+    // Listen for storage changes to sync Supabase token updates
+    this.setupStorageListener()
   }
   
   async initializeAuth() {
-    const token = localStorage.getItem('access_token')
-    if (token) {
+    console.log('🔐 Initializing authentication...')
+    
+    // Check for Supabase token first
+    const supabaseToken = localStorage.getItem('sb-ixkhkzjhelyumdplutbz-auth-token')
+    if (supabaseToken) {
+      console.log('📦 Found Supabase token, processing...')
       try {
-        const userData = await api.getCurrentUser()
-        this.setUser(userData.user)
+        const tokenData = JSON.parse(supabaseToken)
+        if (tokenData.access_token) {
+          console.log('✅ Valid Supabase token found')
+          // Store in the format our API expects
+          localStorage.setItem('access_token', tokenData.access_token)
+          localStorage.setItem('refresh_token', tokenData.refresh_token)
+          
+          // Try to get user data from our API
+          try {
+            console.log('🌐 Attempting to fetch user data from API...')
+            const userData = await api.getCurrentUser()
+            console.log('✅ API user data received:', userData)
+            this.setUser(userData.user)
+          } catch (error) {
+            console.log('⚠️ API call failed, falling back to JWT decode:', error.message)
+            // If API call fails, try to decode the JWT to get basic user info
+            const userInfo = this.decodeJWT(tokenData.access_token)
+            if (userInfo) {
+              console.log('🔓 JWT decoded successfully:', userInfo)
+              this.setUser({
+                id: userInfo.sub,
+                email: userInfo.email,
+                role: userInfo.role || 'authenticated',
+                handle: userInfo.email?.split('@')[0] || 'user'
+              })
+            }
+          }
+        }
       } catch (error) {
-        // Token is invalid, clear it
+        console.warn('❌ Failed to parse Supabase token:', error)
         this.clearAuth()
       }
+    } else {
+      console.log('🔍 No Supabase token found, checking direct access_token...')
+      // Fallback to direct access_token check
+      const token = localStorage.getItem('access_token')
+      if (token) {
+        try {
+          console.log('🔑 Direct access_token found, validating...')
+          const userData = await api.getCurrentUser()
+          console.log('✅ Direct token validation successful:', userData)
+          this.setUser(userData.user)
+        } catch (error) {
+          console.log('❌ Direct token validation failed:', error.message)
+          // Try to refresh the token before giving up
+          if (error.message?.includes('JWT expired') || error.message?.includes('expired')) {
+            console.log('🔄 JWT expired, attempting token refresh...')
+            const refreshSuccess = await this.refreshSession()
+            if (refreshSuccess) {
+              console.log('✅ Token refresh successful')
+              // Try to get user data again
+              try {
+                const userData = await api.getCurrentUser()
+                this.setUser(userData.user)
+              } catch (refreshError) {
+                console.log('❌ Still failed after refresh:', refreshError.message)
+                this.clearAuth()
+              }
+            } else {
+              this.clearAuth()
+            }
+          } else {
+            // Token is invalid, clear it
+            this.clearAuth()
+          }
+        }
+      } else {
+        console.log('❌ No authentication tokens found')
+      }
     }
+    
+    this.isInitialized = true
+    console.log('🔐 Authentication initialization complete. User:', this.user, 'Authenticated:', this.isAuthenticated)
   }
   
   setUser(user) {
@@ -39,19 +113,33 @@ class AuthService {
     this.isAuthenticated = false
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
+    localStorage.removeItem('sb-ixkhkzjhelyumdplutbz-auth-token') // Clear Supabase token
     localStorage.removeItem('demo_user') // Legacy cleanup
     localStorage.removeItem('demo_token') // Legacy cleanup
     this.notifyListeners()
   }
   
   notifyListeners() {
-    this.listeners.forEach(callback => callback(this.user, this.isAuthenticated))
+    this.listeners.forEach(callback => {
+      try {
+        callback(this.user, this.isAuthenticated)
+      } catch (error) {
+        console.error('Error in auth listener callback:', error)
+      }
+    })
   }
   
   subscribe(callback) {
     this.listeners.add(callback)
-    // Immediately call with current state
-    callback(this.user, this.isAuthenticated)
+    
+    // If already initialized, call immediately with current state
+    if (this.isInitialized) {
+      try {
+        callback(this.user, this.isAuthenticated)
+      } catch (error) {
+        console.error('Error in auth subscription callback:', error)
+      }
+    }
     
     // Return unsubscribe function
     return () => this.listeners.delete(callback)
@@ -146,6 +234,17 @@ class AuthService {
     return this.isAuthenticated
   }
   
+  getInitializationStatus() {
+    return this.isInitialized
+  }
+  
+  // Method to manually trigger initialization (useful for testing)
+  async forceInitialize() {
+    if (!this.getInitializationStatus()) {
+      await this.initializeAuth()
+    }
+  }
+  
   requireAuth() {
     if (!this.isAuthenticated) {
       toast.error('Please sign in to continue')
@@ -164,6 +263,68 @@ class AuthService {
   
   isModerator() {
     return this.hasRole('mod') || this.isAdmin()
+  }
+  
+  // Helper method to decode JWT tokens
+  decodeJWT(token) {
+    try {
+      const base64Url = token.split('.')[1]
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      }).join(''))
+      return JSON.parse(jsonPayload)
+    } catch (error) {
+      console.warn('Failed to decode JWT:', error)
+      return null
+    }
+  }
+  
+  // Method to sync Supabase token updates
+  syncSupabaseToken() {
+    const supabaseToken = localStorage.getItem('sb-ixkhkzjhelyumdplutbz-auth-token')
+    if (supabaseToken) {
+      try {
+        const tokenData = JSON.parse(supabaseToken)
+        if (tokenData.access_token) {
+          localStorage.setItem('access_token', tokenData.access_token)
+          localStorage.setItem('refresh_token', tokenData.refresh_token)
+          
+          // Update user info if we have it
+          if (tokenData.user) {
+            this.setUser(tokenData.user)
+          } else {
+            // Try to decode JWT for user info
+            const userInfo = this.decodeJWT(tokenData.access_token)
+            if (userInfo) {
+              this.setUser({
+                id: userInfo.sub,
+                email: userInfo.email,
+                role: userInfo.role || 'authenticated',
+                handle: userInfo.email?.split('@')[0] || 'user'
+              })
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to sync Supabase token:', error)
+      }
+    }
+  }
+  
+  // Setup storage event listener for cross-tab synchronization
+  setupStorageListener() {
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'sb-ixkhkzjhelyumdplutbz-auth-token') {
+        if (event.newValue) {
+          // Token was added or updated
+          this.syncSupabaseToken()
+        } else {
+          // Token was removed
+          this.clearAuth()
+        }
+      }
+    })
   }
 }
 

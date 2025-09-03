@@ -22,6 +22,8 @@ import navbarRoutes from './routes/navbar.js';
 import statsRoutes from './routes/stats.js';
 import analyticsRoutes from './routes/analytics.js';
 import goRoutes from './routes/go.js';
+import tempDataRoutes from './routes/temp-data.js';
+import debugRoutes from './routes/debug.js';
 import { log } from './lib/logger.js';
 
 const app = express();
@@ -33,21 +35,23 @@ app.use(express.json());
 app.use(makeAuth());
 
 app.use(health);
-app.use(authRoutes);
-app.use(usersRoutes);
-app.use(categoriesRoutes);
-app.use(couponsRoutes);
-app.use(companiesRoutes);
-app.use(tagsRoutes);
-app.use(savedSearchesRoutes);
-app.use(priceTrackingRoutes);
-app.use(autoTaggingRoutes);
-app.use(gamificationRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/categories', categoriesRoutes);
+app.use('/api/coupons', couponsRoutes);
+app.use('/api/companies', companiesRoutes);
+app.use('/api/tags', tagsRoutes);
+app.use('/api/saved-searches', savedSearchesRoutes);
+app.use('/api/price-tracking', priceTrackingRoutes);
+app.use('/api/auto-tagging', autoTaggingRoutes);
+app.use('/api/gamification', gamificationRoutes);
 app.use('/api/navbar', navbarRoutes);
-app.use(statsRoutes);
-app.use(analyticsRoutes);
-app.use(deals);
-app.use(adminRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/deals', deals);
+app.use('/api/admin', adminRoutes);
+app.use('/api', tempDataRoutes);
+app.use('/api', debugRoutes); // Debug routes
 app.use(goRoutes);
 
 const PORT = Number(process.env.PORT || 4000);

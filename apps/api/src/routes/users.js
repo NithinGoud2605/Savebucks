@@ -1,7 +1,7 @@
-import express from 'express'
-import { makeAdminClient } from '../lib/supa.js'
-import multer from 'multer'
-import path from 'path'
+import express from 'express';
+import { makeAdminClient } from '../lib/supa.js';
+import multer from 'multer';
+import path from 'path';
 
 const router = express.Router()
 const supabase = makeAdminClient()
@@ -32,7 +32,7 @@ const upload = multer({
 })
 
 // Get leaderboard
-router.get('/api/users/leaderboard/:period', async (req, res) => {
+router.get('/leaderboard/:period', async (req, res) => {
   try {
     const { period = 'all_time' } = req.params
     const { limit = 50 } = req.query
@@ -63,7 +63,7 @@ router.get('/api/users/leaderboard/:period', async (req, res) => {
 })
 
 // Get user profile
-router.get('/api/users/:handle', async (req, res) => {
+router.get('/:handle', async (req, res) => {
   try {
     const { handle } = req.params
 
@@ -132,7 +132,7 @@ router.get('/api/users/:handle', async (req, res) => {
 })
 
 // Update user profile
-router.put('/api/users/:handle', requireAuth, async (req, res) => {
+router.put('/:handle', requireAuth, async (req, res) => {
   try {
     const { handle } = req.params
     const { bio, website, location } = req.body
@@ -172,7 +172,7 @@ router.put('/api/users/:handle', requireAuth, async (req, res) => {
 })
 
 // Upload profile image
-router.post('/api/users/:handle/avatar', requireAuth, upload.single('avatar'), async (req, res) => {
+router.post('/:handle/avatar', requireAuth, upload.single('avatar'), async (req, res) => {
   try {
     const { handle } = req.params
     const userId = req.user.id
@@ -251,7 +251,7 @@ router.post('/api/users/:handle/avatar', requireAuth, upload.single('avatar'), a
 })
 
 // Follow/unfollow user
-router.post('/api/users/:handle/follow', requireAuth, async (req, res) => {
+router.post('/:handle/follow', requireAuth, async (req, res) => {
   try {
     const { handle } = req.params
     const followerId = req.user.id
@@ -314,7 +314,7 @@ router.post('/api/users/:handle/follow', requireAuth, async (req, res) => {
 })
 
 // Get user's followers
-router.get('/api/users/:handle/followers', async (req, res) => {
+router.get('/:handle/followers', async (req, res) => {
   try {
     const { handle } = req.params
     const { page = 1, limit = 20 } = req.query
@@ -359,7 +359,7 @@ router.get('/api/users/:handle/followers', async (req, res) => {
 })
 
 // Get user's following
-router.get('/api/users/:handle/following', async (req, res) => {
+router.get('/:handle/following', async (req, res) => {
   try {
     const { handle } = req.params
     const { page = 1, limit = 20 } = req.query
@@ -404,7 +404,7 @@ router.get('/api/users/:handle/following', async (req, res) => {
 })
 
 // Get user achievements
-router.get('/api/users/:handle/achievements', async (req, res) => {
+router.get('/:handle/achievements', async (req, res) => {
   try {
     const { handle } = req.params
 
@@ -441,7 +441,7 @@ router.get('/api/users/:handle/achievements', async (req, res) => {
 })
 
 // Get user activity feed
-router.get('/api/users/:handle/activity', async (req, res) => {
+router.get('/:handle/activity', async (req, res) => {
   try {
     const { handle } = req.params
     const { page = 1, limit = 20 } = req.query
@@ -478,7 +478,7 @@ router.get('/api/users/:handle/activity', async (req, res) => {
 })
 
 // Get user badges
-router.get('/api/users/:handle/badges', async (req, res) => {
+router.get('/:handle/badges', async (req, res) => {
   try {
     const { handle } = req.params
 
@@ -514,7 +514,7 @@ router.get('/api/users/:handle/badges', async (req, res) => {
 })
 
 // Get user stats
-router.get('/api/users/:handle/stats', async (req, res) => {
+router.get('/:handle/stats', async (req, res) => {
   try {
     const { handle } = req.params
 
@@ -569,7 +569,7 @@ router.get('/api/users/:handle/stats', async (req, res) => {
 })
 
 // Get user reputation
-router.get('/api/users/:handle/reputation', async (req, res) => {
+router.get('/:handle/reputation', async (req, res) => {
   try {
     const { handle } = req.params
 

@@ -10,7 +10,7 @@ const supaAdmin = makeAdminClient();
  * POST /api/auth/signup
  * Body: { email, password, handle? }
  */
-r.post('/api/auth/signup', async (req, res) => {
+r.post('/signup', async (req, res) => {
   try {
     const { email, password, handle } = req.body || {};
     
@@ -98,7 +98,7 @@ r.post('/api/auth/signup', async (req, res) => {
  * POST /api/auth/signin
  * Body: { email, password }
  */
-r.post('/api/auth/signin', async (req, res) => {
+r.post('/signin', async (req, res) => {
   try {
     const { email, password } = req.body || {};
     
@@ -158,7 +158,7 @@ r.post('/api/auth/signin', async (req, res) => {
  * POST /api/auth/signout
  * Headers: Authorization: Bearer <token>
  */
-r.post('/api/auth/signout', async (req, res) => {
+r.post('/signout', async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
     
@@ -183,7 +183,7 @@ r.post('/api/auth/signout', async (req, res) => {
  * POST /api/auth/refresh
  * Body: { refresh_token }
  */
-r.post('/api/auth/refresh', async (req, res) => {
+r.post('/refresh', async (req, res) => {
   try {
     const { refresh_token } = req.body || {};
     
@@ -223,7 +223,7 @@ r.post('/api/auth/refresh', async (req, res) => {
  * GET /api/auth/me
  * Headers: Authorization: Bearer <token>
  */
-r.get('/api/auth/me', async (req, res) => {
+r.get('/me', async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
     
@@ -274,7 +274,7 @@ r.get('/api/auth/me', async (req, res) => {
  * Headers: Authorization: Bearer <token>
  * Body: { handle?, avatar_url? }
  */
-r.put('/api/auth/profile', async (req, res) => {
+r.put('/profile', async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
     

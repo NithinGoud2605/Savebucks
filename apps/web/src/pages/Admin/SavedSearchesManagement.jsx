@@ -17,14 +17,14 @@ const SavedSearchesManagement = () => {
   // Fetch saved searches stats
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['admin', 'saved-searches', 'stats'],
-    queryFn: () => apiRequest('/api/admin/saved-searches/stats'),
+    queryFn: () => apiRequest('/api/saved-searches/admin/stats'),
     refetchInterval: 30000
   })
 
   // Fetch saved searches list
   const { data: searches, isLoading: searchesLoading } = useQuery({
     queryKey: ['admin', 'saved-searches', 'list'],
-    queryFn: () => apiRequest('/api/admin/saved-searches/list'),
+    queryFn: () => apiRequest('/api/saved-searches/admin/list'),
     refetchInterval: 30000
   })
 

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { hotScore, normalizeUrl } from '@savebucks/shared';
 import { makeAdminClient } from '../lib/supa.js';
 import { makeUserClientFromToken } from '../lib/supaUser.js';
+import { createSafeUserClient } from '../lib/authUtils.js';
 import multer from 'multer';
 import path from 'path';
 
@@ -36,8 +37,10 @@ async function listDeals(tab, filters = {}) {
     .select(`
       id, title, url, price, merchant, created_at, approved_at, status,
       description, image_url, coupon_code, coupon_type, discount_percentage,
-      discount_amount, original_price, expires_at, category_id,
+      discount_amount, original_price, expires_at, category_id, deal_type,
+      is_featured, views_count, clicks_count,
       categories(name, slug),
+      companies(name, slug, logo_url),
       deal_tags(tags(id, name, slug, color, category))
     `)
     .eq('status','approved');
@@ -71,6 +74,20 @@ async function listDeals(tab, filters = {}) {
     // Filter deals that have any of the specified tags
     const tagIds = Array.isArray(filters.tags) ? filters.tags : [filters.tags];
     query = query.in('deal_tags.tag_id', tagIds);
+  }
+
+  if (filters.ending_soon) {
+    const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+    query = query.not('expires_at', 'is', null).lt('expires_at', threeDaysFromNow);
+  }
+
+  if (filters.free_shipping) {
+    query = query.eq('is_free_shipping', true);
+  }
+
+  if (filters.timeframe === 'week') {
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    query = query.gte('approved_at', oneWeekAgo);
   }
     
   query = query.order('approved_at', { ascending: false }).limit(200);
@@ -111,11 +128,13 @@ async function listDeals(tab, filters = {}) {
       price: d.price,
       original_price: d.original_price,
       merchant: d.merchant,
+      store: d.companies?.name || d.merchant,
       description: d.description,
       image_url: d.image_url,
       created: createdSec,
       ups: v.ups || 0,
       downs: v.downs || 0,
+      vote_score: (v.ups || 0) - (v.downs || 0),
       hot: hotScore(v.ups || 0, v.downs || 0, createdSec, now),
       coupon_code: d.coupon_code,
       coupon_type: d.coupon_type,
@@ -123,18 +142,59 @@ async function listDeals(tab, filters = {}) {
       discount_amount: d.discount_amount,
       expires_at: d.expires_at,
       category: d.categories,
+      company: d.companies,
+      deal_type: d.deal_type,
+      is_featured: d.is_featured,
+      view_count: d.views_count || 0,
+      clicks_count: d.clicks_count || 0,
       savings,
-      discount_text: discountText
+      discount_text: discountText,
+      free_shipping: d.is_free_shipping || false
     };
   });
 
   // Apply tab-specific filtering and sorting
   switch (tab) {
     case 'new':
+    case 'newest':
       return enriched.sort((a,b) => b.created - a.created);
     
     case 'trending':
-      return enriched.sort((a,b) => (b.ups - b.downs) - (a.ups - a.downs));
+      // For trending, prioritize recent deals with high engagement
+      const oneDayAgo = Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
+      return enriched
+        .filter(deal => deal.created > oneDayAgo)
+        .sort((a,b) => {
+          const aScore = (a.vote_score * 2) + (a.view_count * 0.1) + (a.clicks_count * 0.5);
+          const bScore = (b.vote_score * 2) + (b.view_count * 0.1) + (b.clicks_count * 0.5);
+          return bScore - aScore;
+        });
+    
+    case 'popular':
+      // For popular (top deals this week), use votes + clicks from this week
+      const oneWeekAgo = Math.floor((Date.now() - 7 * 24 * 60 * 60 * 1000) / 1000);
+      return enriched
+        .filter(deal => deal.created > oneWeekAgo)
+        .sort((a,b) => {
+          const aScore = (a.vote_score * 3) + (a.clicks_count * 1) + (a.view_count * 0.2);
+          const bScore = (b.vote_score * 3) + (b.clicks_count * 1) + (b.view_count * 0.2);
+          return bScore - aScore;
+        });
+    
+    case 'personalized':
+      // For personalized, mix featured deals with high-rated ones
+      return enriched
+        .sort((a,b) => {
+          const aScore = (a.is_featured ? 100 : 0) + (a.vote_score * 2) + (a.view_count * 0.1);
+          const bScore = (b.is_featured ? 100 : 0) + (b.vote_score * 2) + (b.view_count * 0.1);
+          return bScore - aScore;
+        });
+    
+    case 'discount':
+      // Sort by discount percentage
+      return enriched
+        .filter(deal => deal.discount_percentage && deal.discount_percentage > 0)
+        .sort((a,b) => (b.discount_percentage || 0) - (a.discount_percentage || 0));
     
     case 'under-20':
       return enriched
@@ -143,49 +203,52 @@ async function listDeals(tab, filters = {}) {
     
     case '50-percent-off':
       return enriched
-        .filter(deal => deal.discount_text && deal.discount_text.includes('50%'))
+        .filter(deal => deal.discount_percentage && deal.discount_percentage >= 50)
         .sort((a,b) => b.hot - a.hot);
     
     case 'free-shipping':
       return enriched
-        .filter(deal => deal.title.toLowerCase().includes('free shipping') || 
+        .filter(deal => deal.free_shipping || 
+                       deal.title.toLowerCase().includes('free shipping') || 
                        deal.description?.toLowerCase().includes('free shipping'))
         .sort((a,b) => b.hot - a.hot);
     
     case 'new-arrivals':
-      const oneWeekAgo = Math.floor((Date.now() - 7 * 24 * 60 * 60 * 1000) / 1000);
+      const newArrivalWeek = Math.floor((Date.now() - 7 * 24 * 60 * 60 * 1000) / 1000);
       return enriched
-        .filter(deal => deal.created > oneWeekAgo)
+        .filter(deal => deal.created > newArrivalWeek)
         .sort((a,b) => b.created - a.created);
     
     case 'hot-deals':
       return enriched
-        .filter(deal => (deal.ups - deal.downs) >= 5) // Popular deals
+        .filter(deal => deal.vote_score >= 5) // Popular deals
         .sort((a,b) => b.hot - a.hot);
     
     case 'ending-soon':
-      const now = Math.floor(Date.now() / 1000);
-      const threeDaysFromNow = now + (3 * 24 * 60 * 60);
+      const nowSec = Math.floor(Date.now() / 1000);
+      const threeDaysFromNow = nowSec + (3 * 24 * 60 * 60);
       return enriched
-        .filter(deal => deal.expires_at && deal.expires_at < threeDaysFromNow)
-        .sort((a,b) => deal.expires_at - b.expires_at);
+        .filter(deal => deal.expires_at && new Date(deal.expires_at).getTime() / 1000 < threeDaysFromNow)
+        .sort((a,b) => new Date(a.expires_at).getTime() - new Date(b.expires_at).getTime());
     
     default: // 'hot'
       return enriched.sort((a,b) => b.hot - a.hot);
   }
 }
 
-r.get('/api/deals', async (req, res) => {
+r.get('/', async (req, res) => {
   try {
     // Support both tab= and sort= aliases from frontend
-    const tab = (req.query.tab || req.query.sort || 'hot').toString().replace('newest','new').replace('top_rated','hot');
+    const tab = (req.query.tab || req.query.sort_by || 'hot').toString().replace('newest','new').replace('top_rated','hot');
     const filters = {
       category_id: req.query.category_id ? parseInt(req.query.category_id) : null,
       merchant: req.query.merchant,
       min_discount: req.query.min_discount ? parseInt(req.query.min_discount) : null,
       max_price: req.query.max_price ? parseFloat(req.query.max_price) : null,
       has_coupon: req.query.has_coupon === 'true',
-      search: req.query.search
+      search: req.query.search,
+      ending_soon: req.query.ending_soon === 'true',
+      timeframe: req.query.timeframe
     };
     
     const items = await listDeals(tab, filters);
@@ -208,12 +271,12 @@ r.get('/api/deals', async (req, res) => {
 });
 
 /** Deal detail (includes comments + vote agg) */
-r.get('/api/deals/:id', async (req, res) => {
+r.get('/:id', async (req, res) => {
   try {
     const id = Number(req.params.id);
     const { data: d, error: dErr } = await supaAdmin
       .from('deals')
-      .select('id,title,url,price,merchant,description,image_url,created_at,status')
+      .select('id,title,url,price,merchant,description,image_url,deal_images,featured_image,created_at,status,category_id,deal_type,is_featured,views_count,clicks_count,expires_at,original_price,discount_percentage,discount_amount,coupon_code,coupon_type')
       .eq('id', id)
       .single();
     if (dErr) return res.status(404).json({ error: 'not found' });
@@ -233,9 +296,12 @@ r.get('/api/deals/:id', async (req, res) => {
 
     res.json({
       id: d.id, title: d.title, url: d.url, price: d.price, merchant: d.merchant,
-      description: d.description, image_url: d.image_url, created,
+      description: d.description, image_url: d.image_url, deal_images: d.deal_images, featured_image: d.featured_image, created,
       ups, downs, hot: hotScore(ups, downs, created, now),
-      comments
+      comments, category_id: d.category_id, deal_type: d.deal_type, is_featured: d.is_featured,
+      views_count: d.views_count, clicks_count: d.clicks_count, expires_at: d.expires_at,
+      original_price: d.original_price, discount_percentage: d.discount_percentage,
+      discount_amount: d.discount_amount, coupon_code: d.coupon_code, coupon_type: d.coupon_type
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -243,18 +309,30 @@ r.get('/api/deals/:id', async (req, res) => {
 });
 
 /** Create deal (JWT required; RLS + trigger sets submitter_id) */
-r.post('/api/deals', async (req, res) => {
+r.post('/', async (req, res) => {
   try {
     const token = bearer(req);
     if (!token) return res.status(401).json({ error: 'auth required' });
-    const supaUser = makeUserClientFromToken(token);
+    
+    const supaUser = await createSafeUserClient(token, res);
+    if (!supaUser) return; // Exit if client creation failed
 
-    const { title, url, price = null, merchant = null, description = null, image_url = null } = req.body || {};
+    const { title, url, price = null, merchant = null, description = null, image_url = null, deal_images = null, featured_image = null } = req.body || {};
     if (!title || !url) return res.status(400).json({ error: 'title and url required' });
 
     const { data, error } = await supaUser
       .from('deals')
-      .insert([{ title, url: normalizeUrl(url), price, merchant, description, image_url, status: 'pending' }])
+      .insert([{ 
+        title, 
+        url: normalizeUrl(url), 
+        price, 
+        merchant, 
+        description, 
+        image_url, 
+        deal_images, 
+        featured_image,
+        status: 'pending' 
+      }])
       .select()
       .single();
     if (error) throw error;
@@ -262,7 +340,7 @@ r.post('/api/deals', async (req, res) => {
     res.status(201).json({
       id: data.id, title: data.title, url: data.url, price: data.price,
       merchant: data.merchant, created: Math.floor(new Date(data.created_at).getTime()/1000),
-      ups: 0, downs: 0
+      ups: 0, downs: 0, deal_images: data.deal_images, featured_image: data.featured_image
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -270,11 +348,13 @@ r.post('/api/deals', async (req, res) => {
 });
 
 /** Vote (JWT required; RLS ensures deal is approved) */
-r.post('/api/deals/:id/vote', async (req, res) => {
+r.post('/:id/vote', async (req, res) => {
   try {
     const token = bearer(req);
     if (!token) return res.status(401).json({ error: 'auth required' });
-    const supaUser = makeUserClientFromToken(token);
+    
+    const supaUser = await createSafeUserClient(token, res);
+    if (!supaUser) return; // Exit if client creation failed
 
     const id = Number(req.params.id);
     const { value } = req.body || {};
@@ -303,11 +383,13 @@ r.post('/api/deals/:id/vote', async (req, res) => {
 });
 
 /** Comment (JWT required; RLS enforces deal approved) */
-r.post('/api/deals/:id/comment', async (req, res) => {
+r.post('/:id/comment', async (req, res) => {
   try {
     const token = bearer(req);
     if (!token) return res.status(401).json({ error: 'auth required' });
-    const supaUser = makeUserClientFromToken(token);
+    
+    const supaUser = await createSafeUserClient(token, res);
+    if (!supaUser) return; // Exit if client creation failed
 
     const id = Number(req.params.id);
     const { body, parent_id = null } = req.body || {};
@@ -327,11 +409,13 @@ r.post('/api/deals/:id/comment', async (req, res) => {
 });
 
   /** Report deal (JWT required) */
-  r.post('/api/deals/:id/report', async (req, res) => {
+  r.post('/:id/report', async (req, res) => {
     try {
       const token = bearer(req);
       if (!token) return res.status(401).json({ error: 'auth required' });
-      const supaUser = makeUserClientFromToken(token);
+      
+      const supaUser = await createSafeUserClient(token, res);
+      if (!supaUser) return; // Exit if client creation failed
 
       const id = Number(req.params.id);
       const { reason, note = null } = req.body || {};
@@ -356,11 +440,13 @@ r.post('/api/deals/:id/comment', async (req, res) => {
   });
 
   /** Upload deal images (JWT required) */
-  r.post('/api/deals/:id/images', upload.array('images', 5), async (req, res) => {
+  r.post('/:id/images', upload.array('images', 5), async (req, res) => {
     try {
       const token = bearer(req);
       if (!token) return res.status(401).json({ error: 'auth required' });
-      const supaUser = makeUserClientFromToken(token);
+      
+      const supaUser = await createSafeUserClient(token, res);
+      if (!supaUser) return; // Exit if client creation failed
 
       const dealId = Number(req.params.id);
       if (!req.files || req.files.length === 0) {

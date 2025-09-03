@@ -12,7 +12,7 @@ async function ensureTables() {
 }
 
 // Track arbitrary analytics event
-r.post('/api/analytics/track', async (req, res) => {
+r.post('/track', async (req, res) => {
   try {
     const { event_name, properties = {}, user_id = null } = {
       event_name: req.body?.event || req.body?.event_name,

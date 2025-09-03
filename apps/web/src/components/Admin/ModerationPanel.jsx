@@ -224,10 +224,11 @@ export function ModerationPanel({ deal, onUpdate }) {
             </div>
           </div>
 
-          {deal.image_url && (
+          {/* Get images array - prioritize deal_images, fallback to image_url */}
+          {(deal.deal_images?.length > 0 ? deal.deal_images[0] : deal.image_url) && (
             <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-gray-100 ml-4">
               <img
-                src={deal.image_url}
+                src={deal.deal_images?.length > 0 ? deal.deal_images[0] : deal.image_url}
                 alt={deal.title}
                 className="w-full h-full object-cover"
               />

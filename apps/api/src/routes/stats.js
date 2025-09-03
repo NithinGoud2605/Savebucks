@@ -5,7 +5,7 @@ const r = Router();
 const supa = makeAdminClient();
 
 // Homepage stats consumed by VibrantHero
-r.get('/api/stats/homepage', async (_req, res) => {
+r.get('/homepage', async (_req, res) => {
   try {
     const [
       { count: totalDeals },

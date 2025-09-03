@@ -1,6 +1,7 @@
 import express from 'express'
 import { makeAdminClient } from '../lib/supa.js'
 import { makeUserClientFromToken } from '../lib/supaUser.js'
+import { createSafeUserClient } from '../lib/authUtils.js'
 import multer from 'multer'
 import path from 'path'
 
@@ -38,8 +39,26 @@ function bearer(req) {
   return h.startsWith('Bearer ') ? h.slice(7) : null
 }
 
-// List coupons with filtering
-router.get('/api/coupons', async (req, res) => {
+// Test endpoint to debug the issue
+router.get('/test', async (req, res) => {
+  try {
+    res.json({ 
+      success: true, 
+      message: 'Coupons test endpoint working', 
+      timestamp: new Date().toISOString(),
+      mockData: [
+        { id: 1, title: "Test Coupon 1", code: "TEST1" },
+        { id: 2, title: "Test Coupon 2", code: "TEST2" }
+      ]
+    })
+  } catch (error) {
+    console.error('Test endpoint error:', error)
+    res.status(500).json({ error: 'Test failed' })
+  }
+})
+
+  // List coupons with filtering
+router.get('/', async (req, res) => {
   try {
     const { 
       company, 
@@ -120,9 +139,23 @@ router.get('/api/coupons', async (req, res) => {
 
     if (couponIds.length > 0) {
       try {
-        const { data: votesAgg } = await supabase.rpc('get_coupon_votes_agg')
-        if (votesAgg) {
-          votesAgg.forEach(v => voteMap.set(v.coupon_id, v))
+        // Try to get votes from the coupon_votes table directly
+        const { data: votesData, error: votesError } = await supabase
+          .from('coupon_votes')
+          .select('coupon_id, value')
+          .in('coupon_id', couponIds)
+        
+        if (!votesError && votesData) {
+          // Aggregate votes manually
+          votesData.forEach(vote => {
+            const existing = voteMap.get(vote.coupon_id) || { ups: 0, downs: 0 }
+            if (vote.value === 1) {
+              existing.ups = (existing.ups || 0) + 1
+            } else if (vote.value === -1) {
+              existing.downs = (existing.downs || 0) + 1
+            }
+            voteMap.set(vote.coupon_id, existing)
+          })
         }
       } catch (e) {
         console.error('Error getting coupon votes:', e)
@@ -150,7 +183,7 @@ router.get('/api/coupons', async (req, res) => {
 })
 
 // Get single coupon
-router.get('/api/coupons/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params
 
@@ -205,12 +238,13 @@ router.get('/api/coupons/:id', async (req, res) => {
 })
 
 // Create new coupon
-router.post('/api/coupons', requireAuth, async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     const token = bearer(req)
     if (!token) return res.status(401).json({ error: 'Authentication required' })
     
-    const supaUser = makeUserClientFromToken(token)
+    const supaUser = await createSafeUserClient(token, res)
+    if (!supaUser) return; // Exit if client creation failed
     const {
       title,
       description,
@@ -274,7 +308,7 @@ router.post('/api/coupons', requireAuth, async (req, res) => {
 })
 
 // Upload coupon images
-router.post('/api/coupons/:id/images', requireAuth, upload.array('images', 3), async (req, res) => {
+router.post('/:id/images', requireAuth, upload.array('images', 3), async (req, res) => {
   try {
     const token = bearer(req)
     if (!token) return res.status(401).json({ error: 'Authentication required' })
@@ -366,12 +400,13 @@ router.post('/api/coupons/:id/images', requireAuth, upload.array('images', 3), a
 })
 
 // Vote on coupon
-router.post('/api/coupons/:id/vote', requireAuth, async (req, res) => {
+router.post('/:id/vote', requireAuth, async (req, res) => {
   try {
     const token = bearer(req)
     if (!token) return res.status(401).json({ error: 'Authentication required' })
     
-    const supaUser = makeUserClientFromToken(token)
+    const supaUser = await createSafeUserClient(token, res)
+    if (!supaUser) return; // Exit if client creation failed
     const couponId = parseInt(req.params.id)
     const { value } = req.body
 
@@ -402,7 +437,7 @@ router.post('/api/coupons/:id/vote', requireAuth, async (req, res) => {
 })
 
 // Use coupon (track usage)
-router.post('/api/coupons/:id/use', async (req, res) => {
+router.post('/:id/use', async (req, res) => {
   try {
     const couponId = parseInt(req.params.id)
     const { order_amount, was_successful = true } = req.body
@@ -432,12 +467,13 @@ router.post('/api/coupons/:id/use', async (req, res) => {
 })
 
 // Add comment to coupon
-router.post('/api/coupons/:id/comments', requireAuth, async (req, res) => {
+router.post('/:id/comments', requireAuth, async (req, res) => {
   try {
     const token = bearer(req)
     if (!token) return res.status(401).json({ error: 'Authentication required' })
     
-    const supaUser = makeUserClientFromToken(token)
+    const supaUser = await createSafeUserClient(token, res)
+    if (!supaUser) return; // Exit if client creation failed
     const couponId = parseInt(req.params.id)
     const { body, parent_id } = req.body
 

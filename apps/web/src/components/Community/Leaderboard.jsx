@@ -182,7 +182,7 @@ const Leaderboard = ({ compact = false, showViewMore = true }) => {
           <TrophyIcon className="w-12 h-12 text-secondary-300 mx-auto mb-3" />
           <p className="text-secondary-600">No contributors yet</p>
           <p className="text-sm text-secondary-500 mt-1">
-            Be the first to post a deal and climb the leaderboard!
+            Be the first to post a deal or coupon and climb the leaderboard!
           </p>
         </div>
       )}

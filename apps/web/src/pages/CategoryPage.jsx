@@ -315,7 +315,7 @@ const CategoryPage = () => {
             <p className="text-secondary-600 mb-6">
               {hasActiveFilters 
                 ? 'Try adjusting your filters or check back later for new deals.'
-                : 'Be the first to post a deal in this category!'
+                : 'Be the first to post a deal or coupon in this category!'
               }
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -331,7 +331,7 @@ const CategoryPage = () => {
                 to="/post"
                 className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
-                Post a Deal
+                Post Deal/Coupon
               </Link>
             </div>
           </div>

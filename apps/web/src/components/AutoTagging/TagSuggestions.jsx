@@ -25,7 +25,7 @@ const TagSuggestionChip = ({ tag, isSelected, onToggle, isAI = false }) => {
   )
 }
 
-const AutoTagSuggestions = ({ title, description, url, selectedTags, onTagsChange, dealData = null }) => {
+const AutoTagSuggestions = ({ title, description, url, selectedTags = [], onTagsChange, dealData = null }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [suggestions, setSuggestions] = useState([])
   const [showAllTags, setShowAllTags] = useState(false)
@@ -75,6 +75,8 @@ const AutoTagSuggestions = ({ title, description, url, selectedTags, onTagsChang
   }, [title, description, url])
 
   const handleTagToggle = (tag) => {
+    if (!tag || !tag.id) return
+    
     const isSelected = selectedTags.some(t => t.id === tag.id)
     
     if (isSelected) {
@@ -84,13 +86,14 @@ const AutoTagSuggestions = ({ title, description, url, selectedTags, onTagsChang
     }
   }
 
-  const aiSuggestions = suggestions.filter(tag => 
-    !selectedTags.some(selected => selected.id === tag.id)
+  const aiSuggestions = (suggestions || []).filter(tag => 
+    tag && tag.id && !selectedTags.some(selected => selected.id === tag.id)
   ).slice(0, 5)
 
-  const remainingPopularTags = popularTags.filter(tag => 
+  const remainingPopularTags = (popularTags || []).filter(tag => 
+    tag && tag.id && 
     !selectedTags.some(selected => selected.id === tag.id) &&
-    !suggestions.some(suggested => suggested.id === tag.id)
+    !(suggestions || []).some(suggested => suggested.id === tag.id)
   )
 
   const displayedPopularTags = showAllTags 

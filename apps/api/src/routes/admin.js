@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { makeAdminClient } from '../lib/supa.js';
-import { makeUserClientFromToken } from '../lib/supaUser.js';
 import { requireAdmin } from '../middleware/requireAdmin.js';
 
 const r = Router();
@@ -14,7 +13,7 @@ function bearer(req) {
 
 
 // Dashboard Analytics
-r.get('/api/admin/dashboard', requireAdmin, async (req, res) => {
+r.get('/dashboard', requireAdmin, async (req, res) => {
   try {
     // Get overall statistics
     const [
@@ -95,7 +94,7 @@ r.get('/api/admin/dashboard', requireAdmin, async (req, res) => {
 });
 
 // Who am I (admin check)
-r.get('/api/admin/whoami', async (req, res) => {
+r.get('/whoami', async (req, res) => {
   try {
     const user = req.user;
     if (!user?.id) return res.json({ isAdmin: false });
@@ -111,7 +110,7 @@ r.get('/api/admin/whoami', async (req, res) => {
 });
 
 // Get deals with status filter (pending by default)
-r.get('/api/admin/deals', requireAdmin, async (req, res) => {
+r.get('/deals', requireAdmin, async (req, res) => {
   try {
     const { page = 1, limit = 20, status = 'pending' } = req.query;
     const offset = (page - 1) * limit;
@@ -140,7 +139,7 @@ r.get('/api/admin/deals', requireAdmin, async (req, res) => {
 });
 
 // Get pending coupons for approval
-r.get('/api/admin/coupons/pending', requireAdmin, async (req, res) => {
+r.get('/coupons/pending', requireAdmin, async (req, res) => {
   try {
     const { page = 1, limit = 20 } = req.query;
     const offset = (page - 1) * limit;
@@ -169,7 +168,7 @@ r.get('/api/admin/coupons/pending', requireAdmin, async (req, res) => {
 });
 
 // Approve deal (alias)
-r.post('/api/admin/deals/:id/approve', requireAdmin, async (req, res) => {
+r.post('/deals/:id/approve', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = {
@@ -201,7 +200,7 @@ r.post('/api/admin/deals/:id/approve', requireAdmin, async (req, res) => {
 });
 
 // Reject deal (alias)
-r.post('/api/admin/deals/:id/reject', requireAdmin, async (req, res) => {
+r.post('/deals/:id/reject', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body || {};
@@ -237,7 +236,7 @@ r.post('/api/admin/deals/:id/reject', requireAdmin, async (req, res) => {
 });
 
 // Approve/Reject Coupon
-r.post('/api/admin/coupons/:id/review', requireAdmin, async (req, res) => {
+r.post('/coupons/:id/review', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { action, rejection_reason } = req.body;
@@ -283,7 +282,7 @@ r.post('/api/admin/coupons/:id/review', requireAdmin, async (req, res) => {
 });
 
 // Get all users with pagination and filters
-r.get('/api/admin/users', requireAdmin, async (req, res) => {
+r.get('/users', requireAdmin, async (req, res) => {
   try {
     const { page = 1, limit = 50, search, role } = req.query;
     const offset = (page - 1) * limit;
@@ -315,7 +314,7 @@ r.get('/api/admin/users', requireAdmin, async (req, res) => {
 });
 
 // Update user role
-r.post('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
+r.post('/users/:id/role', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
@@ -343,7 +342,7 @@ r.post('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
 });
 
 // Get analytics data
-r.get('/api/admin/analytics', requireAdmin, async (req, res) => {
+r.get('/analytics', requireAdmin, async (req, res) => {
   try {
     const { period = '30' } = req.query;
     const startDate = new Date();
@@ -374,7 +373,7 @@ r.get('/api/admin/analytics', requireAdmin, async (req, res) => {
 });
 
 // Feature/Unfeature deals and coupons
-r.post('/api/admin/deals/:id/feature', requireAdmin, async (req, res) => {
+r.post('/deals/:id/feature', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { featured } = req.body;
@@ -397,7 +396,7 @@ r.post('/api/admin/deals/:id/feature', requireAdmin, async (req, res) => {
   }
 });
 
-r.post('/api/admin/coupons/:id/feature', requireAdmin, async (req, res) => {
+r.post('/coupons/:id/feature', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { featured } = req.body;
@@ -421,7 +420,7 @@ r.post('/api/admin/coupons/:id/feature', requireAdmin, async (req, res) => {
 });
 
 // Get expiration statistics and management
-r.get('/api/admin/expiration/stats', requireAdmin, async (req, res) => {
+r.get('/expiration/stats', requireAdmin, async (req, res) => {
   try {
     const { data: stats, error } = await supabase.rpc('get_expiration_stats')
 
@@ -437,7 +436,7 @@ r.get('/api/admin/expiration/stats', requireAdmin, async (req, res) => {
 })
 
 // Get items expiring soon
-r.get('/api/admin/expiration/expiring-soon', requireAdmin, async (req, res) => {
+r.get('/expiration/expiring-soon', requireAdmin, async (req, res) => {
   try {
     const { hours = 24 } = req.query
     const { data: expiringItems, error } = await supabase.rpc('get_expiring_soon', { 
@@ -456,7 +455,7 @@ r.get('/api/admin/expiration/expiring-soon', requireAdmin, async (req, res) => {
 })
 
 // Manually mark expired items
-r.post('/api/admin/expiration/mark-expired', requireAdmin, async (req, res) => {
+r.post('/expiration/mark-expired', requireAdmin, async (req, res) => {
   try {
     const { data: expiredCount, error } = await supabase.rpc('mark_expired_items')
 
@@ -476,7 +475,7 @@ r.post('/api/admin/expiration/mark-expired', requireAdmin, async (req, res) => {
 })
 
 // Clean up old expired items
-r.post('/api/admin/expiration/cleanup', requireAdmin, async (req, res) => {
+r.post('/expiration/cleanup', requireAdmin, async (req, res) => {
   try {
     const { data: cleanupCount, error } = await supabase.rpc('cleanup_old_expired_items')
 
@@ -496,7 +495,7 @@ r.post('/api/admin/expiration/cleanup', requireAdmin, async (req, res) => {
 })
 
 // Gamification System Management
-r.get('/api/admin/gamification/stats', requireAdmin, async (req, res) => {
+r.get('/gamification/stats', requireAdmin, async (req, res) => {
   try {
     const [
       { count: totalXpEvents },
@@ -536,7 +535,7 @@ r.get('/api/admin/gamification/stats', requireAdmin, async (req, res) => {
   }
 });
 
-r.get('/api/admin/gamification/achievements', requireAdmin, async (req, res) => {
+r.get('/gamification/achievements', requireAdmin, async (req, res) => {
   try {
     const { data: achievements } = await supaAdmin
       .from('achievements')
@@ -551,7 +550,7 @@ r.get('/api/admin/gamification/achievements', requireAdmin, async (req, res) => 
   }
 });
 
-r.post('/api/admin/gamification/achievements', requireAdmin, async (req, res) => {
+r.post('/gamification/achievements', requireAdmin, async (req, res) => {
   try {
     const { name, slug, description, category, criteria_type, criteria_value, xp_reward, badge_icon, badge_color, rarity, is_hidden } = req.body;
     
@@ -581,7 +580,7 @@ r.post('/api/admin/gamification/achievements', requireAdmin, async (req, res) =>
   }
 });
 
-r.put('/api/admin/gamification/achievements/:id', requireAdmin, async (req, res) => {
+r.put('/gamification/achievements/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -601,7 +600,7 @@ r.put('/api/admin/gamification/achievements/:id', requireAdmin, async (req, res)
   }
 });
 
-r.get('/api/admin/gamification/xp-config', requireAdmin, async (req, res) => {
+r.get('/gamification/xp-config', requireAdmin, async (req, res) => {
   try {
     const { data: xpConfig } = await supaAdmin
       .from('xp_config')
@@ -615,7 +614,7 @@ r.get('/api/admin/gamification/xp-config', requireAdmin, async (req, res) => {
   }
 });
 
-r.put('/api/admin/gamification/xp-config/:id', requireAdmin, async (req, res) => {
+r.put('/gamification/xp-config/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { base_xp, max_daily, is_active } = req.body;
@@ -636,7 +635,7 @@ r.put('/api/admin/gamification/xp-config/:id', requireAdmin, async (req, res) =>
 });
 
 // Auto-Tagging System Management
-r.get('/api/admin/auto-tagging/stats', requireAdmin, async (req, res) => {
+r.get('/auto-tagging/stats', requireAdmin, async (req, res) => {
   try {
     const [
       { count: totalPatterns },
@@ -671,7 +670,7 @@ r.get('/api/admin/auto-tagging/stats', requireAdmin, async (req, res) => {
   }
 });
 
-r.get('/api/admin/auto-tagging/merchant-patterns', requireAdmin, async (req, res) => {
+r.get('/auto-tagging/merchant-patterns', requireAdmin, async (req, res) => {
   try {
     const { data: patterns } = await supaAdmin
       .from('merchant_patterns')
@@ -685,7 +684,7 @@ r.get('/api/admin/auto-tagging/merchant-patterns', requireAdmin, async (req, res
   }
 });
 
-r.post('/api/admin/auto-tagging/merchant-patterns', requireAdmin, async (req, res) => {
+r.post('/auto-tagging/merchant-patterns', requireAdmin, async (req, res) => {
   try {
     const { merchant_name, domain_patterns, title_patterns, auto_apply_tags, confidence_score } = req.body;
     
@@ -709,7 +708,7 @@ r.post('/api/admin/auto-tagging/merchant-patterns', requireAdmin, async (req, re
   }
 });
 
-r.get('/api/admin/auto-tagging/category-patterns', requireAdmin, async (req, res) => {
+r.get('/auto-tagging/category-patterns', requireAdmin, async (req, res) => {
   try {
     const { data: patterns } = await supaAdmin
       .from('category_patterns')
@@ -726,7 +725,7 @@ r.get('/api/admin/auto-tagging/category-patterns', requireAdmin, async (req, res
   }
 });
 
-r.post('/api/admin/auto-tagging/category-patterns', requireAdmin, async (req, res) => {
+r.post('/auto-tagging/category-patterns', requireAdmin, async (req, res) => {
   try {
     const { category_name, category_id, keyword_patterns, title_patterns, confidence_score, priority } = req.body;
     
@@ -752,7 +751,7 @@ r.post('/api/admin/auto-tagging/category-patterns', requireAdmin, async (req, re
 });
 
 // Price Tracking Management
-r.get('/api/admin/price-tracking/stats', requireAdmin, async (req, res) => {
+r.get('/price-tracking/stats', requireAdmin, async (req, res) => {
   try {
     const [
       { count: totalPriceHistory },
@@ -787,7 +786,7 @@ r.get('/api/admin/price-tracking/stats', requireAdmin, async (req, res) => {
   }
 });
 
-r.get('/api/admin/price-tracking/alerts', requireAdmin, async (req, res) => {
+r.get('/price-tracking/alerts', requireAdmin, async (req, res) => {
   try {
     const { data: alerts } = await supaAdmin
       .from('price_alerts')
@@ -806,7 +805,7 @@ r.get('/api/admin/price-tracking/alerts', requireAdmin, async (req, res) => {
 });
 
 // Saved Searches Management
-r.get('/api/admin/saved-searches/stats', requireAdmin, async (req, res) => {
+r.get('/saved-searches/stats', requireAdmin, async (req, res) => {
   try {
     const [
       { count: totalSavedSearches },
@@ -837,7 +836,7 @@ r.get('/api/admin/saved-searches/stats', requireAdmin, async (req, res) => {
   }
 });
 
-r.get('/api/admin/saved-searches/list', requireAdmin, async (req, res) => {
+r.get('/saved-searches/list', requireAdmin, async (req, res) => {
   try {
     const { data: searches } = await supaAdmin
       .from('saved_searches')
@@ -854,7 +853,7 @@ r.get('/api/admin/saved-searches/list', requireAdmin, async (req, res) => {
   }
 });
 
-r.get('/api/admin/notifications/queue', requireAdmin, async (req, res) => {
+r.get('/notifications/queue', requireAdmin, async (req, res) => {
   try {
     const { data: notifications } = await supaAdmin
       .from('notification_queue')
@@ -874,7 +873,7 @@ r.get('/api/admin/notifications/queue', requireAdmin, async (req, res) => {
 });
 
 // System Health and Maintenance
-r.get('/api/admin/system/health', requireAdmin, async (req, res) => {
+r.get('/system/health', requireAdmin, async (req, res) => {
   try {
     const [
       { count: totalDeals },
@@ -920,7 +919,7 @@ r.get('/api/admin/system/health', requireAdmin, async (req, res) => {
 });
 
 // Admin: list reports with deal info
-r.get('/api/admin/reports', requireAdmin, async (_req, res) => {
+r.get('/reports', requireAdmin, async (_req, res) => {
   try {
     const { data: reports, error } = await supaAdmin
       .from('reports')
@@ -938,7 +937,7 @@ r.get('/api/admin/reports', requireAdmin, async (_req, res) => {
 });
 
 // Admin: delete report
-r.delete('/api/admin/reports/:id', requireAdmin, async (req, res) => {
+r.delete('/reports/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { error } = await supaAdmin

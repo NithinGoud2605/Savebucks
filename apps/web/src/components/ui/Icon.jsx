@@ -11,6 +11,7 @@ const iconMap = {
   search: LucideIcons.Search,
   menu: LucideIcons.Menu,
   close: LucideIcons.X,
+  x: LucideIcons.X, // Alias for 'x'
   chevronDown: LucideIcons.ChevronDown,
   chevronUp: LucideIcons.ChevronUp,
   chevronLeft: LucideIcons.ChevronLeft,
@@ -100,6 +101,7 @@ const iconMap = {
   sparkles: LucideIcons.Sparkles,
   trophy: LucideIcons.Trophy,
   crown: LucideIcons.Crown,
+  lightbulb: LucideIcons.Lightbulb,
   
   // System & Technical
   refresh: LucideIcons.RefreshCw,

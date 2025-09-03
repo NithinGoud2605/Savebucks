@@ -1,6 +1,7 @@
 import express from 'express'
 import { makeAdminClient } from '../lib/supa.js'
 import { makeUserClientFromToken } from '../lib/supaUser.js'
+import { createSafeUserClient } from '../lib/authUtils.js'
 import { requireAdmin } from '../middleware/requireAdmin.js'
 
 const router = express.Router()
@@ -17,7 +18,9 @@ const requireAuth = async (req, res, next) => {
     const token = bearer(req)
     if (!token) return res.status(401).json({ error: 'Authentication required' })
 
-    const supaUser = makeUserClientFromToken(token)
+    const supaUser = await createSafeUserClient(token, res)
+    if (!supaUser) return; // Exit if client creation failed
+    
     const { data: { user } } = await supaUser.auth.getUser()
     
     if (!user) return res.status(401).json({ error: 'Invalid token' })
@@ -33,7 +36,7 @@ const requireAuth = async (req, res, next) => {
 
 
 // Get price history for a deal
-router.get('/api/price-tracking/deals/:dealId/history', requireAuth, async (req, res) => {
+router.get('/deals/:dealId/history', requireAuth, async (req, res) => {
   try {
     const { dealId } = req.params
     const { days = 30 } = req.query
@@ -57,7 +60,7 @@ router.get('/api/price-tracking/deals/:dealId/history', requireAuth, async (req,
 })
 
 // Get deal countdown info
-router.get('/api/price-tracking/deals/:dealId/countdown', requireAuth, async (req, res) => {
+router.get('/deals/:dealId/countdown', requireAuth, async (req, res) => {
   try {
     const { dealId } = req.params
 
@@ -95,7 +98,7 @@ router.get('/api/price-tracking/deals/:dealId/countdown', requireAuth, async (re
 })
 
 // Create price alert
-router.post('/api/price-tracking/alerts', requireAuth, async (req, res) => {
+router.post('/alerts', requireAuth, async (req, res) => {
   try {
     const {
       deal_id,
@@ -133,7 +136,7 @@ router.post('/api/price-tracking/alerts', requireAuth, async (req, res) => {
 })
 
 // Get user's price alerts
-router.get('/api/price-tracking/alerts', requireAuth, async (req, res) => {
+router.get('/alerts', requireAuth, async (req, res) => {
   try {
     const { data: alerts, error } = await supabase
       .from('price_alerts')
@@ -156,7 +159,7 @@ router.get('/api/price-tracking/alerts', requireAuth, async (req, res) => {
 })
 
 // Update price alert
-router.put('/api/price-tracking/alerts/:alertId', requireAuth, async (req, res) => {
+router.put('/alerts/:alertId', requireAuth, async (req, res) => {
   try {
     const { alertId } = req.params
     const updates = req.body
@@ -185,7 +188,7 @@ router.put('/api/price-tracking/alerts/:alertId', requireAuth, async (req, res) 
 })
 
 // Delete price alert
-router.delete('/api/price-tracking/alerts/:alertId', requireAuth, async (req, res) => {
+router.delete('/alerts/:alertId', requireAuth, async (req, res) => {
   try {
     const { alertId } = req.params
 
@@ -207,7 +210,7 @@ router.delete('/api/price-tracking/alerts/:alertId', requireAuth, async (req, re
 })
 
 // Get expiring deals
-router.get('/api/price-tracking/expiring', requireAuth, async (req, res) => {
+router.get('/expiring', requireAuth, async (req, res) => {
   try {
     const { days = 7 } = req.query
     const cutoffDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
@@ -232,7 +235,7 @@ router.get('/api/price-tracking/expiring', requireAuth, async (req, res) => {
 })
 
 // Mark deals as expired
-router.post('/api/price-tracking/mark-expired', requireAuth, requireAdmin, async (req, res) => {
+router.post('/mark-expired', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { deal_ids } = req.body
 
@@ -265,7 +268,7 @@ router.post('/api/price-tracking/mark-expired', requireAuth, requireAdmin, async
 })
 
 // Admin: Get price tracking stats
-router.get('/api/admin/price-tracking/stats', requireAuth, requireAdmin, async (req, res) => {
+router.get('/admin/stats', requireAuth, requireAdmin, async (req, res) => {
   try {
     // Get price history stats
     const { count: priceHistoryCount } = await supabase
@@ -309,7 +312,7 @@ router.get('/api/admin/price-tracking/stats', requireAuth, requireAdmin, async (
 })
 
 // Admin: Get all price alerts
-router.get('/api/admin/price-tracking/alerts', requireAuth, requireAdmin, async (req, res) => {
+router.get('/admin/alerts', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { limit = 50, offset = 0, status } = req.query
 

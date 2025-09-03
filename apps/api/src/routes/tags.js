@@ -6,7 +6,7 @@ const router = express.Router()
 const supabase = makeAdminClient()
 
 // Get all tags
-router.get('/api/tags', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { category, featured_only, limit = 100 } = req.query
 
@@ -39,7 +39,7 @@ router.get('/api/tags', async (req, res) => {
 })
 
 // Get popular tags
-router.get('/api/tags/popular', async (req, res) => {
+router.get('/popular', async (req, res) => {
   try {
     const { category, limit = 20 } = req.query
 
@@ -61,7 +61,7 @@ router.get('/api/tags/popular', async (req, res) => {
 })
 
 // Suggest tags for content
-router.post('/api/tags/suggest', async (req, res) => {
+router.post('/suggest', async (req, res) => {
   try {
     const { title, description = '', max_suggestions = 10 } = req.body
 
@@ -88,7 +88,7 @@ router.post('/api/tags/suggest', async (req, res) => {
 })
 
 // Create new tag (admin only)
-router.post('/api/tags', requireAdmin, async (req, res) => {
+router.post('/', requireAdmin, async (req, res) => {
   try {
     const { name, description, color = '#3B82F6', icon, category = 'custom', is_featured = false } = req.body
 
@@ -132,7 +132,7 @@ router.post('/api/tags', requireAdmin, async (req, res) => {
 })
 
 // Update tag (admin only)
-router.put('/api/tags/:id', requireAdmin, async (req, res) => {
+router.put('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params
     const { name, description, color, icon, category, is_featured } = req.body
@@ -178,7 +178,7 @@ router.put('/api/tags/:id', requireAdmin, async (req, res) => {
 })
 
 // Delete tag (admin only)
-router.delete('/api/tags/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params
 
@@ -199,7 +199,7 @@ router.delete('/api/tags/:id', requireAdmin, async (req, res) => {
 })
 
 // Add tags to deal (admin or deal owner)
-router.post('/api/deals/:id/tags', async (req, res) => {
+router.post('/deals/:id/tags', async (req, res) => {
   try {
     const { id } = req.params
     const { tag_ids } = req.body
@@ -258,7 +258,7 @@ router.post('/api/deals/:id/tags', async (req, res) => {
 })
 
 // Add tags to coupon (admin or coupon owner)
-router.post('/api/coupons/:id/tags', async (req, res) => {
+router.post('/coupons/:id/tags', async (req, res) => {
   try {
     const { id } = req.params
     const { tag_ids } = req.body
