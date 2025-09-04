@@ -270,7 +270,7 @@ export function CommunityDealCard({ deal, className, compact = false }) {
             )}
             {deal.category && (
               <span className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 px-3 py-1.5 rounded-full text-sm font-medium border border-purple-200">
-                📂 {deal.category}
+                📂 {deal.category?.name || deal.category}
               </span>
             )}
           </div>

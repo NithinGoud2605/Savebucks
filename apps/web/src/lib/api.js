@@ -394,6 +394,28 @@ export const api = {
 
   getCompany: (slug) => apiRequest(`/api/companies/${slug}`),
 
+  getCompanyFull: (slug) => apiRequest(`/api/companies/${slug}/full`),
+
+  searchCompanies: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value.toString())
+      }
+    })
+    return apiRequest(`/api/companies/search?${searchParams}`)
+  },
+
+  getCompanyListings: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value.toString())
+      }
+    })
+    return apiRequest(`/api/companies/listings?${searchParams}`)
+  },
+
   getCompanyDeals: (slug, params = {}) => {
     const searchParams = new URLSearchParams()
     Object.entries(params).forEach(([key, value]) => {
@@ -415,6 +437,16 @@ export const api = {
   },
 
   getCompanyCategories: () => apiRequest('/api/companies/categories'),
+
+  createCompany: (companyData) => apiRequest('/api/companies', {
+    method: 'POST',
+    body: companyData,
+  }),
+
+  searchCompaniesByName: (query, limit = 10) => {
+    const params = new URLSearchParams({ q: query, limit: limit.toString() })
+    return apiRequest(`/api/companies/search/name?${params}`)
+  },
 
   // Admin APIs
   getAdminDashboard: () => apiRequest('/api/admin/dashboard'),
@@ -458,16 +490,19 @@ export const api = {
     const params = new URLSearchParams({ period })
     return apiRequest(`/api/admin/analytics?${params}`)
   },
-  
-  featureDeal: (dealId, featured) => apiRequest(`/api/admin/deals/${dealId}/feature`, {
-    method: 'POST',
-    body: { featured },
-  }),
-  
-  featureCoupon: (couponId, featured) => apiRequest(`/api/admin/coupons/${couponId}/feature`, {
-    method: 'POST',
-    body: { featured },
-  }),
+
+  // Admin Company Management
+  getPendingCompanies: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value.toString())
+      }
+    })
+    return apiRequest(`/api/companies/admin/pending?${searchParams}`)
+  },
+
+  getCompanyForAdmin: (slug) => apiRequest(`/api/companies/admin/${slug}`),
 
   // Company management APIs
   createCompany: (companyData) => apiRequest('/api/companies', {
@@ -479,25 +514,47 @@ export const api = {
     method: 'PUT',
     body: companyData,
   }),
+  
+  featureDeal: (dealId, featured) => apiRequest(`/api/admin/deals/${dealId}/feature`, {
+    method: 'POST',
+    body: { featured },
+  }),
+  
+  featureCoupon: (couponId, featured) => apiRequest(`/api/admin/coupons/${couponId}/feature`, {
+    method: 'POST',
+    body: { featured },
+  }),
 
   uploadCompanyLogo: (companyId, logoFile) => {
+    console.log('🔧 API: uploadCompanyLogo called with:', { companyId, logoFile: logoFile.name })
     const formData = new FormData()
     formData.append('logo', logoFile)
     
-    return fetch(`${API_BASE_URL}/api/companies/${companyId}/logo`, {
+    console.log('🔧 API: Making request to:', `${API_BASE}/api/companies/${companyId}/logo`)
+    console.log('🔧 API: Authorization header present:', !!localStorage.getItem('access_token'))
+    
+    return fetch(`${API_BASE}/api/companies/${companyId}/logo`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${getToken()}`,
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
       },
       body: formData,
     }).then(async response => {
+      console.log('🔧 API: Response status:', response.status)
       if (!response.ok) {
         const error = await response.json()
+        console.error('🔧 API: Upload failed:', error)
         throw new Error(error.message || 'Upload failed')
       }
-      return response.json()
+      const result = await response.json()
+      console.log('🔧 API: Upload successful:', result)
+      return result
+    }).catch(error => {
+      console.error('🔧 API: Fetch error:', error)
+      throw error
     })
   },
+
 
   // Enhanced deal features
   getSimilarDeals: async (dealId, params = {}) => {

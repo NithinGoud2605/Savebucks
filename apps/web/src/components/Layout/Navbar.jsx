@@ -36,7 +36,8 @@ import {
   ClockIcon,
   BoltIcon,
   HomeIcon,
-  GiftIcon
+  GiftIcon,
+  BuildingOfficeIcon
 } from '@heroicons/react/24/outline'
 import { 
   FireIcon, 
@@ -547,6 +548,19 @@ const Navbar = () => {
                   </NavigationMenu.Link>
                 </NavigationMenu.Item>
 
+                {/* Companies Link */}
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+            <Link
+              to="/companies"
+                      className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600 focus:bg-secondary-100 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-secondary-100"
+            >
+                      <BuildingOfficeIcon className="mr-2 h-4 w-4" />
+                      Companies
+            </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+
                 {/* Community Link */}
                 <NavigationMenu.Item>
                   <NavigationMenu.Link asChild>
@@ -745,6 +759,15 @@ const Navbar = () => {
                 >
                         <TagIcon className="h-5 w-5" />
                   <span>Coupons</span>
+                </Link>
+
+                <Link
+                  to="/companies"
+                  onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900"
+                >
+                        <BuildingOfficeIcon className="h-5 w-5" />
+                  <span>Companies</span>
                 </Link>
 
                 <Link

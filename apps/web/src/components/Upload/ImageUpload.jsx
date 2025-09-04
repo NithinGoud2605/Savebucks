@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react'
 import { PhotoIcon, XMarkIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
 import { api } from '../../lib/api'
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:4000'
+
 const ImageUpload = ({ 
   entityType, 
   entityId, 
@@ -35,7 +37,7 @@ const ImageUpload = ({
       }
       
       return true
-    }).slice(0, maxFiles - existingImages.length)
+    }).slice(0, entityType === 'company' ? 1 : maxFiles - existingImages.length)
 
     if (validFiles.length !== files.length) {
       onUploadError?.('Some files were rejected due to size or type restrictions.')
@@ -72,6 +74,9 @@ const ImageUpload = ({
     setUploadProgress({})
 
     try {
+      console.log('🚀 Starting upload for entity:', entityType, 'ID:', entityId)
+      console.log('📁 Files to upload:', selectedFiles.length)
+      
       let uploadResult
       
       switch (entityType) {
@@ -81,6 +86,16 @@ const ImageUpload = ({
         case 'coupon':
           uploadResult = await api.uploadCouponImages(entityId, selectedFiles)
           break
+        case 'company':
+          console.log('🏢 Company upload - maxFiles:', maxFiles, 'files:', selectedFiles.length)
+          // For company, we only upload logo images
+          if (maxFiles === 1) {
+            console.log('📤 Uploading company logo:', selectedFiles[0].name)
+            uploadResult = await api.uploadCompanyLogo(entityId, selectedFiles[0])
+          } else {
+            throw new Error('Company uploads only support single file (logo) uploads')
+          }
+          break
         case 'profile':
           // For profile, we typically upload one avatar at a time
           uploadResult = await api.uploadAvatar(entityId, selectedFiles[0])
@@ -88,6 +103,8 @@ const ImageUpload = ({
         default:
           throw new Error('Unsupported entity type')
       }
+
+      console.log('✅ Upload successful:', uploadResult)
 
       // Clear selections
       setSelectedFiles([])
@@ -98,7 +115,14 @@ const ImageUpload = ({
 
       onUploadComplete?.(uploadResult)
     } catch (error) {
-      console.error('Upload error:', error)
+      console.error('❌ Upload error:', error)
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        entityType,
+        entityId,
+        fileCount: selectedFiles.length
+      })
       onUploadError?.(error.message || 'Upload failed')
     } finally {
       setUploading(false)
@@ -114,7 +138,8 @@ const ImageUpload = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
-  const canUploadMore = existingImages.length + selectedFiles.length < maxFiles
+  // For company logos, always allow upload (replacement)
+  const canUploadMore = entityType === 'company' ? true : existingImages.length + selectedFiles.length < maxFiles
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -143,13 +168,15 @@ const ImageUpload = ({
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
               <PhotoIcon className={`w-8 h-8 mb-2 ${uploading ? 'text-secondary-400' : 'text-secondary-500'}`} />
               <p className="mb-2 text-sm text-secondary-500">
-                <span className="font-semibold">Click to upload</span> or drag and drop
+                <span className="font-semibold">
+                  {entityType === 'company' && existingImages.length > 0 ? 'Click to replace logo' : 'Click to upload'}
+                </span> or drag and drop
               </p>
               <p className="text-xs text-secondary-500">
                 PNG, JPG, WebP, GIF up to {formatFileSize(maxSize)}
               </p>
               <p className="text-xs text-secondary-500">
-                {maxFiles > 1 ? `Max ${maxFiles} files` : 'Single file'}
+                {entityType === 'company' ? 'Single file (replaces current logo)' : maxFiles > 1 ? `Max ${maxFiles} files` : 'Single file'}
               </p>
             </div>
           </div>

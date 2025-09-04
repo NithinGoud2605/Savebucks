@@ -351,7 +351,7 @@ export function DealComparison({ deals = [], onRemove }) {
             <ComparisonRow label="Category">
               {deals.map((deal) => (
                 <ComparisonCell key={deal.id}>
-                  <span className="text-sm">{deal.category || 'General'}</span>
+                  <span className="text-sm">{deal.category?.name || deal.category || 'General'}</span>
                 </ComparisonCell>
               ))}
             </ComparisonRow>

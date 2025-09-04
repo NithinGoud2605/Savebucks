@@ -274,7 +274,7 @@ export default function DealCard({ deal, variant = 'default', index = 0 }) {
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-xs font-semibold text-primary-600 bg-primary-50 px-3 py-1 rounded-full">
-                  {deal.category || 'Deals'}
+                  {deal.category?.name || deal.category || 'Deals'}
                 </span>
                 {deal.store && (
                   <span className="text-xs text-gray-500">

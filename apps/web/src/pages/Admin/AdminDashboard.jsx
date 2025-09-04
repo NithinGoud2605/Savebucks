@@ -208,6 +208,66 @@ const AdminDashboard = () => {
         </div>
       </div>
 
+      {/* Pending Companies */}
+      {dashboardData?.recentActivity?.pendingCompanies?.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-secondary-200">
+          <div className="p-6 border-b border-secondary-200">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-secondary-900">Pending Company Approvals</h3>
+              <span className="text-sm text-secondary-500">
+                {dashboardData.recentActivity.pendingCompanies.length} companies waiting
+              </span>
+            </div>
+          </div>
+          <div className="p-6">
+            <div className="space-y-4">
+              {dashboardData.recentActivity.pendingCompanies.slice(0, 5).map((company) => (
+                <div key={company.id} className="flex items-center justify-between py-3 border-b border-secondary-100 last:border-0">
+                  <div className="flex items-center space-x-3">
+                    {company.logo_url ? (
+                      <img
+                        src={company.logo_url}
+                        alt={company.name}
+                        className="w-10 h-10 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-secondary-200 rounded-lg flex items-center justify-center">
+                        <BuildingOfficeIcon className="w-5 h-5 text-secondary-400" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium text-secondary-900">{company.name}</p>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <span className="text-sm text-secondary-500">
+                          {company.company_categories?.name || 'Uncategorized'}
+                        </span>
+                        <span className="text-secondary-300">•</span>
+                        <span className="text-sm text-secondary-500">
+                          by {company.profiles?.handle || 'Unknown User'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="ml-4 flex flex-col items-end">
+                    <StatusBadge status="pending" />
+                    <span className="text-xs text-secondary-500 mt-1">
+                      {new Date(company.submitted_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {dashboardData.recentActivity.pendingCompanies.length > 5 && (
+              <div className="text-center pt-4">
+                <button className="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                  View All Pending Companies ({dashboardData.recentActivity.pendingCompanies.length})
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6">
         <h3 className="text-lg font-semibold text-secondary-900 mb-4">Quick Actions</h3>

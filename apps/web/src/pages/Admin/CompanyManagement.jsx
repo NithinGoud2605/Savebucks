@@ -3,24 +3,77 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
 import { Skeleton } from '../../components/Loader/Skeleton'
 import ImageUpload from '../../components/Upload/ImageUpload'
+import { useAuth } from '../../hooks/useAuth'
 import {
   BuildingOfficeIcon,
   PlusIcon,
   PencilIcon,
   CheckBadgeIcon,
-  PhotoIcon
+  PhotoIcon,
+  ClockIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  ChevronDownIcon,
+  XCircleIcon,
+  EyeIcon,
+  FlagIcon,
+  StarIcon,
+  CalendarIcon,
+  UserIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline'
 
 const CompanyManagement = () => {
+  const { user, isAdmin } = useAuth()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingCompany, setEditingCompany] = useState(null)
+  const [statusFilter, setStatusFilter] = useState('')
+  const [showApprovalQueue, setShowApprovalQueue] = useState(false)
+  const [selectedCompanyForReview, setSelectedCompanyForReview] = useState(null)
+  const [showAdditionalDetails, setShowAdditionalDetails] = useState(false)
+  const [reviewForm, setReviewForm] = useState({
+    action: 'approve',
+    notes: '',
+    priority: 'normal',
+    flags: []
+  })
   const [formData, setFormData] = useState({
     name: '',
-    slug: '',
     description: '',
-    website: '',
-    category: '',
-    is_verified: false
+    website_url: '',
+    category_id: '',
+    is_verified: false,
+    status: 'pending',
+    priority: 'normal',
+    flags: [],
+    headquarters: '',
+    founded_year: '',
+    employee_count: '',
+    revenue_range: '',
+    rating: '',
+    total_reviews: '',
+    review_notes: '',
+    // Additional company fields
+    social_media: { twitter: '', facebook: '', instagram: '', linkedin: '' },
+    contact_info: { phone: '', email: '', website: '' },
+    business_hours: { online: '', customer_service: '' },
+    payment_methods: [],
+    shipping_info: { free_shipping: '', standard: '', express: '' },
+    return_policy: '',
+    customer_service: '',
+    mobile_app_url: '',
+    app_store_rating: '',
+    play_store_rating: '',
+    trustpilot_rating: '',
+    trustpilot_reviews_count: '',
+    bbb_rating: '',
+    bbb_accreditation: false,
+    certifications: [],
+    awards: [],
+    meta_title: '',
+    meta_description: '',
+    meta_keywords: [],
+    canonical_url: ''
   })
 
   const queryClient = useQueryClient()
@@ -38,6 +91,8 @@ const CompanyManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] })
       setShowCreateModal(false)
       resetForm()
+      // Reload the page to show updated data
+      window.location.reload()
     }
   })
 
@@ -48,22 +103,59 @@ const CompanyManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] })
       setEditingCompany(null)
       resetForm()
+      setShowCreateModal(false)
+      // Reload the page to show updated data
+      window.location.reload()
     }
   })
 
   const resetForm = () => {
     setFormData({
       name: '',
-      slug: '',
       description: '',
-      website: '',
-      category: '',
-      is_verified: false
+      website_url: '',
+      category_id: '',
+      is_verified: false,
+      status: 'pending',
+      priority: 'normal',
+      flags: [],
+      headquarters: '',
+      founded_year: '',
+      employee_count: '',
+      revenue_range: '',
+      rating: '',
+      total_reviews: '',
+      review_notes: '',
+      // Additional company fields
+      social_media: { twitter: '', facebook: '', instagram: '', linkedin: '' },
+      contact_info: { phone: '', email: '', website: '' },
+      business_hours: { online: '', customer_service: '' },
+      payment_methods: [],
+      shipping_info: { free_shipping: '', standard: '', express: '' },
+      return_policy: '',
+      customer_service: '',
+      mobile_app_url: '',
+      app_store_rating: '',
+      play_store_rating: '',
+      trustpilot_rating: '',
+      trustpilot_reviews_count: '',
+      bbb_rating: '',
+      bbb_accreditation: false,
+      certifications: [],
+      awards: [],
+      meta_title: '',
+      meta_description: '',
+      meta_keywords: [],
+      canonical_url: ''
     })
+    setShowAdditionalDetails(false)
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    
+    console.log('🔧 Form submission data:', formData)
+    console.log('🔧 Category ID being sent:', formData.category_id)
     
     if (editingCompany) {
       updateCompanyMutation.mutate({ id: editingCompany.id, data: formData })
@@ -72,25 +164,93 @@ const CompanyManagement = () => {
     }
   }
 
+  // Helper function to get category ID from category name
+  const getCategoryIdFromName = (categoryName) => {
+    const categoryMap = {
+      'E-commerce': 1,
+      'Technology': 2,
+      'Restaurant': 3,
+      'Travel': 4,
+      'Fashion': 5,
+      'Health & Beauty': 6,
+      'Home & Garden': 7,
+      'Automotive': 8,
+      'Entertainment': 9,
+      'Education': 10,
+      'Finance': 11,
+      'Sports & Fitness': 12,
+      'Pets': 13,
+      'Books & Media': 14
+    }
+    return categoryMap[categoryName] || ''
+  }
+
   const startEdit = (company) => {
+    console.log('🔧 Starting edit for company:', company)
+    console.log('🔧 Company category:', company.category)
+    console.log('🔧 Mapped category_id:', getCategoryIdFromName(company.category))
+    
     setEditingCompany(company)
     setFormData({
       name: company.name || '',
-      slug: company.slug || '',
       description: company.description || '',
-      website: company.website || '',
-      category: company.category || '',
-      is_verified: company.is_verified || false
+      website_url: company.website_url || '',
+      category_id: company.category_id || getCategoryIdFromName(company.category) || '',
+      is_verified: company.is_verified || false,
+      status: company.status || 'pending',
+      priority: company.priority || 'normal',
+      flags: company.flags || [],
+      headquarters: company.headquarters || '',
+      founded_year: company.founded_year || '',
+      employee_count: company.employee_count || '',
+      revenue_range: company.revenue_range || '',
+      rating: company.rating || '',
+      total_reviews: company.total_reviews || '',
+      review_notes: company.review_notes || '',
+      // Additional company fields
+      social_media: company.social_media || { twitter: '', facebook: '', instagram: '', linkedin: '' },
+      contact_info: company.contact_info || { phone: '', email: '', website: '' },
+      business_hours: company.business_hours || { online: '', customer_service: '' },
+      payment_methods: company.payment_methods || [],
+      shipping_info: company.shipping_info || { free_shipping: '', standard: '', express: '' },
+      return_policy: company.return_policy || '',
+      customer_service: company.customer_service || '',
+      mobile_app_url: company.mobile_app_url || '',
+      app_store_rating: company.app_store_rating || '',
+      play_store_rating: company.play_store_rating || '',
+      trustpilot_rating: company.trustpilot_rating || '',
+      trustpilot_reviews_count: company.trustpilot_reviews_count || '',
+      bbb_rating: company.bbb_rating || '',
+      bbb_accreditation: company.bbb_accreditation || false,
+      certifications: company.certifications || [],
+      awards: company.awards || [],
+      meta_title: company.meta_title || '',
+      meta_description: company.meta_description || '',
+      meta_keywords: company.meta_keywords || [],
+      canonical_url: company.canonical_url || ''
     })
     setShowCreateModal(true)
   }
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }))
+    
+    // Handle nested object fields (e.g., contact_info.phone)
+    if (name.includes('.')) {
+      const [parentKey, childKey] = name.split('.')
+      setFormData(prev => ({
+        ...prev,
+        [parentKey]: {
+          ...prev[parentKey],
+          [childKey]: type === 'checkbox' ? checked : value
+        }
+      }))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }))
+    }
 
     // Auto-generate slug from name
     if (name === 'name') {
@@ -103,6 +263,119 @@ const CompanyManagement = () => {
     }
   }
 
+  const handleQuickApprove = async (companyId) => {
+    try {
+      console.log('Approving company:', companyId, 'User:', user)
+      const updateData = { 
+        status: 'approved',
+        is_verified: true,
+        reviewed_by: user?.id || 'admin',
+        reviewed_at: new Date().toISOString(),
+        review_notes: 'Quick approved by admin'
+      }
+      console.log('Sending update data:', updateData)
+      const result = await api.updateCompany(companyId, updateData)
+      console.log('Approval result:', result)
+      queryClient.invalidateQueries({ queryKey: ['companies'] })
+      // Show success feedback and reload
+      alert('Company approved successfully!')
+      window.location.reload()
+    } catch (err) {
+      console.error('Failed to approve company:', err)
+      alert(`Failed to approve company: ${err.message}`)
+    }
+  }
+
+  const handleQuickReject = async (companyId) => {
+    const notes = prompt('Rejection reason (optional):')
+    if (notes !== null) {
+      try {
+        console.log('Rejecting company:', companyId, 'with notes:', notes, 'User:', user)
+        const updateData = { 
+          status: 'rejected',
+          review_notes: notes || 'Rejected by admin',
+          reviewed_by: user?.id || 'admin',
+          reviewed_at: new Date().toISOString()
+        }
+        console.log('Sending reject data:', updateData)
+        const result = await api.updateCompany(companyId, updateData)
+        console.log('Rejection result:', result)
+        queryClient.invalidateQueries({ queryKey: ['companies'] })
+        // Show success feedback and reload
+        alert('Company rejected successfully!')
+        window.location.reload()
+      } catch (err) {
+        console.error('Failed to reject company:', err)
+        alert(`Failed to reject company: ${err.message}`)
+      }
+    }
+  }
+
+  // Enhanced approval workflow functions
+  const openReviewModal = (company) => {
+    setSelectedCompanyForReview(company)
+    setReviewForm({
+      action: 'approve',
+      notes: company.review_notes || '',
+      priority: company.priority || 'normal',
+      flags: company.flags || []
+    })
+  }
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault()
+    if (!selectedCompanyForReview) return
+
+    try {
+      const updateData = {
+        status: reviewForm.action,
+        review_notes: reviewForm.notes,
+        priority: reviewForm.priority,
+        flags: reviewForm.flags,
+        reviewed_by: user?.id || 'admin',
+        reviewed_at: new Date().toISOString()
+      }
+
+      if (reviewForm.action === 'approve') {
+        updateData.is_verified = true
+      }
+
+      await api.updateCompany(selectedCompanyForReview.id, updateData)
+      queryClient.invalidateQueries({ queryKey: ['companies'] })
+      setSelectedCompanyForReview(null)
+      setReviewForm({ action: 'approve', notes: '', priority: 'normal', flags: [] })
+      // Reload the page to show updated data
+      window.location.reload()
+    } catch (err) {
+      console.error('Failed to review company:', err)
+    }
+  }
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'high': return 'text-red-600 bg-red-100'
+      case 'medium': return 'text-orange-600 bg-orange-100'
+      case 'low': return 'text-blue-600 bg-blue-100'
+      default: return 'text-gray-600 bg-gray-100'
+    }
+  }
+
+  const getDaysPending = (submittedAt) => {
+    const days = Math.floor((new Date() - new Date(submittedAt)) / (1000 * 60 * 60 * 24))
+    if (days === 0) return 'Today'
+    if (days === 1) return '1 day ago'
+    return `${days} days ago`
+  }
+
+  const getUrgencyIndicator = (submittedAt, priority) => {
+    const days = Math.floor((new Date() - new Date(submittedAt)) / (1000 * 60 * 60 * 24))
+    
+    if (priority === 'high' && days >= 2) return 'urgent'
+    if (priority === 'medium' && days >= 5) return 'warning'
+    if (days >= 7) return 'overdue'
+    return 'normal'
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -112,6 +385,16 @@ const CompanyManagement = () => {
           <p className="text-secondary-600 mt-1">
             Manage companies and merchants on the platform
           </p>
+          {/* Debug info */}
+          <div className="text-xs text-gray-500 mt-2">
+            User: {user?.id || 'Not authenticated'} | Admin: {isAdmin ? 'Yes' : 'No'}
+            <button 
+              onClick={() => console.log('Current state:', { user, isAdmin, companies: companies?.length })}
+              className="ml-2 text-blue-500 hover:text-blue-700"
+            >
+              Debug
+            </button>
+          </div>
         </div>
 
         <button
@@ -122,6 +405,154 @@ const CompanyManagement = () => {
           <span>Add Company</span>
         </button>
       </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4">
+        <div className="flex items-center space-x-4">
+          <label className="text-sm font-medium text-secondary-700">Filter by Status:</label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          >
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          
+          <button
+            onClick={() => setStatusFilter('')}
+            className="text-sm text-secondary-600 hover:text-secondary-800"
+          >
+            Clear Filters
+          </button>
+        </div>
+      </div>
+
+      {/* Summary */}
+      {companies && companies.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-secondary-600">
+              Showing {companies.filter(company => !statusFilter || company.status === statusFilter).length} of {companies.length} companies
+            </div>
+            <div className="flex items-center space-x-4 text-sm">
+              <span className="text-yellow-600">
+                {companies.filter(c => c.status === 'pending').length} Pending
+              </span>
+              <span className="text-green-600">
+                {companies.filter(c => c.status === 'approved').length} Approved
+              </span>
+              <span className="text-red-600">
+                {companies.filter(c => c.status === 'rejected').length} Rejected
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Approval Queue */}
+      {companies && companies.filter(c => c.status === 'pending').length > 0 && (
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <ClockIcon className="w-6 h-6 text-yellow-600" />
+              <h3 className="text-lg font-semibold text-yellow-800">Approval Queue</h3>
+              <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm font-medium">
+                {companies.filter(c => c.status === 'pending').length} pending
+              </span>
+            </div>
+            <button
+              onClick={() => setShowApprovalQueue(!showApprovalQueue)}
+              className="text-yellow-700 hover:text-yellow-900 text-sm font-medium"
+            >
+              {showApprovalQueue ? 'Hide Queue' : 'Show Queue'}
+            </button>
+          </div>
+
+          {showApprovalQueue && (
+            <div className="space-y-3">
+              {companies
+                .filter(c => c.status === 'pending')
+                .sort((a, b) => {
+                  // Sort by priority and then by submission date
+                  const priorityOrder = { high: 3, medium: 2, low: 1, normal: 0 }
+                  const aPriority = priorityOrder[a.priority || 'normal']
+                  const bPriority = priorityOrder[b.priority || 'normal']
+                  
+                  if (aPriority !== bPriority) return bPriority - aPriority
+                  return new Date(a.submitted_at) - new Date(b.submitted_at)
+                })
+                .map((company) => {
+                  const urgency = getUrgencyIndicator(company.submitted_at, company.priority)
+                  return (
+                    <div key={company.id} className="bg-white rounded-lg border border-yellow-200 p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h4 className="font-medium text-gray-900">{company.name}</h4>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(company.priority || 'normal')}`}>
+                              {company.priority || 'normal'}
+                            </span>
+                            {urgency !== 'normal' && (
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                urgency === 'urgent' ? 'bg-red-100 text-red-800' :
+                                urgency === 'warning' ? 'bg-orange-100 text-orange-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {urgency === 'urgent' ? 'Urgent' : urgency === 'warning' ? 'Warning' : 'Overdue'}
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+                            <span className="flex items-center space-x-1">
+                              <CalendarIcon className="w-4 h-4" />
+                              <span>{getDaysPending(company.submitted_at)}</span>
+                            </span>
+                            {company.company_categories && (
+                              <span>Category: {company.company_categories.name}</span>
+                            )}
+                            {company.headquarters && (
+                              <span>Location: {company.headquarters}</span>
+                            )}
+                          </div>
+
+                          {company.description && (
+                            <p className="text-sm text-gray-700 mb-3 line-clamp-2">
+                              {company.description}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center space-x-2 ml-4">
+                          <button
+                            onClick={() => openReviewModal(company)}
+                            className="flex items-center space-x-1 px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm"
+                          >
+                            <EyeIcon className="w-4 h-4" />
+                            <span>Review</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              console.log('Quick approve clicked for company:', company.id, company.name)
+                              handleQuickApprove(company.id)
+                            }}
+                            className="flex items-center space-x-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                          >
+                            <CheckCircleIcon className="w-4 h-4" />
+                            <span>Quick Approve</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Companies List */}
       <div className="bg-white rounded-lg shadow-sm border border-secondary-200">
@@ -143,7 +574,9 @@ const CompanyManagement = () => {
           </div>
         ) : companies && companies.length > 0 ? (
           <div className="divide-y divide-secondary-200">
-            {companies.map((company) => (
+            {companies
+              .filter(company => !statusFilter || company.status === statusFilter)
+              .map((company) => (
               <div key={company.id} className="p-6">
                 <div className="flex items-start space-x-4">
                   {/* Logo */}
@@ -195,12 +628,102 @@ const CompanyManagement = () => {
                               Website
                             </a>
                           )}
-                          {company.category && (
-                            <span>Category: {company.category}</span>
+                          {company.company_categories && (
+                            <span>Category: {company.company_categories.name}</span>
                           )}
                           <span>
                             Created: {new Date(company.created_at).toLocaleDateString()}
                           </span>
+                        </div>
+
+                        {/* Review History */}
+                        {(company.review_notes || company.reviewed_at || company.flags?.length > 0) && (
+                          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                            <h5 className="text-sm font-medium text-gray-700 mb-2">Review History</h5>
+                            <div className="space-y-2 text-sm">
+                              {company.review_notes && (
+                                <div className="flex items-start space-x-2">
+                                  <ChatBubbleLeftRightIcon className="w-4 h-4 text-gray-500 mt-0.5" />
+                                  <span className="text-gray-600">{company.review_notes}</span>
+                                </div>
+                              )}
+                              {company.reviewed_at && (
+                                <div className="flex items-center space-x-2 text-gray-500">
+                                  <CalendarIcon className="w-4 h-4" />
+                                  <span>Reviewed: {new Date(company.reviewed_at).toLocaleDateString()}</span>
+                                </div>
+                              )}
+                              {company.flags && company.flags.length > 0 && (
+                                <div className="flex items-center space-x-2">
+                                  <FlagIcon className="w-4 h-4 text-gray-500" />
+                                  <div className="flex flex-wrap gap-1">
+                                    {company.flags.map((flag, index) => (
+                                      <span key={index} className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs">
+                                        {flag.replace('_', ' ')}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Status and Quick Actions */}
+                        <div className="flex items-center space-x-4 mt-2">
+                          <div className="flex items-center space-x-2">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              company.status === 'approved' 
+                                ? 'bg-green-100 text-green-800' 
+                                : company.status === 'rejected'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {company.status === 'approved' ? 'Approved' : 
+                               company.status === 'rejected' ? 'Rejected' : 'Pending'}
+                            </span>
+                            
+                            {company.status === 'pending' && company.priority && (
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(company.priority)}`}>
+                                {company.priority}
+                              </span>
+                            )}
+                            
+                            {company.status === 'pending' && (
+                              <span className="text-xs text-gray-500">
+                                {getDaysPending(company.submitted_at)}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {company.status === 'pending' && (
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => openReviewModal(company)}
+                                className="text-xs bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700 transition-colors"
+                              >
+                                Review
+                              </button>
+                              <button
+                                onClick={() => {
+                                  console.log('Quick approve clicked for company:', company.id, company.name)
+                                  handleQuickApprove(company.id)
+                                }}
+                                className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition-colors"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => {
+                                  console.log('Quick reject clicked for company:', company.id, company.name)
+                                  handleQuickReject(company.id)
+                                }}
+                                className="text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 transition-colors"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -250,7 +773,7 @@ const CompanyManagement = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              {/* Basic Info */}
+              {/* Essential Fields Only */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-secondary-700 mb-2">
@@ -263,21 +786,37 @@ const CompanyManagement = () => {
                     onChange={handleInputChange}
                     required
                     className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Enter company name"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-secondary-700 mb-2">
-                    Slug *
+                    Category *
                   </label>
-                  <input
-                    type="text"
-                    name="slug"
-                    value={formData.slug}
+                  <select
+                    name="category_id"
+                    value={formData.category_id}
                     onChange={handleInputChange}
                     required
                     className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  />
+                  >
+                    <option value="">Select a category</option>
+                    <option value="1">E-commerce</option>
+                    <option value="2">Technology</option>
+                    <option value="3">Restaurant</option>
+                    <option value="4">Fashion</option>
+                    <option value="5">Home & Garden</option>
+                    <option value="6">Health & Beauty</option>
+                    <option value="7">Automotive</option>
+                    <option value="8">Travel</option>
+                    <option value="9">Entertainment</option>
+                    <option value="10">Sports</option>
+                    <option value="11">Education</option>
+                    <option value="12">Finance</option>
+                    <option value="13">Real Estate</option>
+                    <option value="14">Other</option>
+                  </select>
                 </div>
               </div>
 
@@ -291,68 +830,441 @@ const CompanyManagement = () => {
                   onChange={handleInputChange}
                   rows={3}
                   className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Brief description of the company"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-secondary-700 mb-2">
-                    Website
+                    Website URL
                   </label>
                   <input
                     type="url"
-                    name="website"
-                    value={formData.website}
+                    name="website_url"
+                    value={formData.website_url}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="https://example.com"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-secondary-700 mb-2">
-                    Category
+                    Headquarters
                   </label>
                   <input
                     type="text"
-                    name="category"
-                    value={formData.category}
+                    name="headquarters"
+                    value={formData.headquarters}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="City, State, Country"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="is_verified"
-                  checked={formData.is_verified}
-                  onChange={handleInputChange}
-                  className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
-                />
-                <label className="ml-2 text-sm text-secondary-700">
-                  Verified Company
-                </label>
+              {/* Admin Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    Status
+                  </label>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    Priority
+                  </label>
+                  <select
+                    name="priority"
+                    value={formData.priority}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="low">Low</option>
+                    <option value="normal">Normal</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="is_verified"
+                      checked={formData.is_verified}
+                      onChange={handleInputChange}
+                      className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <label className="ml-2 text-sm text-secondary-700">
+                      Verified Company
+                    </label>
+                  </div>
+                </div>
               </div>
 
-              {/* Logo Upload (for existing companies) */}
-              {editingCompany && (
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  Review Notes
+                </label>
+                <textarea
+                  name="review_notes"
+                  value={formData.review_notes}
+                  onChange={handleInputChange}
+                  rows={2}
+                  placeholder="Admin notes about this company..."
+                  className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+
+              {/* Additional Details Toggle */}
+              <div className="border-t border-secondary-200 pt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowAdditionalDetails(!showAdditionalDetails)}
+                  className="flex items-center justify-between w-full p-4 bg-secondary-50 rounded-lg hover:bg-secondary-100 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                      <PlusIcon className="w-4 h-4 text-primary-600" />
+                    </div>
+                    <div className="text-left">
+                      <h4 className="text-sm font-medium text-secondary-900">Additional Company Details</h4>
+                      <p className="text-xs text-secondary-600">Add more detailed information about the company</p>
+                    </div>
+                  </div>
+                  <ChevronDownIcon 
+                    className={`w-5 h-5 text-secondary-500 transition-transform duration-200 ${
+                      showAdditionalDetails ? 'rotate-180' : ''
+                    }`} 
+                  />
+                </button>
+              </div>
+
+              {/* Additional Details Section */}
+              {showAdditionalDetails && (
+                <div className="space-y-6 bg-secondary-50 p-6 rounded-lg border border-secondary-200">
+                  <h4 className="text-lg font-medium text-secondary-900 border-b pb-2">Company Details</h4>
+                  
+                  {/* Company Information */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Founded Year
+                      </label>
+                      <input
+                        type="number"
+                        name="founded_year"
+                        value={formData.founded_year}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="e.g., 1994"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Employee Count
+                      </label>
+                      <input
+                        type="text"
+                        name="employee_count"
+                        value={formData.employee_count}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="e.g., 1000+"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Revenue Range
+                      </label>
+                      <input
+                        type="text"
+                        name="revenue_range"
+                        value={formData.revenue_range}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="e.g., $100M+"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Company Rating
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="5"
+                        name="rating"
+                        value={formData.rating}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="e.g., 4.5"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                      Total Reviews
+                    </label>
+                    <input
+                      type="number"
+                      name="total_reviews"
+                      value={formData.total_reviews}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      placeholder="e.g., 1000"
+                    />
+                  </div>
+
+                  {/* Contact Information */}
+                  <div className="border-t border-secondary-200 pt-6">
+                    <h5 className="text-md font-medium text-secondary-900 mb-4">Contact Information</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                          Phone Number
+                        </label>
+                        <input
+                          type="tel"
+                          name="contact_info.phone"
+                          value={formData.contact_info?.phone || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          placeholder="+1 (555) 123-4567"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                          Email Address
+                        </label>
+                        <input
+                          type="email"
+                          name="contact_info.email"
+                          value={formData.contact_info?.email || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          placeholder="contact@company.com"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Business Information */}
+                  <div className="border-t border-secondary-200 pt-6">
+                    <h5 className="text-md font-medium text-secondary-900 mb-4">Business Information</h5>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                          Return Policy
+                        </label>
+                        <textarea
+                          name="return_policy"
+                          value={formData.return_policy}
+                          onChange={handleInputChange}
+                          rows={2}
+                          className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          placeholder="Company's return policy details..."
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                          Customer Service
+                        </label>
+                        <textarea
+                          name="customer_service"
+                          value={formData.customer_service}
+                          onChange={handleInputChange}
+                          rows={2}
+                          className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          placeholder="Customer service information..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ratings & Reviews */}
+                  <div className="border-t border-secondary-200 pt-6">
+                    <h5 className="text-md font-medium text-secondary-900 mb-4">Ratings & Reviews</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                          App Store Rating
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="5"
+                          name="app_store_rating"
+                          value={formData.app_store_rating}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          placeholder="e.g., 4.2"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                          Play Store Rating
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="5"
+                          name="play_store_rating"
+                          value={formData.play_store_rating}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          placeholder="e.g., 4.3"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                          Trustpilot Rating
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="5"
+                          name="trustpilot_rating"
+                          value={formData.trustpilot_rating}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          placeholder="e.g., 4.1"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                          Trustpilot Reviews Count
+                        </label>
+                        <input
+                          type="number"
+                          name="trustpilot_reviews_count"
+                          value={formData.trustpilot_reviews_count}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          placeholder="e.g., 500"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Mobile App URL
+                      </label>
+                      <input
+                        type="url"
+                        name="mobile_app_url"
+                        value={formData.mobile_app_url}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="https://apps.apple.com/app/company-app"
+                      />
+                    </div>
+                  </div>
+
+                  {/* SEO & Metadata */}
+                  <div className="border-t border-secondary-200 pt-6">
+                    <h5 className="text-md font-medium text-secondary-900 mb-4">SEO & Metadata</h5>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                          Meta Title
+                        </label>
+                        <input
+                          type="text"
+                          name="meta_title"
+                          value={formData.meta_title}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          placeholder="SEO title for search engines"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                          Meta Description
+                        </label>
+                        <textarea
+                          name="meta_description"
+                          value={formData.meta_description}
+                          onChange={handleInputChange}
+                          rows={2}
+                          className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          placeholder="SEO description for search engines"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                          Canonical URL
+                        </label>
+                        <input
+                          type="url"
+                          name="canonical_url"
+                          value={formData.canonical_url}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          placeholder="https://example.com/canonical-page"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Company Logo Section */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-medium text-secondary-900 border-b pb-2">Company Logo</h4>
+                
+                {/* Logo Upload */}
                 <div>
                   <label className="block text-sm font-medium text-secondary-700 mb-2">
                     Company Logo
                   </label>
-                  <ImageUpload
-                    entityType="company"
-                    entityId={editingCompany.id}
-                    maxFiles={1}
-                    existingImages={editingCompany.logo_url ? [{ url: editingCompany.logo_url }] : []}
-                    onUploadComplete={() => {
-                      queryClient.invalidateQueries({ queryKey: ['companies'] })
-                    }}
-                    className="max-w-md"
-                  />
+                  {editingCompany ? (
+                    <ImageUpload
+                      entityType="company"
+                      entityId={editingCompany.id}
+                      maxFiles={1}
+                      existingImages={editingCompany.logo_url ? [{ url: editingCompany.logo_url }] : []}
+                      onUploadComplete={() => {
+                        queryClient.invalidateQueries({ queryKey: ['companies'] })
+                        // Show success message
+                        alert('Logo updated successfully!')
+                      }}
+                      onUploadError={(error) => {
+                        alert(`Logo upload failed: ${error}`)
+                      }}
+                      className="max-w-md"
+                    />
+                  ) : (
+                    <div className="max-w-md p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                      <p className="text-gray-500 text-sm">
+                        Logo upload will be available after creating the company
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
 
               {/* Actions */}
               <div className="flex justify-end space-x-3 pt-6 border-t border-secondary-200">
@@ -381,6 +1293,184 @@ const CompanyManagement = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Review Modal */}
+      {selectedCompanyForReview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-secondary-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-secondary-900">
+                  Review Company: {selectedCompanyForReview.name}
+                </h3>
+                <button
+                  onClick={() => setSelectedCompanyForReview(null)}
+                  className="text-secondary-400 hover:text-secondary-600"
+                >
+                  <XCircleIcon className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Company Information */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-medium text-secondary-900 border-b pb-2">Company Details</h4>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-secondary-700">Company Name</label>
+                      <p className="text-secondary-900">{selectedCompanyForReview.name}</p>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium text-secondary-700">Slug</label>
+                      <p className="text-secondary-900">/{selectedCompanyForReview.slug}</p>
+                    </div>
+                    
+                    {selectedCompanyForReview.description && (
+                      <div>
+                        <label className="text-sm font-medium text-secondary-700">Description</label>
+                        <p className="text-secondary-900">{selectedCompanyForReview.description}</p>
+                      </div>
+                    )}
+                    
+                    {selectedCompanyForReview.website && (
+                      <div>
+                        <label className="text-sm font-medium text-secondary-700">Website</label>
+                        <a 
+                          href={selectedCompanyForReview.website} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary-600 hover:text-primary-800"
+                        >
+                          {selectedCompanyForReview.website}
+                        </a>
+                      </div>
+                    )}
+                    
+                    {selectedCompanyForReview.headquarters && (
+                      <div>
+                        <label className="text-sm font-medium text-secondary-700">Headquarters</label>
+                        <p className="text-secondary-900">{selectedCompanyForReview.headquarters}</p>
+                      </div>
+                    )}
+                    
+                    {selectedCompanyForReview.company_categories && (
+                      <div>
+                        <label className="text-sm font-medium text-secondary-700">Category</label>
+                        <p className="text-secondary-900">{selectedCompanyForReview.company_categories.name}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Review Form */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-medium text-secondary-900 border-b pb-2">Review Decision</h4>
+                  
+                  <form onSubmit={handleReviewSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Action *
+                      </label>
+                      <select
+                        value={reviewForm.action}
+                        onChange={(e) => setReviewForm(prev => ({ ...prev, action: e.target.value }))}
+                        className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        required
+                      >
+                        <option value="approve">Approve Company</option>
+                        <option value="reject">Reject Company</option>
+                        <option value="request_changes">Request Changes</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Priority Level
+                      </label>
+                      <select
+                        value={reviewForm.priority}
+                        onChange={(e) => setReviewForm(prev => ({ ...prev, priority: e.target.value }))}
+                        className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      >
+                        <option value="low">Low</option>
+                        <option value="normal">Normal</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Flags
+                      </label>
+                      <div className="space-y-2">
+                        {['suspicious', 'incomplete', 'duplicate', 'spam'].map((flag) => (
+                          <label key={flag} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={reviewForm.flags.includes(flag)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setReviewForm(prev => ({ ...prev, flags: [...prev.flags, flag] }))
+                                } else {
+                                  setReviewForm(prev => ({ ...prev, flags: prev.flags.filter(f => f !== flag) }))
+                                }
+                              }}
+                              className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+                            />
+                            <span className="ml-2 text-sm text-secondary-700 capitalize">{flag}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Review Notes *
+                      </label>
+                      <textarea
+                        value={reviewForm.notes}
+                        onChange={(e) => setReviewForm(prev => ({ ...prev, notes: e.target.value }))}
+                        rows="4"
+                        placeholder="Provide detailed notes about your decision..."
+                        className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        required
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-end space-x-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCompanyForReview(null)}
+                        className="px-4 py-2 text-secondary-700 border border-secondary-300 rounded-lg hover:bg-secondary-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className={`px-4 py-2 text-white rounded-lg transition-colors ${
+                          reviewForm.action === 'approve' 
+                            ? 'bg-green-600 hover:bg-green-700' 
+                            : reviewForm.action === 'reject'
+                            ? 'bg-red-600 hover:bg-red-700'
+                            : 'bg-yellow-600 hover:bg-yellow-700'
+                        }`}
+                      >
+                        {reviewForm.action === 'approve' ? 'Approve Company' : 
+                         reviewForm.action === 'reject' ? 'Reject Company' : 'Request Changes'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

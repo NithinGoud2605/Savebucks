@@ -107,7 +107,7 @@ const CouponCard = ({ coupon, index }) => {
                 {coupon.store || coupon.company?.name || 'Store'}
               </h3>
               <p className="text-sm text-gray-500">
-                {coupon.category || 'All Categories'}
+                {coupon.category?.name || coupon.category || 'All Categories'}
               </p>
             </div>
           </div>

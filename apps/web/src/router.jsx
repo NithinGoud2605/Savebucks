@@ -20,6 +20,8 @@ const CategoryPage = React.lazy(() => import('./pages/CategoryPage'))
 const CategoriesPage = React.lazy(() => import('./pages/CategoriesPage'))
 const CouponsPage = React.lazy(() => import('./pages/CouponsPage'))
 const ModernCouponsPage = React.lazy(() => import('./pages/ModernCouponsPage'))
+const CompanyPage = React.lazy(() => import('./pages/CompanyPage'))
+const CompaniesPage = React.lazy(() => import('./pages/CompaniesPage'))
 
 const About = React.lazy(() => import('./pages/About'))
 const Privacy = React.lazy(() => import('./pages/Privacy'))
@@ -305,6 +307,22 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <ModernCouponsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'company/:slug',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <CompanyPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'companies',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <CompaniesPage />
           </Suspense>
         ),
       },
