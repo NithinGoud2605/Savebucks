@@ -97,3 +97,4 @@ testConnection().then(() => {
   console.log('\n--- Starting Migration ---\n');
   return applyMigration();
 });
+
