@@ -44,7 +44,7 @@ const emptyStateConfigs = {
     description: "There are no coupons matching your criteria right now. New coupons are added daily!",
     action: {
       label: "View All Coupons",
-      href: "/coupons",
+      href: "/companies",
       variant: "primary"
     },
     illustration: "coupon"

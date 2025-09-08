@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -26,19 +26,24 @@ import {
   ChevronRightIcon,
   ArrowTopRightOnSquareIcon,
   PlayIcon,
-  PhotoIcon
+  PhotoIcon,
+  BookmarkIcon
 } from '@heroicons/react/24/outline'
+import { BookmarkCheck } from 'lucide-react'
 import { Container } from '../components/Layout/Container'
 import { DealCard } from '../components/Deal/DealCard'
 import { Skeleton } from '../components/Loader/Skeleton'
 import { api } from '../lib/api'
 import { setPageMeta } from '../lib/head'
+import { useAuth } from '../hooks/useAuth'
 import { formatPrice, dateAgo, formatCompactNumber } from '../lib/format'
 
 const CompanyPage = () => {
   const { slug } = useParams()
   const [activeTab, setActiveTab] = useState('overview')
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [couponSearch, setCouponSearch] = useState('')
+  const [couponTypeFilter, setCouponTypeFilter] = useState('all')
 
   // Fetch comprehensive company data
   const { data: companyData, isLoading, error } = useQuery({
@@ -214,37 +219,79 @@ const CompanyPage = () => {
     </div>
   )
 
-  const renderCoupons = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-semibold text-secondary-900">
-          All Coupons ({coupons.length})
-        </h3>
-        <div className="flex items-center space-x-2 text-sm text-secondary-600">
-          <CursorArrowRaysIcon className="w-4 h-4" />
-          <span>{formatCompactNumber(stats.total_clicks)} total clicks</span>
-        </div>
-      </div>
+  const renderCoupons = () => {
+    // Filter coupons based on search and type
+    const filteredCoupons = coupons.filter(coupon => {
+      const matchesSearch = !couponSearch || 
+        coupon.title.toLowerCase().includes(couponSearch.toLowerCase()) ||
+        coupon.description?.toLowerCase().includes(couponSearch.toLowerCase()) ||
+        coupon.coupon_code?.toLowerCase().includes(couponSearch.toLowerCase())
       
-      {coupons.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {coupons.map((coupon) => (
-            <CouponCard key={coupon.id} coupon={coupon} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <GiftIcon className="w-16 h-16 text-secondary-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-secondary-900 mb-2">
-            No Coupons Available
+      const matchesType = couponTypeFilter === 'all' || coupon.coupon_type === couponTypeFilter
+      
+      return matchesSearch && matchesType
+    })
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-semibold text-secondary-900">
+            All Coupons ({filteredCoupons.length})
           </h3>
-          <p className="text-secondary-600">
-            This company doesn't have any active coupons at the moment.
-          </p>
+          <div className="flex items-center space-x-2 text-sm text-secondary-600">
+            <CursorArrowRaysIcon className="w-4 h-4" />
+            <span>{formatCompactNumber(stats.total_clicks)} total clicks</span>
+          </div>
         </div>
-      )}
-    </div>
-  )
+
+        {/* Search and Filter Controls */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Search coupons..."
+              value={couponSearch}
+              onChange={(e) => setCouponSearch(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+          <div className="sm:w-48">
+            <select
+              value={couponTypeFilter}
+              onChange={(e) => setCouponTypeFilter(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option value="all">All Types</option>
+              <option value="percentage">Percentage Off</option>
+              <option value="fixed_amount">Fixed Amount</option>
+              <option value="free_shipping">Free Shipping</option>
+            </select>
+          </div>
+        </div>
+        
+        {filteredCoupons.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCoupons.map((coupon) => (
+              <CouponCard key={coupon.id} coupon={coupon} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <GiftIcon className="w-16 h-16 text-secondary-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-secondary-900 mb-2">
+              {coupons.length === 0 ? 'No Coupons Available' : 'No Coupons Match Your Search'}
+            </h3>
+            <p className="text-secondary-600">
+              {coupons.length === 0 
+                ? "This company doesn't have any active coupons at the moment."
+                : "Try adjusting your search terms or filters."
+              }
+            </p>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   const renderAbout = () => (
     <div className="space-y-8">
@@ -627,6 +674,10 @@ const CompanyPage = () => {
 // Coupon Card Component
 const CouponCard = ({ coupon }) => {
   const [isCopied, setIsCopied] = useState(false)
+  const [isSaved, setIsSaved] = useState(coupon.is_saved || false)
+  const [isSaving, setIsSaving] = useState(false)
+  const { user } = useAuth()
+  const navigate = useNavigate()
 
   const handleCopyCode = async () => {
     if (!coupon.coupon_code) return
@@ -635,8 +686,48 @@ const CouponCard = ({ coupon }) => {
       await navigator.clipboard.writeText(coupon.coupon_code)
       setIsCopied(true)
       setTimeout(() => setIsCopied(false), 2000)
+      
+      // Track coupon click when copying code
+      await handleCouponClick('coupon_copy_code')
     } catch (err) {
       console.error('Failed to copy code:', err)
+    }
+  }
+
+  const handleSave = async () => {
+    if (!user) {
+      navigate('/signin')
+      return
+    }
+
+    if (isSaving) return
+
+    setIsSaving(true)
+    try {
+      if (isSaved) {
+        await api.unsaveCoupon(coupon.id)
+        setIsSaved(false)
+        console.log('Coupon unsaved successfully')
+      } else {
+        await api.saveCoupon(coupon.id)
+        setIsSaved(true)
+        console.log('Coupon saved successfully')
+      }
+    } catch (error) {
+      console.error('Failed to save/unsave coupon:', error)
+      alert(`Failed to ${isSaved ? 'unsave' : 'save'} coupon: ${error.message}`)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Track coupon click
+  const handleCouponClick = async (source = 'coupon_card') => {
+    try {
+      await api.trackCouponClick(coupon.id, source)
+    } catch (error) {
+      console.error('Failed to track coupon click:', error)
+      // Don't prevent action if tracking fails
     }
   }
 
@@ -677,9 +768,27 @@ const CouponCard = ({ coupon }) => {
             </span>
           </div>
           
-          {coupon.is_featured && (
-            <SparklesIcon className="w-5 h-5 text-yellow-500" />
-          )}
+          <div className="flex items-center space-x-2">
+            {coupon.is_featured && (
+              <SparklesIcon className="w-5 h-5 text-yellow-500" />
+            )}
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className={`p-2 rounded-lg border transition-all ${
+                isSaved
+                  ? 'bg-primary-50 border-primary-200 text-primary-600'
+                  : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+              } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={isSaved ? 'Remove from saved items' : 'Save coupon'}
+            >
+              {isSaved ? (
+                <BookmarkCheck className="w-4 h-4 fill-current" />
+              ) : (
+                <BookmarkIcon className="w-4 h-4" />
+              )}
+            </button>
+          </div>
         </div>
 
         <h3 className="text-lg font-semibold text-secondary-900 mb-2 line-clamp-2">

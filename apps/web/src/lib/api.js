@@ -219,7 +219,50 @@ export const api = {
   },
   
   getDeal: (id) => apiRequest(`/api/deals/${id}`),
+  getRelatedDeals: (categoryId, excludeId) => apiRequest(`/api/deals?category_id=${categoryId}&exclude=${excludeId}&limit=6&sort=popular`),
   getDealComments: (id) => apiRequest(`/api/deals/${id}/comments`),
+  
+  // Reviews
+  getDealReviews: (dealId, options = {}) => {
+    const params = new URLSearchParams()
+    if (options.sort) params.append('sort', options.sort)
+    if (options.limit) params.append('limit', options.limit)
+    return apiRequest(`/api/deals/${dealId}/reviews?${params}`)
+  },
+  submitDealReview: (reviewData) => apiRequest('/api/reviews', {
+    method: 'POST',
+    body: reviewData,
+  }),
+  voteOnReview: (reviewId, voteType) => apiRequest(`/api/reviews/${reviewId}/vote`, {
+    method: 'POST',
+    body: { vote_type: voteType },
+  }),
+
+  // Saved Items
+  getSavedItems: (type = 'all') => apiRequest(`/api/saved-items?type=${type}`),
+  
+  saveDeal: (dealId) => apiRequest(`/api/saved-items/deals/${dealId}`, {
+    method: 'POST',
+  }),
+  
+  saveCoupon: (couponId) => apiRequest(`/api/saved-items/coupons/${couponId}`, {
+    method: 'POST',
+  }),
+  
+  unsaveDeal: (dealId) => apiRequest(`/api/saved-items/deals/${dealId}`, {
+    method: 'DELETE',
+  }),
+  
+  unsaveCoupon: (couponId) => apiRequest(`/api/saved-items/coupons/${couponId}`, {
+    method: 'DELETE',
+  }),
+  
+  checkSavedItems: (dealIds = [], couponIds = []) => {
+    const params = new URLSearchParams()
+    if (dealIds.length > 0) params.append('deal_ids', dealIds.join(','))
+    if (couponIds.length > 0) params.append('coupon_ids', couponIds.join(','))
+    return apiRequest(`/api/saved-items/check?${params}`)
+  },
   
   createDeal: (deal) => apiRequest('/api/deals', {
     method: 'POST',
@@ -774,6 +817,25 @@ export const api = {
     const params = status ? `?status=${status}` : ''
     return apiAuth(`/api/admin/deals${params}`)
   },
+
+  // Admin - advanced list with search/pagination
+  listAdminDeals: ({ status = 'approved', search = '', page = 1, limit = 20 } = {}) => {
+    const sp = new URLSearchParams()
+    if (status) sp.append('status', status)
+    if (search) sp.append('search', search)
+    if (page) sp.append('page', page.toString())
+    if (limit) sp.append('limit', limit.toString())
+    return apiAuth(`/api/admin/deals?${sp.toString()}`)
+  },
+
+  listAdminCoupons: ({ status = 'approved', search = '', page = 1, limit = 20 } = {}) => {
+    const sp = new URLSearchParams()
+    if (status) sp.append('status', status)
+    if (search) sp.append('search', search)
+    if (page) sp.append('page', page.toString())
+    if (limit) sp.append('limit', limit.toString())
+    return apiAuth(`/api/admin/coupons?${sp.toString()}`)
+  },
   
   approveDeal: (id, edits) => apiAuth(`/api/admin/deals/${id}/approve`, {
     method: 'POST',
@@ -788,6 +850,17 @@ export const api = {
   expireDeal: (id) => apiAuth(`/api/admin/deals/${id}/expire`, {
     method: 'POST',
   }),
+
+  // Admin - update entities
+  updateDealAdmin: (id, updates) => apiAuth(`/api/admin/deals/${id}`, {
+    method: 'PUT',
+    body: updates,
+  }),
+
+  updateCouponAdmin: (id, updates) => apiAuth(`/api/admin/coupons/${id}`, {
+    method: 'PUT',
+    body: updates,
+  }),
   
   checkAdmin: () => apiAuth('/api/admin/whoami'),
   
@@ -801,6 +874,41 @@ export const api = {
   bulkModeratePosts: (action, postIds) => apiRequest('/api/admin/bulk-moderate', {
     method: 'POST',
     body: { action, postIds },
+  }),
+
+  // ===== TRACKING & ANALYTICS APIs =====
+  
+  // Deal tracking
+  trackDealClick: (dealId, source = 'unknown') => apiRequest(`/api/deals/${dealId}/click`, {
+    method: 'POST',
+    body: { source }
+  }),
+
+  // Coupon tracking
+  trackCouponClick: (couponId, source = 'unknown') => apiRequest(`/api/coupons/${couponId}/click`, {
+    method: 'POST',
+    body: { source }
+  }),
+
+  // User session tracking
+  trackUserSession: (page = 'unknown') => apiRequest('/api/users/session/heartbeat', {
+    method: 'POST',
+    body: { 
+      page,
+      user_agent: navigator.userAgent
+    }
+  }),
+
+  // Navbar stats
+  getNavbarStats: () => apiRequest('/api/navbar/stats'),
+
+  // Analytics tracking
+  trackEvent: (eventName, properties = {}) => apiRequest('/api/analytics/track', {
+    method: 'POST',
+    body: {
+      event_name: eventName,
+      properties
+    }
   }),
 
   // ===== NEW FEATURE APIs =====
@@ -847,35 +955,6 @@ export const api = {
     }),
   },
 
-  // Price Tracking & Countdown
-  priceTracking: {
-    getDealHistory: (dealId, days = 30) => apiRequest(`/api/price-tracking/deals/${dealId}/history?days=${days}`),
-    
-    getDealCountdown: (dealId) => apiRequest(`/api/price-tracking/deals/${dealId}/countdown`),
-    
-    createAlert: (alertData) => apiRequest('/api/price-tracking/alerts', {
-      method: 'POST',
-      body: alertData,
-    }),
-    
-    getUserAlerts: () => apiRequest('/api/price-tracking/alerts'),
-    
-    updateAlert: (alertId, updates) => apiRequest(`/api/price-tracking/alerts/${alertId}`, {
-      method: 'PUT',
-      body: updates,
-    }),
-    
-    deleteAlert: (alertId) => apiRequest(`/api/price-tracking/alerts/${alertId}`, {
-      method: 'DELETE',
-    }),
-    
-    getExpiringDeals: (days = 7) => apiRequest(`/api/price-tracking/expiring?days=${days}`),
-    
-    markExpired: (dealIds) => apiRequest('/api/price-tracking/mark-expired', {
-      method: 'POST',
-      body: { deal_ids: dealIds },
-    }),
-  },
 
   // Auto-Tagging
   autoTagging: {

@@ -17,7 +17,9 @@ import {
   Eye,
   ArrowUpRight,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Bookmark,
+  BookmarkCheck
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
@@ -28,9 +30,20 @@ export default function DealCard({ deal, variant = 'default', index = 0 }) {
   const { user } = useAuth();
   const [isVoting, setIsVoting] = useState(false);
   const [localVoteScore, setLocalVoteScore] = useState(deal.vote_score || 0);
-  const [userVote, setUserVote] = useState(deal.user_vote || 0);
   const [isSaved, setIsSaved] = useState(deal.is_saved || false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [userVote, setUserVote] = useState(deal.user_vote || 0);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+
+  // Track deal click
+  const handleDealClick = async (source = 'deal_card') => {
+    try {
+      await api.trackDealClick(deal.id, source)
+    } catch (error) {
+      console.error('Failed to track deal click:', error)
+      // Don't prevent navigation if tracking fails
+    }
+  }
   
   // Get images array - prioritize deal_images, fallback to image_url
   const images = deal.deal_images?.length > 0 ? deal.deal_images : (deal.image_url ? [deal.image_url] : [])
@@ -86,8 +99,28 @@ export default function DealCard({ deal, variant = 'default', index = 0 }) {
       return;
     }
 
-    setIsSaved(!isSaved);
-    // TODO: Implement save functionality
+    if (isSaving) return;
+    setIsSaving(true);
+
+    try {
+      if (isSaved) {
+        await api.unsaveDeal(deal.id);
+        setIsSaved(false);
+        // Show success message
+        console.log('Deal removed from saved items');
+      } else {
+        await api.saveDeal(deal.id);
+        setIsSaved(true);
+        // Show success message
+        console.log('Deal saved successfully');
+      }
+    } catch (error) {
+      console.error('Error saving/unsaving deal:', error);
+      // Show error message to user
+      alert(isSaved ? 'Failed to remove deal from saved items' : 'Failed to save deal');
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   async function handleReport() {
@@ -124,7 +157,7 @@ export default function DealCard({ deal, variant = 'default', index = 0 }) {
         whileHover={{ y: -4 }}
         className="group relative bg-white rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-xl transition-all duration-300 overflow-hidden"
       >
-        <Link to={`/deal/${deal.id}`} className="block">
+        <Link to={`/deal/${deal.id}`} className="block" onClick={() => handleDealClick('deal_card_image')}>
           {/* Image */}
           <div className="aspect-[4/3] overflow-hidden bg-gray-100 relative">
             {currentImage ? (
@@ -284,7 +317,7 @@ export default function DealCard({ deal, variant = 'default', index = 0 }) {
               </div>
               
               <h3 className="text-xl font-bold text-gray-900 mb-2 hover:text-primary-600 transition-colors">
-                <Link to={`/deal/${deal.id}`}>
+                <Link to={`/deal/${deal.id}`} onClick={() => handleDealClick('deal_card_title')}>
                   {deal.title}
                 </Link>
               </h3>
@@ -367,6 +400,7 @@ export default function DealCard({ deal, variant = 'default', index = 0 }) {
                 href={deal.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => handleDealClick('deal_card_external_link')}
                 className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
               >
                 Get Deal
@@ -375,13 +409,19 @@ export default function DealCard({ deal, variant = 'default', index = 0 }) {
 
               <button
                 onClick={handleSave}
+                disabled={isSaving}
                 className={`p-2.5 rounded-xl border transition-all ${
                   isSaved 
-                    ? 'bg-red-50 border-red-200 text-red-500' 
+                    ? 'bg-primary-50 border-primary-200 text-primary-600' 
                     : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-                }`}
+                } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title={isSaved ? 'Remove from saved items' : 'Save deal'}
               >
-                <Heart className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
+                {isSaved ? (
+                  <BookmarkCheck className="w-5 h-5 fill-current" />
+                ) : (
+                  <Bookmark className="w-5 h-5" />
+                )}
               </button>
 
               <button

@@ -69,12 +69,20 @@ router.get('/stats', async (req, res) => {
       console.log('Coupons query failed:', error.message)
     }
 
-    // Provide fallback data if all queries fail
-    if (usersOnline === 0 && dealsToday === 0 && couponsToday === 0) {
-      usersOnline = Math.floor(Math.random() * 50) + 10 // 10-60 users
-      dealsToday = Math.floor(Math.random() * 20) + 5   // 5-25 deals
-      couponsToday = Math.floor(Math.random() * 15) + 3 // 3-18 coupons
-    }
+    // Add base numbers to make the platform feel more active
+    // This helps new users feel like they're joining an active community
+    const baseUsers = 50
+    const baseDeals = 10
+    const baseCoupons = 10
+    
+    // Store real counts for logging
+    const realUsers = usersOnline
+    const realDeals = dealsToday
+    const realCoupons = couponsToday
+    
+    usersOnline = baseUsers + usersOnline
+    dealsToday = baseDeals + dealsToday
+    couponsToday = baseCoupons + couponsToday
 
     const stats = {
       usersOnline,
@@ -82,16 +90,26 @@ router.get('/stats', async (req, res) => {
       couponsToday
     }
 
-    console.log('Navbar stats:', stats)
+    console.log('Navbar stats:', {
+      ...stats,
+      breakdown: {
+        realUsers,
+        realDeals,
+        realCoupons,
+        baseUsers,
+        baseDeals,
+        baseCoupons
+      }
+    })
     res.json({ stats })
   } catch (error) {
     console.error('Navbar stats error:', error)
-    // Return fallback data on complete failure
+    // Return base values on complete failure to maintain platform feel
     res.json({ 
       stats: {
-        usersOnline: 25,
-        dealsToday: 12,
-        couponsToday: 8
+        usersOnline: 50,
+        dealsToday: 10,
+        couponsToday: 10
       }
     })
   }

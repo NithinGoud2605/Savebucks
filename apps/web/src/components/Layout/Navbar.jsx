@@ -77,6 +77,7 @@ const buttonVariants = cva(
 const Navbar = () => {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const searchRef = useRef(null)
@@ -89,14 +90,30 @@ const Navbar = () => {
   })
 
   // Get navbar stats (users online, deals today, coupons today)
-  // Temporarily disabled until backend endpoint is implemented
-  const navbarStats = null
-  const statsError = null
+  const { data: navbarStats, error: statsError } = useQuery({
+    queryKey: ['navbar-stats'],
+    queryFn: () => api.getNavbarStats(),
+    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 15000, // Consider data stale after 15 seconds
+    retry: 2
+  })
 
+  // Track user session (heartbeat)
+  useEffect(() => {
+    if (user) {
+      // Track initial session
+      api.trackUserSession(location.pathname).catch(console.error)
+      
+      // Set up heartbeat interval
+      const heartbeatInterval = setInterval(() => {
+        api.trackUserSession(location.pathname).catch(console.error)
+      }, 60000) // Every minute
 
+      return () => clearInterval(heartbeatInterval)
+    }
+  }, [user, location.pathname])
 
   // Get current pathname for active state
-  const location = useLocation()
   const currentPath = location.pathname
 
   // Filter tags for secondary navbar
@@ -536,17 +553,6 @@ const Navbar = () => {
                 </NavigationMenu.Item>
 
                 {/* Coupons Link */}
-                <NavigationMenu.Item>
-                  <NavigationMenu.Link asChild>
-            <Link
-              to="/coupons"
-                      className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600 focus:bg-secondary-100 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-secondary-100"
-            >
-                      <TagIcon className="mr-2 h-4 w-4" />
-                      Coupons
-            </Link>
-                  </NavigationMenu.Link>
-                </NavigationMenu.Item>
 
                 {/* Companies Link */}
                 <NavigationMenu.Item>
@@ -571,6 +577,19 @@ const Navbar = () => {
                       <UserGroupIcon className="mr-2 h-4 w-4" />
                       Community
             </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+
+                {/* Saved Items Link */}
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link
+                      to="/saved-items"
+                      className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600 focus:bg-secondary-100 focus:outline-none"
+                    >
+                      <BookmarkIcon className="mr-2 h-4 w-4" />
+                      Saved Items
+                    </Link>
                   </NavigationMenu.Link>
                 </NavigationMenu.Item>
               </NavigationMenu.List>
@@ -661,13 +680,14 @@ const Navbar = () => {
                     
                     <DropdownMenu.Item asChild>
                       <Link
-                        to="/price-alerts"
+                        to="/saved-items"
                         className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-secondary-100 focus:text-secondary-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
                       >
-                        <BellIcon className="mr-2 h-4 w-4" />
-                        Price Alerts
+                        <BookmarkIcon className="mr-2 h-4 w-4" />
+                        Saved Items
                       </Link>
                     </DropdownMenu.Item>
+                    
                     
                     <DropdownMenu.Item asChild>
                       <Link
@@ -752,14 +772,6 @@ const Navbar = () => {
                         <span>Categories</span>
                     </Link>
 
-                <Link
-                  to="/coupons"
-                  onClick={() => setIsMenuOpen(false)}
-                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900"
-                >
-                        <TagIcon className="h-5 w-5" />
-                  <span>Coupons</span>
-                </Link>
 
                 <Link
                   to="/companies"
@@ -835,13 +847,14 @@ const Navbar = () => {
                 </Link>
 
                 <Link
-                          to="/price-alerts"
+                          to="/saved-items"
                   onClick={() => setIsMenuOpen(false)}
                           className="flex items-center space-x-2 rounded-lg px-3 py-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900"
                 >
-                          <BellIcon className="h-5 w-5" />
-                          <span>Price Alerts</span>
+                          <BookmarkIcon className="h-5 w-5" />
+                          <span>Saved Items</span>
                 </Link>
+
 
                 <Link
                           to="/settings"

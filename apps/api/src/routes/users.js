@@ -621,4 +621,39 @@ router.get('/:handle/reputation', async (req, res) => {
   }
 })
 
+// Track user session (heartbeat)
+router.post('/session/heartbeat', async (req, res) => {
+  try {
+    const userId = req.user?.id || null
+    const { page = 'unknown', user_agent = 'unknown' } = req.body
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' })
+    }
+
+    // Update or insert user session
+    const { error } = await supabase
+      .from('user_sessions')
+      .upsert([{
+        user_id: userId,
+        last_seen: new Date().toISOString(),
+        current_page: page,
+        user_agent: user_agent,
+        updated_at: new Date().toISOString()
+      }], {
+        onConflict: 'user_id'
+      })
+
+    if (error) {
+      console.error('Session tracking error:', error)
+      // Don't fail the request if session tracking fails
+    }
+
+    res.json({ success: true })
+  } catch (error) {
+    console.error('Error tracking user session:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 export default router

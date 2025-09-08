@@ -14,7 +14,6 @@ export const EnhancedFooter = ({ className }) => {
       title: 'For Shoppers',
       links: [
         { label: 'Browse Deals', href: '/deals' },
-        { label: 'Coupons', href: '/coupons' },
         { label: 'Categories', href: '/categories' },
         { label: 'Price Alerts', href: '/price-alerts' },
         { label: 'Saved Searches', href: '/saved-searches' },

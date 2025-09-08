@@ -58,6 +58,13 @@ router.get('/test', async (req, res) => {
 })
 
   // List coupons with filtering
+// Extract hashtags to tag filter helper
+function extractHashtagSlugs(text) {
+  if (!text) return [];
+  const matches = text.match(/(^|\s)#([a-z0-9][a-z0-9-_]*)/gi) || [];
+  return Array.from(new Set(matches.map(m => m.replace(/^[^#]*#/, '').toLowerCase().replace(/[^a-z0-9-_]/g, ''))));
+}
+
 router.get('/', async (req, res) => {
   try {
     const { 
@@ -100,6 +107,18 @@ router.get('/', async (req, res) => {
 
     if (search) {
       query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,coupon_code.ilike.%${search}%`)
+      // If search contains hashtags, translate to coupon_tags filter
+      const slugs = extractHashtagSlugs(search)
+      if (slugs.length > 0) {
+        const { data: tagRows } = await supabase
+          .from('tags')
+          .select('id, slug')
+          .in('slug', slugs)
+        const tagIds = (tagRows || []).map(t => t.id)
+        if (tagIds.length > 0) {
+          query = query.in('coupon_tags.tag_id', tagIds)
+        }
+      }
     }
 
     // Apply sorting
@@ -299,6 +318,38 @@ router.post('/', requireAuth, async (req, res) => {
     if (error) {
       return res.status(400).json({ error: error.message })
     }
+
+    // Auto-attach hashtags from title/description as tags
+    try {
+      const slugs = extractHashtagSlugs(`${title} ${description || ''}`)
+      if (slugs.length > 0) {
+        const { data: existing } = await supabase
+          .from('tags')
+          .select('id, slug')
+          .in('slug', slugs)
+        const existingMap = new Map((existing || []).map(t => [t.slug, t.id]))
+        const missing = slugs.filter(s => !existingMap.has(s))
+        if (missing.length > 0) {
+          const toInsert = missing.map(slug => ({
+            name: slug.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+            slug,
+            color: '#3B82F6',
+            category: 'custom',
+            is_featured: false,
+          }))
+          const { data: inserted } = await supabase
+            .from('tags')
+            .insert(toInsert)
+            .select('id, slug')
+          ;(inserted || []).forEach(t => existingMap.set(t.slug, t.id))
+        }
+        const tagIds = slugs.map(s => existingMap.get(s)).filter(Boolean)
+        if (tagIds.length > 0) {
+          const rows = tagIds.map(tag_id => ({ coupon_id: coupon.id, tag_id }))
+          await supabase.from('coupon_tags').insert(rows)
+        }
+      }
+    } catch (_) {}
 
     res.status(201).json(coupon)
   } catch (error) {
@@ -501,6 +552,52 @@ router.post('/:id/comments', requireAuth, async (req, res) => {
     res.status(201).json(comment)
   } catch (error) {
     console.error('Error creating coupon comment:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Track coupon click
+router.post('/:id/click', async (req, res) => {
+  try {
+    const couponId = parseInt(req.params.id)
+    const userId = req.user?.id || null
+    const { source = 'unknown' } = req.body // Track where the click came from
+
+    // Increment clicks count using RPC function
+    try {
+      await supabase.rpc('increment_coupon_clicks', { coupon_id: couponId })
+    } catch (rpcError) {
+      console.log('RPC click tracking failed, using direct update:', rpcError.message)
+      // Fallback to direct update
+      await supabase
+        .from('coupons')
+        .update({ 
+          clicks_count: supabase.raw('COALESCE(clicks_count, 0) + 1')
+        })
+        .eq('id', couponId)
+    }
+
+    // Track analytics event
+    try {
+      await supabase
+        .from('analytics_events')
+        .insert([{
+          user_id: userId,
+          event_name: 'coupon_click',
+          properties: {
+            coupon_id: couponId,
+            source: source,
+            timestamp: new Date().toISOString()
+          }
+        }])
+    } catch (analyticsError) {
+      console.log('Analytics tracking failed:', analyticsError.message)
+      // Don't fail the request if analytics fails
+    }
+
+    res.json({ success: true })
+  } catch (error) {
+    console.error('Error tracking coupon click:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 })

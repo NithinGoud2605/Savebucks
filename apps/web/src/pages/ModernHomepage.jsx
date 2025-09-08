@@ -22,9 +22,9 @@ const DealCard = ({ deal, index }) => {
     (deal.original_price && deal.price ? 
       Math.round(((deal.original_price - deal.price) / deal.original_price) * 100) : 0)
   
-  // Get images array - prioritize deal_images, fallback to image_url
-  const images = deal.deal_images?.length > 0 ? deal.deal_images : (deal.image_url ? [deal.image_url] : [])
-  const currentImage = images[0] || deal.image_url
+  // Image selection: prefer featured_image, then first of deal_images, then image_url
+  const images = Array.isArray(deal.deal_images) && deal.deal_images.length > 0 ? deal.deal_images : (deal.image_url ? [deal.image_url] : [])
+  const currentImage = deal.featured_image || images[0] || deal.image_url
 
   return (
     <motion.article
@@ -37,10 +37,29 @@ const DealCard = ({ deal, index }) => {
         <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50">
           {currentImage ? (
             <img
-              src={currentImage}
+              src={(() => {
+                try {
+                  const u = new URL(currentImage)
+                  u.pathname = u.pathname.split('/').map(encodeURIComponent).join('/')
+                  return u.toString()
+                } catch {
+                  return currentImage
+                }
+              })()}
               alt={deal.title}
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               loading="lazy"
+              referrerPolicy="no-referrer"
+              onError={(e)=>{
+                const img = e.currentTarget
+                if (!img.dataset.proxyUsed) {
+                  img.dataset.proxyUsed = '1'
+                  img.src = `/api/proxy/image?url=${encodeURIComponent(currentImage)}`
+                } else {
+                  img.removeAttribute('onerror')
+                  img.src = `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200"><rect width="300" height="200" fill="#f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-family="Arial" font-size="14">Image unavailable</text></svg>')}`
+                }
+              }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -81,11 +100,11 @@ const DealCard = ({ deal, index }) => {
           {/* Store & Views */}
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-primary-600 bg-primary-50 px-2 py-1 rounded-md">
-              {deal.store || 'Unknown Store'}
+              {deal.companies?.name || deal.merchant || 'Unknown Store'}
             </span>
             <div className="flex items-center gap-1 text-gray-400">
               <Eye className="w-3 h-3" />
-              <span className="text-xs">{deal.view_count || 0}</span>
+              <span className="text-xs">{deal.views_count || 0}</span>
             </div>
           </div>
 
@@ -100,11 +119,11 @@ const DealCard = ({ deal, index }) => {
               {deal.price ? (
                 <div className="flex items-baseline gap-2">
                   <span className="text-lg font-bold text-gray-900">
-                    ${deal.price}
+                    ${Number(deal.price).toFixed(2)}
                   </span>
                   {deal.original_price && (
                     <span className="text-sm text-gray-400 line-through">
-                      ${deal.original_price}
+                      ${Number(deal.original_price).toFixed(2)}
                     </span>
                   )}
                 </div>
@@ -117,9 +136,9 @@ const DealCard = ({ deal, index }) => {
             
             {/* Vote Score */}
             <div className="flex items-center gap-1">
-              <Flame className={`w-4 h-4 ${deal.vote_score > 0 ? 'text-orange-500' : 'text-gray-400'}`} />
-              <span className={`text-xs font-semibold ${deal.vote_score > 0 ? 'text-orange-500' : 'text-gray-400'}`}>
-                {deal.vote_score || 0}
+              <Flame className={`w-4 h-4 ${(deal.ups||0)-(deal.downs||0) > 0 ? 'text-orange-500' : 'text-gray-400'}`} />
+              <span className={`text-xs font-semibold ${(deal.ups||0)-(deal.downs||0) > 0 ? 'text-orange-500' : 'text-gray-400'}`}>
+                {(deal.ups || 0) - (deal.downs || 0)}
               </span>
             </div>
           </div>
@@ -184,9 +203,18 @@ const CouponCard = ({ coupon, index }) => {
 
 // Compact Coupon Card Component for Sidebar
 const CompactCouponCard = ({ coupon, index }) => {
+  const handleCouponClick = async () => {
+    try {
+      await api.trackCouponClick(coupon.id, 'homepage_sidebar')
+    } catch (error) {
+      console.error('Failed to track coupon click:', error)
+    }
+  }
+
   return (
     <Link 
-      to={`/coupons/${coupon.id}`}
+      to={`/company/${coupon.companies?.slug || coupon.merchant?.toLowerCase().replace(/\s+/g, '-')}?tab=coupons`}
+      onClick={handleCouponClick}
       className="block bg-white rounded border border-gray-200 p-2 hover:shadow-sm transition-all duration-200 hover:border-primary-300 group"
     >
       <div className="flex items-center gap-2">
@@ -488,7 +516,7 @@ export default function ModernHomepage() {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-gray-900">Latest Coupons</h2>
                   <Link 
-                    to="/coupons" 
+                    to="/companies" 
                     className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center gap-1"
                   >
                     View All

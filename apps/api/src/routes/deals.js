@@ -31,6 +31,44 @@ function bearer(req) {
   return h.startsWith('Bearer ') ? h.slice(7) : null;
 }
 
+// Extract hashtags from text like "#electronics #TV-Deals" → ["electronics","tv-deals"]
+function parseHashtags(...texts) {
+  const combined = (texts || []).filter(Boolean).join(' ');
+  const matches = combined.match(/(^|\s)#([a-z0-9][a-z0-9-_]*)/gi) || [];
+  return Array.from(new Set(matches.map(m => m.replace(/^[^#]*#/, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]/g, '')
+    .replace(/_{2,}/g, '_')
+    .replace(/-{2,}/g, '-')
+  )));
+}
+
+async function ensureTagsReturnIds(slugs) {
+  if (!slugs || slugs.length === 0) return [];
+  // Fetch existing
+  const { data: existing } = await supaAdmin
+    .from('tags')
+    .select('id, slug')
+    .in('slug', slugs);
+  const existingMap = new Map((existing || []).map(t => [t.slug, t.id]));
+  const missing = slugs.filter(s => !existingMap.has(s));
+  if (missing.length > 0) {
+    const toInsert = missing.map(slug => ({
+      name: slug.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      slug,
+      color: '#3B82F6',
+      category: 'custom',
+      is_featured: false,
+    }));
+    const { data: inserted } = await supaAdmin
+      .from('tags')
+      .insert(toInsert)
+      .select('id, slug');
+    (inserted || []).forEach(t => existingMap.set(t.slug, t.id));
+  }
+  return slugs.map(s => existingMap.get(s)).filter(Boolean);
+}
+
 async function listDeals(tab, filters = {}) {
   let query = supaAdmin
     .from('deals')
@@ -79,6 +117,10 @@ async function listDeals(tab, filters = {}) {
   if (filters.ending_soon) {
     const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
     query = query.not('expires_at', 'is', null).lt('expires_at', threeDaysFromNow);
+  }
+
+  if (filters.exclude) {
+    query = query.neq('id', filters.exclude);
   }
 
   if (filters.free_shipping) {
@@ -248,8 +290,18 @@ r.get('/', async (req, res) => {
       has_coupon: req.query.has_coupon === 'true',
       search: req.query.search,
       ending_soon: req.query.ending_soon === 'true',
-      timeframe: req.query.timeframe
+      timeframe: req.query.timeframe,
+      exclude: req.query.exclude ? parseInt(req.query.exclude) : null
     };
+    // If search contains hashtags, convert to tag filters (union with any provided tags[])
+    let tagIdsFromSearch = [];
+    if (filters.search && /#/.test(filters.search)) {
+      const slugs = parseHashtags(filters.search);
+      tagIdsFromSearch = await ensureTagsReturnIds(slugs);
+    }
+    if (tagIdsFromSearch.length > 0) {
+      filters.tags = tagIdsFromSearch;
+    }
     
     const items = await listDeals(tab, filters);
     // Featured filter if requested
@@ -276,7 +328,12 @@ r.get('/:id', async (req, res) => {
     const id = Number(req.params.id);
     const { data: d, error: dErr } = await supaAdmin
       .from('deals')
-      .select('id,title,url,price,merchant,description,image_url,deal_images,featured_image,created_at,status,category_id,deal_type,is_featured,views_count,clicks_count,expires_at,original_price,discount_percentage,discount_amount,coupon_code,coupon_type')
+      .select(`
+        id,title,url,price,merchant,description,image_url,deal_images,featured_image,created_at,status,category_id,deal_type,is_featured,views_count,clicks_count,expires_at,original_price,discount_percentage,discount_amount,coupon_code,coupon_type,company_id,
+        companies(
+          id,name,slug,logo_url,website_url,is_verified,description,founded_year,headquarters,employee_count,revenue_range,social_media,contact_info,business_hours,payment_methods,shipping_info,return_policy,customer_service,faq_url,blog_url,newsletter_signup,loyalty_program,mobile_app_url,app_store_rating,play_store_rating,trustpilot_rating,trustpilot_reviews_count,bbb_rating,bbb_accreditation,certifications,awards,featured_image,banner_image,gallery_images,video_url,rating,total_reviews,status,created_at,updated_at
+        )
+      `)
       .eq('id', id)
       .single();
     if (dErr) return res.status(404).json({ error: 'not found' });
@@ -294,6 +351,16 @@ r.get('/:id', async (req, res) => {
     const created = Math.floor(new Date(d.created_at).getTime()/1000);
     const now = Math.floor(Date.now()/1000);
 
+    // Fetch tags for this deal
+    let tags = [];
+    try {
+      const { data: tagRows } = await supaAdmin
+        .from('deal_tags')
+        .select('tags(id,name,slug,color,category)')
+        .eq('deal_id', id);
+      tags = (tagRows || []).map(r => r.tags).filter(Boolean);
+    } catch (_) {}
+
     res.json({
       id: d.id, title: d.title, url: d.url, price: d.price, merchant: d.merchant,
       description: d.description, image_url: d.image_url, deal_images: d.deal_images, featured_image: d.featured_image, created,
@@ -301,7 +368,9 @@ r.get('/:id', async (req, res) => {
       comments, category_id: d.category_id, deal_type: d.deal_type, is_featured: d.is_featured,
       views_count: d.views_count, clicks_count: d.clicks_count, expires_at: d.expires_at,
       original_price: d.original_price, discount_percentage: d.discount_percentage,
-      discount_amount: d.discount_amount, coupon_code: d.coupon_code, coupon_type: d.coupon_type
+      discount_amount: d.discount_amount, coupon_code: d.coupon_code, coupon_type: d.coupon_type,
+      company: d.companies, // Include full company information
+      tags
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -336,6 +405,18 @@ r.post('/', async (req, res) => {
       .select()
       .single();
     if (error) throw error;
+
+    // Auto-attach hashtags from title/description as tags
+    try {
+      const slugs = parseHashtags(title, description);
+      if (slugs.length > 0) {
+        const tagIds = await ensureTagsReturnIds(slugs);
+        if (tagIds.length > 0) {
+          const dealTagRows = tagIds.map(tag_id => ({ deal_id: data.id, tag_id }));
+          await supaUser.from('deal_tags').insert(dealTagRows);
+        }
+      }
+    } catch (_) {}
 
     res.status(201).json({
       id: data.id, title: data.title, url: data.url, price: data.price,
@@ -544,5 +625,51 @@ r.post('/:id/comment', async (req, res) => {
       res.status(500).json({ error: e.message });
     }
   });
+
+// Track deal click
+r.post('/:id/click', async (req, res) => {
+  try {
+    const dealId = parseInt(req.params.id)
+    const userId = req.user?.id || null
+    const { source = 'unknown' } = req.body // Track where the click came from
+
+    // Increment clicks count using RPC function
+    try {
+      await supaAdmin.rpc('increment_deal_clicks', { deal_id: dealId })
+    } catch (rpcError) {
+      console.log('RPC click tracking failed, using direct update:', rpcError.message)
+      // Fallback to direct update
+      await supaAdmin
+        .from('deals')
+        .update({ 
+          clicks_count: supaAdmin.raw('COALESCE(clicks_count, 0) + 1')
+        })
+        .eq('id', dealId)
+    }
+
+    // Track analytics event
+    try {
+      await supaAdmin
+        .from('analytics_events')
+        .insert([{
+          user_id: userId,
+          event_name: 'deal_click',
+          properties: {
+            deal_id: dealId,
+            source: source,
+            timestamp: new Date().toISOString()
+          }
+        }])
+    } catch (analyticsError) {
+      console.log('Analytics tracking failed:', analyticsError.message)
+      // Don't fail the request if analytics fails
+    }
+
+    res.json({ success: true })
+  } catch (error) {
+    console.error('Error tracking deal click:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
 
 export default r;

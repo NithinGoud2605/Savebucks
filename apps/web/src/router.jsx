@@ -7,7 +7,7 @@ import { Skeleton } from './components/Loader/Skeleton'
 const ListPage = React.lazy(() => import('./pages/ListPage'))
 const SearchResults = React.lazy(() => import('./pages/SearchResults'))
 const ModernHomepage = React.lazy(() => import('./pages/ModernHomepage'))
-const CompactDealPage = React.lazy(() => import('./pages/CompactDealPage'))
+const ProfessionalDealPage = React.lazy(() => import('./pages/ProfessionalDealPage'))
 const PostItem = React.lazy(() => import('./pages/PostItem'))
 const AdminPage = React.lazy(() => import('./pages/Admin/AdminPage'))
 const TagManagement = React.lazy(() => import('./pages/Admin/TagManagement'))
@@ -18,8 +18,6 @@ const ThreadComposer = React.lazy(() => import('./pages/Forums/ThreadComposer'))
 const ThreadPage = React.lazy(() => import('./pages/Forums/ThreadPage'))
 const CategoryPage = React.lazy(() => import('./pages/CategoryPage'))
 const CategoriesPage = React.lazy(() => import('./pages/CategoriesPage'))
-const CouponsPage = React.lazy(() => import('./pages/CouponsPage'))
-const ModernCouponsPage = React.lazy(() => import('./pages/ModernCouponsPage'))
 const CompanyPage = React.lazy(() => import('./pages/CompanyPage'))
 const CompaniesPage = React.lazy(() => import('./pages/CompaniesPage'))
 
@@ -33,7 +31,7 @@ const SignIn = React.lazy(() => import('./pages/SignIn'))
 const SignUp = React.lazy(() => import('./pages/SignUp'))
 const AuthCallback = React.lazy(() => import('./pages/AuthCallback'))
 const SavedSearches = React.lazy(() => import('./pages/SavedSearches'))
-const PriceAlerts = React.lazy(() => import('./pages/PriceAlerts'))
+const SavedItems = React.lazy(() => import('./pages/SavedItems'))
 const Achievements = React.lazy(() => import('./pages/Achievements'))
 const EnhancedLeaderboard = React.lazy(() => import('./pages/EnhancedLeaderboard'))
 const Settings = React.lazy(() => import('./pages/Settings'))
@@ -138,7 +136,7 @@ export const router = createBrowserRouter([
         path: 'deal/:id',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <CompactDealPage />
+            <ProfessionalDealPage />
           </Suspense>
         ),
       },
@@ -183,10 +181,10 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'price-alerts',
+        path: 'saved-items',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <PriceAlerts />
+            <SavedItems />
           </Suspense>
         ),
       },
@@ -299,14 +297,6 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <CategoryPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'coupons',
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <ModernCouponsPage />
           </Suspense>
         ),
       },

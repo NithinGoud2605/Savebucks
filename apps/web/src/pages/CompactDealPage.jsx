@@ -26,6 +26,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { CommentThread } from '../components/Comments/CommentThread'
 import PriceAlert from '../components/PriceTracking/PriceAlert'
+import StoreInfoPanel from '../components/Deal/StoreInfoPanel'
 
 export default function CompactDealPage() {
   const { id } = useParams()
@@ -449,6 +450,9 @@ export default function CompactDealPage() {
                 Get notified when the price drops or when this deal is about to expire.
               </p>
             </div>
+
+            {/* Store Information Panel */}
+            <StoreInfoPanel company={deal.company} deal={deal} />
 
             {/* Description */}
             {deal.description && (

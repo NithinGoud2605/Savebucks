@@ -32,7 +32,6 @@ const ModernFooter = () => {
     features: [
       { label: 'Hot Deals', href: '/' },
       { label: 'Categories', href: '/categories' },
-      { label: 'Coupons', href: '/coupons' },
       { label: 'Stores', href: '/stores' },
       { label: 'Forums', href: '/forums' }
     ],

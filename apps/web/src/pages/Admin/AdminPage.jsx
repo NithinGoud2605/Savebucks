@@ -11,7 +11,7 @@ import Analytics from './Analytics'
 import CompanyManagement from './CompanyManagement'
 import GamificationManagement from './GamificationManagement'
 import AutoTaggingManagement from './AutoTaggingManagement'
-import PriceTrackingManagement from './PriceTrackingManagement'
+import ApprovedItems from './ApprovedItems'
 import SavedSearchesManagement from './SavedSearchesManagement'
 import SystemHealth from './SystemHealth'
 import {
@@ -77,6 +77,12 @@ const AdminPage = () => {
       component: PendingApprovals
     },
     {
+      id: 'approved-items',
+      name: 'Approved Items',
+      icon: ClipboardDocumentCheckIcon,
+      component: ApprovedItems
+    },
+    {
       id: 'users',
       name: 'User Management',
       icon: UsersIcon,
@@ -105,12 +111,6 @@ const AdminPage = () => {
       name: 'Auto-Tagging',
       icon: TagIcon,
       component: AutoTaggingManagement
-    },
-    {
-      id: 'price-tracking',
-      name: 'Price Tracking',
-      icon: CurrencyDollarIcon,
-      component: PriceTrackingManagement
     },
     {
       id: 'saved-searches',

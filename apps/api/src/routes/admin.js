@@ -109,13 +109,13 @@ r.get('/whoami', async (req, res) => {
   }
 });
 
-// Get deals with status filter (pending by default)
+// Get deals with status filter (pending by default) + basic search
 r.get('/deals', requireAdmin, async (req, res) => {
   try {
-    const { page = 1, limit = 20, status = 'pending' } = req.query;
+    const { page = 1, limit = 20, status = 'pending', search = '' } = req.query;
     const offset = (page - 1) * limit;
 
-    const { data: deals, error } = await supaAdmin
+    let query = supaAdmin
       .from('deals')
       .select(`
         *,
@@ -127,13 +127,22 @@ r.get('/deals', requireAdmin, async (req, res) => {
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
+    if (search) {
+      // Search by title, description, or merchant
+      query = query.or(
+        `title.ilike.%${search}%,description.ilike.%${search}%,merchant.ilike.%${search}%`
+      );
+    }
+
+    const { data: deals, error } = await query;
+
     if (error) {
       return res.status(400).json({ error: error.message });
     }
 
     res.json(deals || []);
   } catch (error) {
-    console.error('Error fetching pending deals:', error);
+    console.error('Error fetching admin deals:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -163,6 +172,44 @@ r.get('/coupons/pending', requireAdmin, async (req, res) => {
     res.json(coupons || []);
   } catch (error) {
     console.error('Error fetching pending coupons:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get coupons with status filter (pending by default) + search
+r.get('/coupons', requireAdmin, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status = 'pending', search = '' } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supaAdmin
+      .from('coupons')
+      .select(`
+        *,
+        companies(id, name, slug, logo_url, is_verified),
+        categories(id, name, slug, color),
+        profiles!submitter_id(handle, avatar_url, karma, created_at)
+      `)
+      .eq('status', status)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (search) {
+      // Search by title, description or coupon code
+      query = query.or(
+        `title.ilike.%${search}%,description.ilike.%${search}%,coupon_code.ilike.%${search}%`
+      );
+    }
+
+    const { data: coupons, error } = await query;
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json(coupons || []);
+  } catch (error) {
+    console.error('Error fetching admin coupons:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -392,6 +439,118 @@ r.post('/deals/:id/feature', requireAdmin, async (req, res) => {
     res.json({ success: true, deal });
   } catch (error) {
     console.error('Error featuring deal:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update deal (Admin only)
+r.put('/deals/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      description,
+      url,
+      price,
+      original_price,
+      discount_percentage,
+      discount_amount,
+      merchant,
+      image_url,
+      featured_image,
+      deal_images,
+      category_id,
+      deal_type,
+      is_featured,
+      expires_at,
+      coupon_code,
+      coupon_type,
+      status,
+      company_id,
+    } = req.body || {};
+
+    const updateData = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (url !== undefined) updateData.url = url;
+    if (price !== undefined) updateData.price = price === '' ? null : parseFloat(price);
+    if (original_price !== undefined) updateData.original_price = original_price === '' ? null : parseFloat(original_price);
+    if (discount_percentage !== undefined) updateData.discount_percentage = discount_percentage === '' ? null : parseFloat(discount_percentage);
+    if (discount_amount !== undefined) updateData.discount_amount = discount_amount === '' ? null : parseFloat(discount_amount);
+    if (merchant !== undefined) updateData.merchant = merchant;
+    if (image_url !== undefined) updateData.image_url = image_url;
+    if (featured_image !== undefined) updateData.featured_image = featured_image;
+    if (deal_images !== undefined) updateData.deal_images = deal_images; // expecting array
+    if (category_id !== undefined) updateData.category_id = category_id === '' ? null : parseInt(category_id);
+    if (company_id !== undefined) updateData.company_id = company_id === '' ? null : parseInt(company_id);
+    if (deal_type !== undefined) updateData.deal_type = deal_type;
+    if (is_featured !== undefined) updateData.is_featured = !!is_featured;
+    if (expires_at !== undefined) updateData.expires_at = expires_at ? new Date(expires_at).toISOString() : null;
+    if (coupon_code !== undefined) updateData.coupon_code = coupon_code;
+    if (coupon_type !== undefined) updateData.coupon_type = coupon_type;
+    if (status !== undefined) updateData.status = status;
+
+    const { data: deal, error } = await supaAdmin
+      .from('deals')
+      .update(updateData)
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ success: true, deal });
+  } catch (error) {
+    console.error('Error updating deal:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update coupon (Admin only)
+r.put('/coupons/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      description,
+      coupon_code,
+      coupon_type,
+      is_featured,
+      expires_at,
+      status,
+      company_id,
+      category_id,
+      image_url,
+    } = req.body || {};
+
+    const updateData = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (coupon_code !== undefined) updateData.coupon_code = coupon_code;
+    if (coupon_type !== undefined) updateData.coupon_type = coupon_type;
+    if (is_featured !== undefined) updateData.is_featured = !!is_featured;
+    if (expires_at !== undefined) updateData.expires_at = expires_at ? new Date(expires_at).toISOString() : null;
+    if (status !== undefined) updateData.status = status;
+    if (company_id !== undefined) updateData.company_id = company_id === '' ? null : parseInt(company_id);
+    if (category_id !== undefined) updateData.category_id = category_id === '' ? null : parseInt(category_id);
+    if (image_url !== undefined) updateData.image_url = image_url;
+
+    const { data: coupon, error } = await supaAdmin
+      .from('coupons')
+      .update(updateData)
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ success: true, coupon });
+  } catch (error) {
+    console.error('Error updating coupon:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
