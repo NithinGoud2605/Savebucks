@@ -40,7 +40,7 @@ export async function makeUserClientFromToken(token) {
     await client.auth.setSession({
       access_token: token,
       refresh_token: null,
-      expires_in: 3600,
+      expires_in: 86400, // 24 hours instead of 1 hour
       token_type: 'bearer'
     });
     

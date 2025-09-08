@@ -24,7 +24,6 @@ import {
   ArrowTopRightOnSquareIcon,
   ClockIcon
 } from '@heroicons/react/24/outline'
-import { CommentThread } from '../components/Comments/CommentThread'
 import PriceAlert from '../components/PriceTracking/PriceAlert'
 import StoreInfoPanel from '../components/Deal/StoreInfoPanel'
 
@@ -34,7 +33,6 @@ export default function CompactDealPage() {
   const queryClient = useQueryClient()
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isBookmarked, setIsBookmarked] = useState(false)
-  const [userVote, setUserVote] = useState(null)
   const [showPriceAlert, setShowPriceAlert] = useState(false)
 
   // Fetch deal data
@@ -51,12 +49,7 @@ export default function CompactDealPage() {
     enabled: !!id && !!user
   })
 
-  // Fetch user's vote
-  const { data: voteData } = useQuery({
-    queryKey: ['vote', id],
-    queryFn: () => api.getVote(id),
-    enabled: !!id && !!user
-  })
+  // User's vote is now included in the deal data
 
   useEffect(() => {
     if (bookmarkData) {
@@ -84,13 +77,21 @@ export default function CompactDealPage() {
   })
 
   const voteMutation = useMutation({
-    mutationFn: ({ dealId, vote }) => api.vote(dealId, vote),
+    mutationFn: ({ dealId, vote }) => {
+      const value = vote === 'up' ? 1 : vote === 'down' ? -1 : null
+      return api.voteDeal(dealId, value)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['deal', id])
       queryClient.invalidateQueries(['vote', id])
     },
-    onError: () => {
-      toast.error('Failed to vote')
+    onError: (error) => {
+      console.error('Vote error:', error)
+      if (error.status === 401) {
+        toast.error('Session expired. Please login again.')
+      } else {
+        toast.error('Failed to vote. Please try again.')
+      }
     }
   })
 
@@ -108,7 +109,17 @@ export default function CompactDealPage() {
       toast.error('Please login to vote')
       return
     }
-    voteMutation.mutate({ dealId: id, vote })
+    
+    // Check if we have a valid token before making the request
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      toast.error('Session expired. Please login again.')
+      return
+    }
+    
+    const currentVote = deal?.userVote
+    const newVote = currentVote === vote ? null : vote
+    voteMutation.mutate({ dealId: id, vote: newVote })
   }
 
   const handleShare = () => {
@@ -401,12 +412,12 @@ export default function CompactDealPage() {
                     onClick={() => handleVote(1)}
                     className={clsx(
                       'flex items-center space-x-2 px-4 py-2 rounded-lg transition-all',
-                      userVote === 1
+                      deal?.userVote === 1
                         ? 'bg-green-100 text-green-700 border-2 border-green-300'
                         : 'bg-gray-50 text-gray-700 hover:bg-green-50 border border-gray-200'
                     )}
                   >
-                    <HandThumbUpIcon className={`h-5 w-5 ${userVote === 1 ? 'text-green-700' : ''}`} />
+                    <HandThumbUpIcon className={`h-5 w-5 ${deal?.userVote === 1 ? 'text-green-700' : ''}`} />
                     <span>Helpful</span>
                     <span className="font-semibold">{deal.upvotes || 0}</span>
                   </button>
@@ -415,12 +426,12 @@ export default function CompactDealPage() {
                     onClick={() => handleVote(-1)}
                     className={clsx(
                       'flex items-center space-x-2 px-4 py-2 rounded-lg transition-all',
-                      userVote === -1
+                      deal?.userVote === -1
                         ? 'bg-red-100 text-red-700 border-2 border-red-300'
                         : 'bg-gray-50 text-gray-700 hover:bg-red-50 border border-gray-200'
                     )}
                   >
-                    <HandThumbDownIcon className={`h-5 w-5 ${userVote === -1 ? 'text-red-700' : ''}`} />
+                    <HandThumbDownIcon className={`h-5 w-5 ${deal?.userVote === -1 ? 'text-red-700' : ''}`} />
                     <span>Not Helpful</span>
                     <span className="font-semibold">{deal.downvotes || 0}</span>
                   </button>
@@ -431,6 +442,18 @@ export default function CompactDealPage() {
                     {((deal.upvotes || 0) - (deal.downvotes || 0))}
                   </div>
                   <div className="text-sm text-gray-600">Net Score</div>
+                  <div className="mt-2 text-xs text-gray-500">
+                    <div className="flex items-center justify-end space-x-3">
+                      <span className="flex items-center">
+                        <HandThumbUpIcon className="w-3 h-3 mr-1 text-green-600" />
+                        {deal.upvotes || 0}
+                      </span>
+                      <span className="flex items-center">
+                        <HandThumbDownIcon className="w-3 h-3 mr-1 text-red-600" />
+                        {deal.downvotes || 0}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -462,11 +485,6 @@ export default function CompactDealPage() {
               </div>
             )}
 
-            {/* Comments */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Comments</h3>
-              <CommentThread dealId={deal.id} />
-            </div>
           </div>
         </div>
       </div>

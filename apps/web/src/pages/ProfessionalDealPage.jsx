@@ -34,7 +34,6 @@ import {
   HeartIcon as HeartIconSolid,
   BookmarkIcon as BookmarkIconSolid
 } from '@heroicons/react/24/solid'
-import { CommentThread } from '../components/Comments/CommentThread'
 import { TagChips } from '../components/Deal/TagChips'
 import ReviewsAndRatings from '../components/Deal/ReviewsAndRatings'
 import StoreInfoPanel from '../components/Deal/StoreInfoPanel'
@@ -209,7 +208,6 @@ export default function ProfessionalDealPage() {
   const queryClient = useQueryClient()
   
   const [isBookmarked, setIsBookmarked] = useState(false)
-  const [userVote, setUserVote] = useState(null)
   const [showFullDescription, setShowFullDescription] = useState(false)
 
   // Fetch deal data with enhanced details
@@ -236,10 +234,21 @@ export default function ProfessionalDealPage() {
   })
 
   const voteMutation = useMutation({
-    mutationFn: ({ dealId, vote }) => api.vote(dealId, vote),
+    mutationFn: ({ dealId, vote }) => {
+      const value = vote === 'up' ? 1 : vote === 'down' ? -1 : null
+      return api.voteDeal(dealId, value)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['deal-professional', id])
       toast.success('Vote recorded')
+    },
+    onError: (error) => {
+      console.error('Vote error:', error)
+      if (error.status === 401) {
+        toast.error('Session expired. Please login again.')
+      } else {
+        toast.error('Failed to record vote. Please try again.')
+      }
     }
   })
 
@@ -256,8 +265,16 @@ export default function ProfessionalDealPage() {
       toast.error('Please login to vote')
       return
     }
-    const newVote = userVote === vote ? null : vote
-    setUserVote(newVote)
+    
+    // Check if we have a valid token before making the request
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      toast.error('Session expired. Please login again.')
+      return
+    }
+    
+    const currentVote = deal?.userVote
+    const newVote = currentVote === vote ? null : vote
     voteMutation.mutate({ dealId: id, vote: newVote })
   }
 
@@ -528,7 +545,7 @@ export default function ProfessionalDealPage() {
                   <button
                     onClick={() => handleVote('up')}
                     className={`p-2 rounded-lg border transition-colors ${
-                      userVote === 'up' 
+                      deal?.userVote === 1 
                         ? 'bg-green-50 border-green-200 text-green-700' 
                         : 'border-gray-300 text-gray-600 hover:bg-gray-50'
                     }`}
@@ -538,7 +555,7 @@ export default function ProfessionalDealPage() {
                   <button
                     onClick={() => handleVote('down')}
                     className={`p-2 rounded-lg border transition-colors ${
-                      userVote === 'down' 
+                      deal?.userVote === -1 
                         ? 'bg-red-50 border-red-200 text-red-700' 
                         : 'border-gray-300 text-gray-600 hover:bg-gray-50'
                     }`}
@@ -552,6 +569,18 @@ export default function ProfessionalDealPage() {
                     {(deal.upvotes || 0) - (deal.downvotes || 0)}
                   </div>
                   <div className="text-sm text-gray-600">Net Score</div>
+                  <div className="mt-2 text-xs text-gray-500">
+                    <div className="flex items-center justify-end space-x-3">
+                      <span className="flex items-center">
+                        <HandThumbUpIcon className="w-3 h-3 mr-1 text-green-600" />
+                        {deal.upvotes || 0}
+                      </span>
+                      <span className="flex items-center">
+                        <HandThumbDownIcon className="w-3 h-3 mr-1 text-red-600" />
+                        {deal.downvotes || 0}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -620,15 +649,12 @@ export default function ProfessionalDealPage() {
         </div>
 
         {/* Reviews and Ratings Section */}
-        <div className="mt-12">
-          <ReviewsAndRatings dealId={deal.id} />
-        </div>
+        {deal?.id && (
+          <div className="mt-12">
+            <ReviewsAndRatings dealId={String(deal.id)} />
+          </div>
+        )}
 
-        {/* Comments Section */}
-        <div className="mt-8 border rounded-lg p-6 bg-white">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Discussion</h3>
-          <CommentThread dealId={deal.id} />
-        </div>
       </div>
     </div>
   )

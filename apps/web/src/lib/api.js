@@ -41,7 +41,7 @@ export async function apiRequest(endpoint, options = {}, retryCount = 0) {
       const error = await response.text()
       
       // Check if it's a JWT expiration error and we haven't retried yet
-      if ((error.includes('JWT expired') || error.includes('expired')) && retryCount === 0) {
+      if ((error.includes('JWT expired') || error.includes('expired') || error.includes('invalid JWT') || error.includes('token is expired')) && retryCount === 0) {
         console.log('🔄 JWT expired, attempting token refresh...')
         
         // Try to refresh the token
@@ -77,10 +77,30 @@ export async function apiRequest(endpoint, options = {}, retryCount = 0) {
               console.log('✅ Token refresh successful, retrying request...')
               // Retry the original request with new token
               return apiRequest(endpoint, options, retryCount + 1)
+            } else {
+              console.error('❌ Token refresh failed:', await refreshResponse.text())
+              // Clear invalid tokens
+              localStorage.removeItem('access_token')
+              localStorage.removeItem('refresh_token')
+              localStorage.removeItem('sb-ixkhkzjhelyumdplutbz-auth-token')
+              // Show user-friendly error message
+              throw new ApiError('Session expired. Please login again.', 401)
             }
+          } else {
+            console.error('❌ No refresh token available')
+            // Clear invalid tokens
+            localStorage.removeItem('access_token')
+            localStorage.removeItem('refresh_token')
+            localStorage.removeItem('sb-ixkhkzjhelyumdplutbz-auth-token')
+            throw new ApiError('Session expired. Please login again.', 401)
           }
         } catch (refreshError) {
-          console.warn('Token refresh failed:', refreshError)
+          console.error('❌ Token refresh error:', refreshError)
+          // Clear invalid tokens
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+          localStorage.removeItem('sb-ixkhkzjhelyumdplutbz-auth-token')
+          throw new ApiError('Session expired. Please login again.', 401)
         }
       }
       
@@ -218,25 +238,87 @@ export const api = {
     return apiRequest(`/api/deals?${searchParams}`)
   },
   
-  getDeal: (id) => apiRequest(`/api/deals/${id}`),
+  getDeal: (id) => {
+    const normalizedId = String(id)
+    return apiRequest(`/api/deals/${normalizedId}`)
+  },
   getRelatedDeals: (categoryId, excludeId) => apiRequest(`/api/deals?category_id=${categoryId}&exclude=${excludeId}&limit=6&sort=popular`),
   getDealComments: (id) => apiRequest(`/api/deals/${id}/comments`),
   
   // Reviews
   getDealReviews: (dealId, options = {}) => {
+    const normalizedDealId = String(dealId)
+    
     const params = new URLSearchParams()
     if (options.sort) params.append('sort', options.sort)
     if (options.limit) params.append('limit', options.limit)
-    return apiRequest(`/api/deals/${dealId}/reviews?${params}`)
+    if (options.page) params.append('page', options.page)
+    if (options.filter) params.append('filter', options.filter)
+    
+    const url = `/api/reviews/deals/${normalizedDealId}/reviews?${params}`
+    return apiRequest(url)
   },
   submitDealReview: (reviewData) => apiRequest('/api/reviews', {
     method: 'POST',
     body: reviewData,
   }),
-  voteOnReview: (reviewId, voteType) => apiRequest(`/api/reviews/${reviewId}/vote`, {
+  getUserReviewVote: (reviewId) => apiRequest(`/api/reviews/${reviewId}/vote`),
+  reportReview: (reviewId, reason, description = '') => apiRequest(`/api/reviews/${reviewId}/report`, {
     method: 'POST',
-    body: { vote_type: voteType },
+    body: { reason, description },
   }),
+  incrementReviewViews: (reviewId) => apiRequest(`/api/reviews/${reviewId}/view`, {
+    method: 'POST',
+  }),
+
+  // Personalization
+  getUserPreferences: () => apiRequest('/api/personalization/preferences'),
+  updateUserPreferences: (preferences) => apiRequest('/api/personalization/preferences', {
+    method: 'PUT',
+    body: preferences,
+  }),
+  trackUserActivity: (activity) => apiRequest('/api/personalization/activity', {
+    method: 'POST',
+    body: activity,
+  }),
+  getUserRecommendations: (options = {}) => {
+    const params = new URLSearchParams()
+    if (options.type) params.append('type', options.type)
+    if (options.limit) params.append('limit', options.limit)
+    return apiRequest(`/api/personalization/recommendations?${params}`)
+  },
+  generateRecommendations: () => apiRequest('/api/personalization/recommendations/generate', {
+    method: 'POST',
+  }),
+  getUserInterests: () => apiRequest('/api/personalization/interests'),
+  getUserActivity: (options = {}) => {
+    const params = new URLSearchParams()
+    if (options.limit) params.append('limit', options.limit)
+    if (options.offset) params.append('offset', options.offset)
+    if (options.type) params.append('type', options.type)
+    return apiRequest(`/api/personalization/activity?${params}`)
+  },
+  getSavedSearches: () => apiRequest('/api/personalization/saved-searches'),
+  saveSearch: (searchData) => apiRequest('/api/personalization/saved-searches', {
+    method: 'POST',
+    body: searchData,
+  }),
+  updateSavedSearch: (id, updates) => apiRequest(`/api/personalization/saved-searches/${id}`, {
+    method: 'PUT',
+    body: updates,
+  }),
+  deleteSavedSearch: (id) => apiRequest(`/api/personalization/saved-searches/${id}`, {
+    method: 'DELETE',
+  }),
+  getUserFollows: (type = 'user') => apiRequest(`/api/personalization/follows?type=${type}`),
+  followUser: (followingId, followType = 'user') => apiRequest('/api/personalization/follows', {
+    method: 'POST',
+    body: { following_id: followingId, follow_type: followType },
+  }),
+  unfollowUser: (followingId) => apiRequest(`/api/personalization/follows/${followingId}`, {
+    method: 'DELETE',
+  }),
+  getPersonalizedDashboard: () => apiRequest('/api/personalization/dashboard'),
 
   // Saved Items
   getSavedItems: (type = 'all') => apiRequest(`/api/saved-items?type=${type}`),
@@ -639,15 +721,28 @@ export const api = {
   },
   
   // Deal reviews
-  submitDealReview: (dealId, reviewData) => apiRequest(`/api/deals/${dealId}/reviews`, {
-    method: 'POST',
-    body: reviewData,
-  }),
+  submitDealReview: (dealId, reviewData) => {
+    const normalizedDealId = String(dealId)
+    
+    // Add deal_id to the reviewData since the backend expects it
+    const reviewDataWithDealId = {
+      ...reviewData,
+      deal_id: normalizedDealId
+    }
+    
+    const url = `/api/reviews`
+    return apiRequest(url, {
+      method: 'POST',
+      body: reviewDataWithDealId,
+    })
+  },
   
-  voteOnReview: (reviewId, helpful) => apiRequest(`/api/reviews/${reviewId}/vote`, {
-    method: 'POST',
-    body: { helpful },
-  }),
+  voteOnReview: (reviewId, isHelpful) => {
+    return apiRequest(`/api/reviews/${reviewId}/vote`, {
+      method: 'POST',
+      body: { isHelpful },
+    })
+  },
   
   // Search
   searchDeals: (query, filters = {}) => {

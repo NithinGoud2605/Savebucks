@@ -346,10 +346,42 @@ r.get('/:id', async (req, res) => {
       .select('id,user_id,body,parent_id,created_at')
       .order('created_at', { ascending: true });
 
-    const { data: agg } = await supaAdmin.rpc('get_votes_for_deal', { p_deal_id: id });
-    const ups = agg?.ups || 0, downs = agg?.downs || 0;
+    // Get vote counts directly from votes table
+    let ups = 0, downs = 0;
+    try {
+      const { data: votesData, error: votesError } = await supaAdmin
+        .from('votes')
+        .select('value')
+        .eq('deal_id', id);
+      
+      if (votesError) {
+        console.error('Error getting votes for deal:', votesError);
+      } else if (votesData) {
+        ups = votesData.filter(v => v.value === 1).length;
+        downs = votesData.filter(v => v.value === -1).length;
+      }
+      console.log('Vote counts for deal', id, ':', { ups, downs, totalVotes: votesData?.length || 0 });
+    } catch (error) {
+      console.error('Error calculating vote counts:', error);
+    }
     const created = Math.floor(new Date(d.created_at).getTime()/1000);
     const now = Math.floor(Date.now()/1000);
+
+    // Get user's current vote if authenticated
+    let userVote = null;
+    if (req.user && req.user.id) {
+      try {
+        const { data: userVoteData } = await supaAdmin
+          .from('votes')
+          .select('value')
+          .eq('deal_id', id)
+          .eq('user_id', req.user.id)
+          .single();
+        userVote = userVoteData?.value || null;
+      } catch (error) {
+        // User hasn't voted yet, userVote remains null
+      }
+    }
 
     // Fetch tags for this deal
     let tags = [];
@@ -364,13 +396,14 @@ r.get('/:id', async (req, res) => {
     res.json({
       id: d.id, title: d.title, url: d.url, price: d.price, merchant: d.merchant,
       description: d.description, image_url: d.image_url, deal_images: d.deal_images, featured_image: d.featured_image, created,
-      ups, downs, hot: hotScore(ups, downs, created, now),
+      ups, downs, upvotes: ups, downvotes: downs, hot: hotScore(ups, downs, created, now),
       comments, category_id: d.category_id, deal_type: d.deal_type, is_featured: d.is_featured,
       views_count: d.views_count, clicks_count: d.clicks_count, expires_at: d.expires_at,
       original_price: d.original_price, discount_percentage: d.discount_percentage,
       discount_amount: d.discount_amount, coupon_code: d.coupon_code, coupon_type: d.coupon_type,
       company: d.companies, // Include full company information
-      tags
+      tags,
+      userVote // Include user's current vote
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -431,23 +464,80 @@ r.post('/', async (req, res) => {
 /** Vote (JWT required; RLS ensures deal is approved) */
 r.post('/:id/vote', async (req, res) => {
   try {
-    const token = bearer(req);
-    if (!token) return res.status(401).json({ error: 'auth required' });
-    
-    const supaUser = await createSafeUserClient(token, res);
-    if (!supaUser) return; // Exit if client creation failed
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required. Please login again.' });
+    }
 
     const id = Number(req.params.id);
     const { value } = req.body || {};
+    
+    // Handle vote removal (null value)
+    if (value === null) {
+      // Remove existing vote
+      const { error: deleteError } = await supaAdmin
+        .from('votes')
+        .delete()
+        .eq('deal_id', id)
+        .eq('user_id', req.user.id);
+      
+      if (deleteError) {
+        return res.status(500).json({ error: 'Failed to remove vote: ' + deleteError.message });
+      }
+      
+      // Return fresh aggregation after vote removal
+      const { data: votesData, error: votesError } = await supaAdmin
+        .from('votes')
+        .select('value')
+        .eq('deal_id', id);
+      
+      let ups = 0, downs = 0;
+      if (!votesError && votesData) {
+        ups = votesData.filter(v => v.value === 1).length;
+        downs = votesData.filter(v => v.value === -1).length;
+      }
+      
+      const { data: d, error: dErr } = await supaAdmin
+        .from('deals')
+        .select('id,title,url,price,merchant,created_at').eq('id', id).single();
+      if (dErr) throw dErr;
+
+      const created = Math.floor(new Date(d.created_at).getTime()/1000);
+      return res.json({
+        success: true,
+        vote_score: ups - downs,
+        upvotes: ups,
+        downvotes: downs,
+        created_at: created
+      });
+    }
+    
     if (![1, -1].includes(value)) return res.status(400).json({ error: 'value must be 1 or -1' });
 
-    // insert vote (user_id auto-set by trigger; RLS enforces)
-    const { error } = await supaUser.from('votes').insert([{ deal_id: id, value }]);
-    if (error && !/duplicate key/.test(error.message)) throw error;
+    // Use upsert to handle existing votes (update if exists, insert if not)
+    const { error } = await supaAdmin.from('votes').upsert([{ 
+      deal_id: id, 
+      value,
+      user_id: req.user.id,
+      created_at: new Date().toISOString()
+    }], {
+      onConflict: 'user_id,deal_id'
+    });
+    if (error) {
+      return res.status(500).json({ error: 'Failed to vote: ' + error.message });
+    }
 
     // return fresh agg
-    const { data: agg, error: aErr } = await supaAdmin.rpc('get_votes_for_deal', { p_deal_id: id });
-    if (aErr) throw aErr;
+    const { data: votesData, error: votesError } = await supaAdmin
+      .from('votes')
+      .select('value')
+      .eq('deal_id', id);
+    
+    let ups = 0, downs = 0;
+    if (!votesError && votesData) {
+      ups = votesData.filter(v => v.value === 1).length;
+      downs = votesData.filter(v => v.value === -1).length;
+    }
+    
     const { data: d, error: dErr } = await supaAdmin
       .from('deals')
       .select('id,title,url,price,merchant,created_at').eq('id', id).single();
@@ -455,7 +545,6 @@ r.post('/:id/vote', async (req, res) => {
 
     const created = Math.floor(new Date(d.created_at).getTime()/1000);
     const now = Math.floor(Date.now()/1000);
-    const ups = agg?.ups || 0, downs = agg?.downs || 0;
 
     res.json({ id: d.id, title: d.title, url: d.url, price: d.price, merchant: d.merchant, created, ups, downs, hot: hotScore(ups, downs, created, now) });
   } catch (e) {

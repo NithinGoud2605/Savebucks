@@ -54,16 +54,28 @@ const StarRating = ({ rating, size = 'w-5 h-5', onRatingChange = null, readonly 
 // Review Item Component
 const ReviewItem = ({ review, onVote }) => {
   const { user } = useAuth()
+  const [isVoting, setIsVoting] = useState(false)
+  
+  const handleVote = async (isHelpful) => {
+    if (!user || isVoting) return
+    
+    setIsVoting(true)
+    try {
+      await onVote?.(review.id, isHelpful)
+    } finally {
+      setIsVoting(false)
+    }
+  }
   
   return (
     <div className="border-b border-gray-200 pb-6 mb-6 last:border-b-0">
       <div className="flex items-start space-x-4">
         {/* Avatar */}
         <div className="flex-shrink-0">
-          {review.profiles?.avatar_url ? (
+          {review.user?.avatar ? (
             <img
-              src={review.profiles.avatar_url}
-              alt={review.profiles.handle}
+              src={review.user.avatar}
+              alt={review.user.username}
               className="w-10 h-10 rounded-full"
             />
           ) : (
@@ -75,14 +87,19 @@ const ReviewItem = ({ review, onVote }) => {
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2">
             <span className="font-medium text-gray-900">
-              {review.profiles?.handle || 'Anonymous'}
+              {review.user?.displayName || review.user?.username || 'Anonymous'}
             </span>
-            {review.profiles?.is_verified && (
-              <CheckBadgeIcon className="w-4 h-4 text-blue-500" />
+            {review.isVerifiedPurchase && (
+              <CheckBadgeIcon className="w-4 h-4 text-blue-500" title="Verified Purchase" />
+            )}
+            {review.isFeatured && (
+              <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                Featured
+              </span>
             )}
             <StarRating rating={review.rating} size="w-4 h-4" readonly />
             <span className="text-sm text-gray-500">
-              {dateAgo(review.created_at)}
+              {dateAgo(review.createdAt)}
             </span>
           </div>
           
@@ -95,22 +112,26 @@ const ReviewItem = ({ review, onVote }) => {
           {/* Review Actions */}
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => onVote?.(review.id, 'helpful')}
-              disabled={!user}
-              className="flex items-center space-x-1 text-sm text-gray-600 hover:text-green-600 disabled:opacity-50"
+              onClick={() => handleVote(true)}
+              disabled={!user || isVoting}
+              className="flex items-center space-x-1 text-sm text-gray-600 hover:text-green-600 disabled:opacity-50 transition-colors"
             >
               <HandThumbUpIcon className="w-4 h-4" />
-              <span>Helpful ({review.helpful_count || 0})</span>
+              <span>Helpful ({review.helpfulCount || 0})</span>
             </button>
             
             <button
-              onClick={() => onVote?.(review.id, 'not_helpful')}
-              disabled={!user}
-              className="flex items-center space-x-1 text-sm text-gray-600 hover:text-red-600 disabled:opacity-50"
+              onClick={() => handleVote(false)}
+              disabled={!user || isVoting}
+              className="flex items-center space-x-1 text-sm text-gray-600 hover:text-red-600 disabled:opacity-50 transition-colors"
             >
               <HandThumbDownIcon className="w-4 h-4" />
-              <span>Not helpful ({review.not_helpful_count || 0})</span>
+              <span>Not helpful ({review.notHelpfulCount || 0})</span>
             </button>
+            
+            {isVoting && (
+              <span className="text-sm text-gray-500">Voting...</span>
+            )}
           </div>
         </div>
       </div>
@@ -142,7 +163,6 @@ const ReviewForm = ({ dealId, onSubmit, onCancel }) => {
     
     try {
       await onSubmit({
-        deal_id: dealId,
         rating,
         title: title.trim(),
         content: content.trim()
@@ -235,39 +255,52 @@ export default function ReviewsAndRatings({ dealId }) {
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [sortBy, setSortBy] = useState('newest') // newest, oldest, highest_rated, most_helpful
   
+  // Ensure dealId is a string and handle edge cases
+  const normalizedDealId = dealId ? String(dealId) : null
+  
+  // Don't render if no valid dealId
+  if (!normalizedDealId || normalizedDealId === 'undefined' || normalizedDealId === 'null') {
+    return null
+  }
+  
   // Fetch reviews
   const { data: reviewsData, isLoading } = useQuery({
-    queryKey: ['deal-reviews', dealId, sortBy],
-    queryFn: () => api.getDealReviews(dealId, { sort: sortBy }),
-    enabled: !!dealId
+    queryKey: ['deal-reviews', normalizedDealId, sortBy],
+    queryFn: () => api.getDealReviews(normalizedDealId, { sort: sortBy, limit: 20, page: 1 }),
+    enabled: !!normalizedDealId && normalizedDealId !== 'undefined'
   })
   
   // Submit review mutation
   const submitReviewMutation = useMutation({
-    mutationFn: (reviewData) => api.submitDealReview(reviewData),
+    mutationFn: (reviewData) => api.submitDealReview(normalizedDealId, reviewData),
     onSuccess: () => {
-      queryClient.invalidateQueries(['deal-reviews', dealId])
+      queryClient.invalidateQueries(['deal-reviews', normalizedDealId])
       setShowReviewForm(false)
     }
   })
   
   // Vote on review mutation
   const voteReviewMutation = useMutation({
-    mutationFn: ({ reviewId, voteType }) => api.voteOnReview(reviewId, voteType),
+    mutationFn: ({ reviewId, isHelpful }) => api.voteOnReview(reviewId, isHelpful),
     onSuccess: () => {
-      queryClient.invalidateQueries(['deal-reviews', dealId])
+      queryClient.invalidateQueries(['deal-reviews', normalizedDealId])
+      toast.success('Thank you for your feedback!')
+    },
+    onError: (error) => {
+      console.error('Vote error:', error)
+      toast.error(error.response?.data?.error || 'Failed to vote on review')
     }
   })
   
   const reviews = reviewsData?.reviews || []
   const stats = reviewsData?.stats || { average_rating: 0, total_reviews: 0, rating_distribution: {} }
   
-  const handleVoteReview = (reviewId, voteType) => {
+  const handleVoteReview = (reviewId, isHelpful) => {
     if (!user) {
       toast.error('Please login to vote on reviews')
       return
     }
-    voteReviewMutation.mutate({ reviewId, voteType })
+    voteReviewMutation.mutate({ reviewId, isHelpful })
   }
   
   if (isLoading) {
@@ -285,7 +318,7 @@ export default function ReviewsAndRatings({ dealId }) {
       {/* Rating Summary */}
       <div className="bg-white border rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Customer Reviews</h2>
+          <h2 className="text-xl font-bold text-gray-900">Community Reviews</h2>
           {user && !showReviewForm && (
             <button
               onClick={() => setShowReviewForm(true)}
@@ -311,7 +344,7 @@ export default function ReviewsAndRatings({ dealId }) {
           {/* Rating Distribution */}
           <div className="space-y-2">
             {[5, 4, 3, 2, 1].map((stars) => {
-              const count = stats.rating_distribution[stars] || 0
+              const count = stats.rating_distribution[`${stars}_star`] || 0
               const percentage = stats.total_reviews > 0 ? (count / stats.total_reviews) * 100 : 0
               
               return (
@@ -333,7 +366,7 @@ export default function ReviewsAndRatings({ dealId }) {
         {/* Review Form */}
         {showReviewForm && (
           <ReviewForm
-            dealId={dealId}
+            dealId={normalizedDealId}
             onSubmit={(data) => submitReviewMutation.mutate(data)}
             onCancel={() => setShowReviewForm(false)}
           />
@@ -395,3 +428,4 @@ export default function ReviewsAndRatings({ dealId }) {
     </div>
   )
 }
+

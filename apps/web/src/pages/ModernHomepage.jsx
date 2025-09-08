@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Link, useLocation } from 'react-router-dom'
 import { setPageMeta } from '../lib/head.js'
 import { api } from '../lib/api'
+import { useAuth } from '../hooks/useAuth'
 import { 
   ShoppingCart, 
   Tag, 
@@ -13,7 +14,8 @@ import {
   Star,
   Gift,
   Flame,
-  Loader2
+  Loader2,
+  Sparkles
 } from 'lucide-react'
 
 // Deal Card Component
@@ -315,45 +317,93 @@ const LeaderboardCard = ({ user, rank }) => {
 
 // Deal Section Component
 const DealSection = ({ section }) => {
+  const { user } = useAuth()
+  
   const { data: deals, isLoading, error } = useQuery({
     queryKey: section.queryKey,
     queryFn: section.queryFn,
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: Boolean(!section.isPersonalized || !!user) // Only fetch personalized if user is logged in
   })
+
+  // For personalized sections, always fetch fallback deals
+  const { data: fallbackDeals, isLoading: fallbackLoading, error: fallbackError } = useQuery({
+    queryKey: ['fallback-deals', section.limit],
+    queryFn: () => api.getDeals({ limit: section.limit, sort_by: 'trending' }),
+    enabled: Boolean(section.isPersonalized),
+    staleTime: 2 * 60 * 1000,
+    retry: 3,
+    retryDelay: 1000,
+    refetchOnWindowFocus: false
+  })
+
+  // Ultimate fallback - get any deals if both personalized and trending fail
+  const { data: ultimateFallback } = useQuery({
+    queryKey: ['ultimate-fallback', section.limit],
+    queryFn: () => api.getDeals({ limit: section.limit }),
+    enabled: Boolean(section.isPersonalized && (!fallbackDeals || fallbackDeals.length === 0)),
+    staleTime: 5 * 60 * 1000,
+    retry: 3,
+    retryDelay: 1000
+  })
+
+  // No static fallback - only use real deals from API
+
+  // Determine what to display - prioritize personalized, fallback to trending, ultimate fallback to any deals
+  const displayData = (deals && deals.length > 0) ? deals : 
+                     (fallbackDeals && fallbackDeals.length > 0) ? fallbackDeals : 
+                     (ultimateFallback && ultimateFallback.length > 0) ? ultimateFallback : null
+  const isFallback = section.isPersonalized && (!deals || deals.length === 0)
 
   return (
     <div className="deal-section">
       {/* Section Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">{section.title}</h2>
-        <p className="text-gray-600">{section.subtitle}</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+          {section.isPersonalized && <Sparkles className="w-6 h-6 text-blue-500" />}
+          {isFallback ? 'Just for You' : section.title}
+        </h2>
+        <p className="text-gray-600">
+          {isFallback ? 'Trending deals we think you\'ll love' : section.subtitle}
+        </p>
       </div>
 
       {/* Deals Grid */}
-      {isLoading ? (
+      {(isLoading || fallbackLoading) && !displayData ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
         </div>
-      ) : error ? (
-        <div className="text-center py-12">
-          <div className="text-sm font-semibold text-gray-900 mb-2">Failed to load {section.title.toLowerCase()}</div>
-          <p className="text-gray-600 text-sm">Please try again later.</p>
-        </div>
-      ) : deals && deals.length > 0 ? (
+      ) : displayData && displayData.length > 0 ? (
         <div className={`grid gap-4 ${
           section.limit === 4 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' :
           section.limit === 6 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
           section.limit === 8 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' :
           'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
         }`}>
-          {deals.map((deal, index) => (
-            <DealCard key={deal.id} deal={deal} index={index} />
-          ))}
+          {displayData.map((item, index) => {
+            // Handle both recommendation objects and deal objects
+            const deal = item.recommendation_type ? item.metadata : item
+            return (
+              <div key={item.id || `fallback-${deal.id}`} className="relative">
+                {/* Recommendation Badge */}
+                {item.recommendation_type && (
+                  <div className="absolute top-2 left-2 z-10">
+                    <div className="flex items-center gap-1 px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                      <Sparkles className="w-3 h-3" />
+                      <span>Recommended</span>
+                    </div>
+                  </div>
+                )}
+                <DealCard deal={deal} index={index} />
+              </div>
+            )
+          })}
         </div>
       ) : (
         <div className="text-center py-12">
           <ShoppingCart className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-600 text-sm">No {section.title.toLowerCase()} found</p>
+          <p className="text-gray-600 text-sm">Loading deals for you...</p>
+          <p className="text-gray-500 text-xs mt-2">Please wait while we fetch the latest deals</p>
         </div>
       )}
     </div>
@@ -399,8 +449,9 @@ export default function ModernHomepage() {
       title: 'Just for You', 
       subtitle: 'Personalized recommendations',
       limit: 4,
-      queryKey: ['deals', 'personalized'],
-      queryFn: () => api.getDeals({ limit: 4, sort_by: 'personalized' })
+      queryKey: ['user-recommendations', 4],
+      queryFn: () => api.getUserRecommendations({ type: 'deal', limit: 4 }),
+      isPersonalized: true
     },
     { 
       id: 'top-deals-week', 
@@ -485,7 +536,7 @@ export default function ModernHomepage() {
             </div>
           </motion.div>
         )}
-        
+
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Side - Deals (70%) */}
           <div className="lg:w-[70%]">

@@ -23,7 +23,7 @@ import {
   BellIcon,
   HeartIcon,
   ShareIcon,
-  ExternalLinkIcon,
+  ArrowTopRightOnSquareIcon,
   CheckBadgeIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon
@@ -111,7 +111,7 @@ const StoreInfoPanel = ({ company, deal }) => {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-700 transition-colors"
             >
-              <ExternalLinkIcon className="w-3 h-3" />
+              <ArrowTopRightOnSquareIcon className="w-3 h-3" />
               {platform.charAt(0).toUpperCase() + platform.slice(1)}
             </a>
           ))}
@@ -518,3 +518,4 @@ const StoreInfoPanel = ({ company, deal }) => {
 }
 
 export default StoreInfoPanel
+

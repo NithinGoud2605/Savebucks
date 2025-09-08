@@ -9,7 +9,13 @@ export function makeAdminClient() {
   }
   
   try {
-    return createClient(url, key, { auth: { persistSession: false } });
+    return createClient(url, key, { 
+      auth: { 
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      } 
+    });
   } catch (error) {
     throw new Error(`Invalid Supabase configuration: ${error.message}`);
   }

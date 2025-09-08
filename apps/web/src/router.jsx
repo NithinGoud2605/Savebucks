@@ -32,6 +32,8 @@ const SignUp = React.lazy(() => import('./pages/SignUp'))
 const AuthCallback = React.lazy(() => import('./pages/AuthCallback'))
 const SavedSearches = React.lazy(() => import('./pages/SavedSearches'))
 const SavedItems = React.lazy(() => import('./pages/SavedItems'))
+const PersonalizedDashboard = React.lazy(() => import('./components/Personalization/PersonalizedDashboard'))
+const UserPreferences = React.lazy(() => import('./components/Personalization/UserPreferences'))
 const Achievements = React.lazy(() => import('./pages/Achievements'))
 const EnhancedLeaderboard = React.lazy(() => import('./pages/EnhancedLeaderboard'))
 const Settings = React.lazy(() => import('./pages/Settings'))
@@ -185,6 +187,22 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <SavedItems />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'dashboard',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PersonalizedDashboard />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'preferences',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <UserPreferences />
           </Suspense>
         ),
       },

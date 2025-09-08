@@ -126,3 +126,4 @@ describe('StoreInfoPanel', () => {
     expect(screen.getByText('Payment Methods')).toBeInTheDocument()
   })
 })
+

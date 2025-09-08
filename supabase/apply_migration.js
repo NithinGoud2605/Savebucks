@@ -1,6 +1,6 @@
-const { createClient } = require('@supabase/supabase-js');
-const fs = require('fs');
-const path = require('path');
+import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
 
 // Supabase configuration
 const supabaseUrl = 'https://ixkhkzjhelyumdplutbz.supabase.co';
@@ -11,7 +11,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 async function applyMigration() {
   try {
     console.log('Reading migration file...');
-    const migrationFile = path.join(__dirname, 'sql', '034_step_by_step_migration.sql');
+    const migrationFile = path.join(process.cwd(), 'supabase', 'sql', process.argv[2] || '034_step_by_step_migration.sql');
     const migrationContent = fs.readFileSync(migrationFile, 'utf8');
     
     // Split into individual statements
