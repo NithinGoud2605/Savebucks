@@ -49,7 +49,7 @@ export default function PostItemOrCoupon() {
                 title: '',
                 description: '',
                 coupon_code: '',
-                coupon_type: 'percentage',
+                coupon_type: '',
                 discount_value: '',
                 minimum_order_amount: '',
                 maximum_discount_amount: '',
@@ -189,20 +189,30 @@ export default function PostItemOrCoupon() {
       newErrors.title = 'Title is required'
     } else if (couponData.title.trim().length < 6) {
       newErrors.title = 'Title must be at least 6 characters'
+    } else if (couponData.title.trim().length > 160) {
+      newErrors.title = 'Title must be less than 160 characters'
     }
     
     if (!couponData.coupon_code.trim()) {
       newErrors.coupon_code = 'Coupon code is required'
+    } else if (couponData.coupon_code.trim().length > 50) {
+      newErrors.coupon_code = 'Coupon code must be less than 50 characters'
     }
     
     if (!couponData.company_id) {
       newErrors.company_id = 'Company is required'
     }
     
+    if (!couponData.coupon_type) {
+      newErrors.coupon_type = 'Coupon type is required'
+    }
+    
     if (couponData.discount_value && couponData.discount_value.trim()) {
       const value = parseFloat(couponData.discount_value)
       if (isNaN(value) || value <= 0) {
         newErrors.discount_value = 'Discount value must be a positive number'
+      } else if (couponData.coupon_type === 'percentage' && value > 100) {
+        newErrors.discount_value = 'Percentage discount cannot exceed 100%'
       }
     }
     
@@ -232,6 +242,22 @@ export default function PostItemOrCoupon() {
       if (isNaN(limit) || limit <= 0) {
         newErrors.usage_limit_per_user = 'Per-user usage limit must be a positive number'
       }
+    }
+    
+    if (couponData.source_url && couponData.source_url.trim()) {
+      try {
+        new URL(couponData.source_url.trim())
+      } catch {
+        newErrors.source_url = 'Please enter a valid URL'
+      }
+    }
+    
+    if (couponData.description && couponData.description.trim().length > 2000) {
+      newErrors.description = 'Description must be less than 2000 characters'
+    }
+    
+    if (couponData.terms_conditions && couponData.terms_conditions.trim().length > 1000) {
+      newErrors.terms_conditions = 'Terms & conditions must be less than 1000 characters'
     }
     
     setErrors(newErrors)
@@ -384,7 +410,7 @@ export default function PostItemOrCoupon() {
         title: '',
         description: '',
         coupon_code: '',
-        coupon_type: 'percentage',
+        coupon_type: '',
         discount_value: '',
         minimum_order_amount: '',
         maximum_discount_amount: '',
@@ -1107,13 +1133,18 @@ export default function PostItemOrCoupon() {
                     value={couponData.coupon_type}
                     onChange={(e) => handleInputChange(e, 'coupon')}
                     className="w-full px-3 py-2 border border-secondary-300 rounded-lg bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
+                    required
                   >
+                    <option value="">Select coupon type</option>
                     <option value="percentage">Percentage Discount</option>
                     <option value="fixed_amount">Fixed Amount Off</option>
                     <option value="free_shipping">Free Shipping</option>
                     <option value="bogo">Buy One Get One</option>
                     <option value="other">Other</option>
                   </select>
+                  {errors.coupon_type && (
+                    <p className="mt-1 text-sm text-danger-600">{errors.coupon_type}</p>
+                  )}
                 </div>
               </div>
 
@@ -1359,6 +1390,23 @@ export default function PostItemOrCoupon() {
                   leftIcon="fileText"
                 />
               </div>
+
+              {/* Tags Input */}
+              <Input
+                label="Tags"
+                name="tags"
+                value={Array.isArray(couponData.tags) ? couponData.tags.join(', ') : couponData.tags || ''}
+                onChange={(e) => {
+                  const tagsValue = e.target.value
+                  const tagsArray = tagsValue ? tagsValue.split(',').map(tag => tag.trim()).filter(tag => tag) : []
+                  setCouponData(prev => ({ ...prev, tags: tagsArray }))
+                }}
+                placeholder="electronics, discount, new-customer"
+                error={errors.tags}
+                description="Comma-separated tags to help users find this coupon (optional)"
+                leftIcon="tag"
+                size="sm"
+              />
 
               {/* Image Upload Section */}
               <div className="space-y-3">
