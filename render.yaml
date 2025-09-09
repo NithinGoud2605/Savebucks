@@ -4,7 +4,7 @@ services:
     name: savebucks-app
     env: node
     plan: free
-    buildCommand: npm install --include=dev && npm run -w apps/web build
+    buildCommand: npm install --include=dev && cd apps/web && npm run build
     startCommand: cd apps/api && npm start
     healthCheckPath: /health
     envVars:
