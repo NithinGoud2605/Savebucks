@@ -6,7 +6,7 @@ import {
   HeartIcon,
   EyeIcon,
   ClockIcon,
-  TrendingUpIcon,
+  ArrowTrendingUpIcon,
   UserGroupIcon,
   Cog6ToothIcon,
   MagnifyingGlassIcon,
@@ -211,7 +211,7 @@ const PersonalizedDashboard = () => {
             <div key={activity.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                 {activity.activity_type === 'deal_view' && <EyeIcon className="w-4 h-4 text-blue-600" />}
-                {activity.activity_type === 'deal_click' && <TrendingUpIcon className="w-4 h-4 text-green-600" />}
+                {activity.activity_type === 'deal_click' && <ArrowTrendingUpIcon className="w-4 h-4 text-green-600" />}
                 {activity.activity_type === 'deal_save' && <BookmarkIcon className="w-4 h-4 text-yellow-600" />}
                 {activity.activity_type === 'search' && <MagnifyingGlassIcon className="w-4 h-4 text-purple-600" />}
                 {activity.activity_type === 'review_submit' && <StarIcon className="w-4 h-4 text-orange-600" />}
@@ -359,7 +359,7 @@ const PersonalizedDashboard = () => {
           className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
         >
           <div className="flex items-center">
-            <TrendingUpIcon className="w-6 h-6 text-blue-600" />
+            <ArrowTrendingUpIcon className="w-6 h-6 text-blue-600" />
             <div className="ml-3">
               <div className="font-medium text-blue-900">Browse New Deals</div>
               <div className="text-sm text-blue-700">Discover the latest deals</div>
