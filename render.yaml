@@ -3,7 +3,7 @@ services:
   - type: web
     name: savebucks-web
     env: static
-    buildCommand: npm install && cd apps/web && npm run build
+    buildCommand: npm install --include=dev && cd apps/web && npx vite build
     staticPublishPath: apps/web/dist
     routes:
       - type: rewrite
