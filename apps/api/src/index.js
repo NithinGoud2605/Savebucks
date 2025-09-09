@@ -31,7 +31,22 @@ import debugRoutes from './routes/debug.js';
 import { log } from './lib/logger.js';
 
 const app = express();
-app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(helmet({ 
+  crossOriginResourcePolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'nonce-theme-script'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://ixkhkzjhelyumdplutbz.supabase.co"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+}));
 app.use(cors({ origin: true, credentials: true }));
 app.use(compression());
 app.use(morgan('tiny'));
