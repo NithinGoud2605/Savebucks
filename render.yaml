@@ -55,10 +55,7 @@ services:
           name: savebucks-app
           property: host
       - key: VITE_API_BASE
-        fromService:
-          type: web
-          name: savebucks-app
-          property: host
+        value: ""
       - key: VITE_DEFAULT_IMAGE
         value: https://dummyimage.com/1200x630/ededed/222.png&text=savebucks
       - key: VITE_SUPABASE_URL

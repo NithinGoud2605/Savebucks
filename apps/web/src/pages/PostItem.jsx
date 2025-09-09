@@ -1104,7 +1104,7 @@ export default function PostItemOrCoupon() {
                 placeholder="e.g., 20% Off Everything - New Customers Only"
                 required
                 error={errors.title}
-                description="Describe what the coupon offers"
+                description="Describe what the coupon offers (required)"
                 leftIcon="ticket"
                 size="sm"
               />
@@ -1119,7 +1119,7 @@ export default function PostItemOrCoupon() {
                   placeholder="SAVE20"
                   required
                   error={errors.coupon_code}
-                  description="The actual coupon code users enter"
+                  description="The actual coupon code users enter (required)"
                   leftIcon="hash"
                   size="sm"
                 />
@@ -1142,6 +1142,7 @@ export default function PostItemOrCoupon() {
                     <option value="bogo">Buy One Get One</option>
                     <option value="other">Other</option>
                   </select>
+                  <p className="mt-1 text-xs text-secondary-500">Type of discount this coupon provides (required)</p>
                   {errors.coupon_type && (
                     <p className="mt-1 text-sm text-danger-600">{errors.coupon_type}</p>
                   )}
@@ -1158,7 +1159,7 @@ export default function PostItemOrCoupon() {
                   onChange={(e) => handleInputChange(e, 'coupon')}
                   placeholder={couponData.coupon_type === 'percentage' ? '20' : '10.00'}
                   error={errors.discount_value}
-                  description={couponData.coupon_type === 'percentage' ? 'Percentage (e.g., 20 for 20%)' : 'Fixed amount (e.g., 10.00 for $10 off)'}
+                  description={couponData.coupon_type === 'percentage' ? 'Percentage (e.g., 20 for 20%) - optional' : 'Fixed amount (e.g., 10.00 for $10 off) - optional'}
                   leftIcon="percent"
                   step="0.01"
                   min="0"
@@ -1183,6 +1184,7 @@ export default function PostItemOrCoupon() {
                       </option>
                     ))}
                   </select>
+                  <p className="mt-1 text-xs text-secondary-500">The store or company offering this coupon (required)</p>
                   {errors.company_id && (
                     <p className="mt-1 text-sm text-danger-600">{errors.company_id}</p>
                   )}
@@ -1361,6 +1363,7 @@ export default function PostItemOrCoupon() {
                       </option>
                     ))}
                   </select>
+                  <p className="mt-1 text-xs text-secondary-500">Product category for better organization (optional)</p>
                 </div>
               </div>
 
