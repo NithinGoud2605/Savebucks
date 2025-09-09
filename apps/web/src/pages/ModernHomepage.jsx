@@ -218,10 +218,10 @@ const DealSection = ({ section }) => {
   // No static fallback - only use real deals from API
 
   // Determine what to display - prioritize personalized, fallback to trending, ultimate fallback to any deals
-  const displayData = (deals && deals.length > 0) ? deals : 
-                     (fallbackDeals && fallbackDeals.length > 0) ? fallbackDeals : 
-                     (ultimateFallback && ultimateFallback.length > 0) ? ultimateFallback : []
-  const isFallback = section.isPersonalized && (!deals || deals.length === 0)
+  const displayData = (deals && Array.isArray(deals) && deals.length > 0) ? deals : 
+                     (fallbackDeals && Array.isArray(fallbackDeals) && fallbackDeals.length > 0) ? fallbackDeals : 
+                     (ultimateFallback && Array.isArray(ultimateFallback) && ultimateFallback.length > 0) ? ultimateFallback : []
+  const isFallback = section.isPersonalized && (!deals || !Array.isArray(deals) || deals.length === 0)
 
   return (
     <div className="deal-section">
@@ -241,7 +241,7 @@ const DealSection = ({ section }) => {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
         </div>
-      ) : displayData && displayData.length > 0 ? (
+      ) : displayData && Array.isArray(displayData) && displayData.length > 0 ? (
         <div className={`grid gap-4 ${
           section.limit === 4 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' :
           section.limit === 6 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
@@ -250,11 +250,11 @@ const DealSection = ({ section }) => {
         }`}>
           {displayData.map((item, index) => {
             // Handle both recommendation objects and deal objects
-            const deal = item.recommendation_type ? item.metadata : item
+            const deal = item?.recommendation_type ? item?.metadata : item
             return (
-              <div key={item.id || `fallback-${deal.id}`} className="relative">
+              <div key={item?.id || `fallback-${deal?.id || index}`} className="relative">
                 {/* Recommendation Badge */}
-                {item.recommendation_type && (
+                {item?.recommendation_type && (
                   <div className="absolute top-2 left-2 z-10">
                     <div className="flex items-center gap-1 px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
                       <Sparkles className="w-3 h-3" />
@@ -410,7 +410,7 @@ export default function ModernHomepage() {
           <div className="lg:w-[70%]">
             {/* Deal Sections */}
             <div className="space-y-12">
-              {dealSections.map((section) => (
+              {Array.isArray(dealSections) && dealSections.map((section) => (
                 <DealSection key={section.id} section={section} />
               ))}
             </div>
@@ -456,7 +456,7 @@ export default function ModernHomepage() {
                 ) : coupons && Array.isArray(coupons) && coupons.length > 0 ? (
                   <div className="space-y-1">
                     {coupons.map((coupon, index) => (
-                      <CompactCouponCard key={coupon.id} coupon={coupon} index={index} />
+                      <CompactCouponCard key={coupon?.id || index} coupon={coupon} index={index} />
                     ))}
                   </div>
                 ) : (
@@ -505,7 +505,7 @@ export default function ModernHomepage() {
                 ) : leaderboardData && Array.isArray(leaderboardData) && leaderboardData.length > 0 ? (
                   <div className="space-y-2">
                     {leaderboardData.map((user, index) => (
-                      <LeaderboardCard key={user.id} user={user} rank={index + 1} />
+                      <LeaderboardCard key={user?.id || index} user={user} rank={index + 1} />
                     ))}
                   </div>
                 ) : (
