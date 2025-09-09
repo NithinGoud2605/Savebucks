@@ -15,13 +15,21 @@ services:
       - key: VITE_SITE_URL
         fromService:
           type: web
-          name: savebucks-api
+          name: savebucks-web
           property: host
       - key: VITE_API_BASE
         fromService:
           type: web
           name: savebucks-api
           property: host
+      - key: VITE_DEFAULT_IMAGE
+        value: https://dummyimage.com/1200x630/ededed/222.png&text=savebucks
+      - key: VITE_ADS_ENABLED
+        value: "false"
+      - key: VITE_ADS_PUB_ID
+        value: ca-pub-XXXXXXXXXXXXXXXX
+      - key: VITE_ADS_PLACEHOLDER
+        value: "true"
 
   # API Backend Service
   - type: web
@@ -35,23 +43,82 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 10000
-      # Add your environment variables here
+        value: 4000
+      # Supabase Configuration
       - key: SUPABASE_URL
-        sync: false
+        value: https://ixkhkzjhelyumdplutbz.supabase.co
       - key: SUPABASE_ANON_KEY
-        sync: false
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4a2hrempoZWx5dW1kcGx1dGJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0MDQ5OTMsImV4cCI6MjA3MTk4MDk5M30.T5-RXfOVOKIMstjyHuc_sEI0B-MTc9wK1BuNWdzYuPs
       - key: SUPABASE_SERVICE_ROLE
-        sync: false
-      - key: UPSTASH_REDIS_REST_URL
-        sync: false
-      - key: UPSTASH_REDIS_REST_TOKEN
-        sync: false
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4a2hrempoZWx5dW1kcGx1dGJ6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjQwNDk5MywiZXhwIjoyMDcxOTgwOTkzfQ.B7zXO8B2ZYpvrDTQuAWOYzUULirUWVJtNF_FAh0o-v8
+      # Affiliate Configuration
+      - key: AFF_ENABLED
+        value: "false"
+      - key: AFF_REQUIRE_APPROVED
+        value: "true"
+      - key: AMZ_ASSOC_TAG
+        value: ""
+      - key: CJ_WEBSITE_ID
+        value: ""
+      - key: CJ_DEEP_LINK_BASE
+        value: https://www.anrdoezrs.net/click
+      # Ads Configuration
+      - key: VITE_ADS_ENABLED
+        value: "false"
+      - key: VITE_ADS_PUB_ID
+        value: ca-pub-XXXXXXXXXXXXXXXX
+      - key: VITE_ADS_PLACEHOLDER
+        value: "true"
+      # Telegram Configuration
+      - key: TELEGRAM_BOT_TOKEN
+        value: 7970745711:AAEjNohzmoFLpPXzedL-9rPvG1z8Ywr8go4
+      - key: TELEGRAM_WEBHOOK_SECRET
+        value: some-long-random-string
+      - key: TELEGRAM_ALLOWED_CHANNELS
+        value: dealshunter,us_deals,tech_bargains
+      - key: TELEGRAM_MIN_TITLE_LEN
+        value: "12"
+      - key: TELEGRAM_ENABLE_IMAGES
+        value: "false"
+      # Site Configuration
+      - key: VITE_SITE_URL
+        fromService:
+          type: web
+          name: savebucks-web
+          property: host
+      - key: VITE_DEFAULT_IMAGE
+        value: https://dummyimage.com/1200x630/ededed/222.png&text=savebucks
       - key: SITE_URL
         fromService:
           type: web
           name: savebucks-web
           property: host
+      # CORS and Security
+      - key: CORS_ORIGINS
+        fromService:
+          type: web
+          name: savebucks-web
+          property: host
+      - key: TRUST_PROXY
+        value: "true"
+      - key: JSON_LIMIT
+        value: 512kb
+      # Upstash Redis (optional - will fallback to in-memory if not set)
+      - key: UPSTASH_REDIS_REST_URL
+        value: ""
+      - key: UPSTASH_REDIS_REST_TOKEN
+        value: ""
+      # Rate Limiting Configuration
+      - key: RL_POSTS_PER_DAY
+        value: "5"
+      - key: RL_VOTES_PER_HOUR
+        value: "60"
+      - key: RL_COMMENTS_COOLDOWN_SEC
+        value: "10"
+      - key: RL_GO_PER_IP_PER_MIN
+        value: "30"
+      - key: RL_PER_DEAL_VOTE_COOLDOWN_SEC
+        value: "10"
 
   # Telegram Worker Service
   - type: worker
@@ -63,17 +130,22 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      # Add your environment variables here
+      # Supabase Configuration
+      - key: SUPABASE_URL
+        value: https://ixkhkzjhelyumdplutbz.supabase.co
+      - key: SUPABASE_SERVICE_ROLE
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4a2hrempoZWx5dW1kcGx1dGJ6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjQwNDk5MywiZXhwIjoyMDcxOTgwOTkzfQ.B7zXO8B2ZYpvrDTQuAWOYzUULirUWVJtNF_FAh0o-v8
+      # Telegram Configuration
       - key: TELEGRAM_BOT_TOKEN
-        sync: false
+        value: 7970745711:AAEjNohzmoFLpPXzedL-9rPvG1z8Ywr8go4
+      - key: TELEGRAM_WEBHOOK_SECRET
+        value: some-long-random-string
       - key: TELEGRAM_ALLOWED_CHANNELS
-        sync: false
+        value: dealshunter,us_deals,tech_bargains
       - key: TELEGRAM_MIN_TITLE_LEN
         value: "12"
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE
-        sync: false
+      - key: TELEGRAM_ENABLE_IMAGES
+        value: "false"
       - key: API_BASE
         fromService:
           type: web
