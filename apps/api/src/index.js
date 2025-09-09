@@ -4,6 +4,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { makeAuth } from './middleware/auth.js';
 import health from './routes/health.js';
 import deals from './routes/deals.js';
@@ -57,6 +59,23 @@ app.use('/api/admin', adminRoutes);
 app.use('/api', tempDataRoutes);
 app.use('/api', debugRoutes); // Debug routes
 app.use(goRoutes);
+
+// Serve static files from the built frontend
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendPath = path.join(__dirname, '../../web/dist');
+
+// Serve static files
+app.use(express.static(frontendPath));
+
+// Handle React routing - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  // Don't serve index.html for API routes
+  if (req.path.startsWith('/api/') || req.path.startsWith('/go/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
 
 const PORT = Number(process.env.PORT || 4000);
 app.listen(PORT, () => log(`API listening on http://localhost:${PORT}`));

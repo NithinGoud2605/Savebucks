@@ -1,42 +1,10 @@
 services:
-  # Web Frontend Service
+  # Combined Web + API Service
   - type: web
-    name: savebucks-web
-    env: static
-    buildCommand: npm install --include=dev && npm run -w apps/web build
-    staticPublishPath: apps/web/dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: VITE_SITE_URL
-        fromService:
-          type: web
-          name: savebucks-web
-          property: host
-      - key: VITE_API_BASE
-        fromService:
-          type: web
-          name: savebucks-api
-          property: host
-      - key: VITE_DEFAULT_IMAGE
-        value: https://dummyimage.com/1200x630/ededed/222.png&text=savebucks
-      - key: VITE_ADS_ENABLED
-        value: "false"
-      - key: VITE_ADS_PUB_ID
-        value: ca-pub-XXXXXXXXXXXXXXXX
-      - key: VITE_ADS_PLACEHOLDER
-        value: "true"
-
-  # API Backend Service
-  - type: web
-    name: savebucks-api
+    name: savebucks-app
     env: node
     plan: free
-    buildCommand: npm install
+    buildCommand: npm install --include=dev && npm run -w apps/web build
     startCommand: cd apps/api && npm start
     healthCheckPath: /health
     envVars:
@@ -84,20 +52,29 @@ services:
       - key: VITE_SITE_URL
         fromService:
           type: web
-          name: savebucks-web
+          name: savebucks-app
+          property: host
+      - key: VITE_API_BASE
+        fromService:
+          type: web
+          name: savebucks-app
           property: host
       - key: VITE_DEFAULT_IMAGE
         value: https://dummyimage.com/1200x630/ededed/222.png&text=savebucks
+      - key: VITE_SUPABASE_URL
+        value: https://ixkhkzjhelyumdplutbz.supabase.co
+      - key: VITE_SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4a2hrempoZWx5dW1kcGx1dGJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0MDQ5OTMsImV4cCI6MjA3MTk4MDk5M30.T5-RXfOVOKIMstjyHuc_sEI0B-MTc9wK1BuNWdzYuPs
       - key: SITE_URL
         fromService:
           type: web
-          name: savebucks-web
+          name: savebucks-app
           property: host
       # CORS and Security
       - key: CORS_ORIGINS
         fromService:
           type: web
-          name: savebucks-web
+          name: savebucks-app
           property: host
       - key: TRUST_PROXY
         value: "true"
@@ -149,5 +126,5 @@ services:
       - key: API_BASE
         fromService:
           type: web
-          name: savebucks-api
+          name: savebucks-app
           property: host
