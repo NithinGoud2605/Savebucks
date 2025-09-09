@@ -3,7 +3,7 @@ services:
   - type: web
     name: savebucks-web
     env: static
-    buildCommand: cd apps/web && npm install && npm run build
+    buildCommand: npm install && npm run -w apps/web build
     staticPublishPath: apps/web/dist
     routes:
       - type: rewrite
@@ -36,7 +36,7 @@ services:
     name: savebucks-api
     env: node
     plan: free
-    buildCommand: cd apps/api && npm install
+    buildCommand: npm install
     startCommand: cd apps/api && npm start
     healthCheckPath: /health
     envVars:
@@ -125,7 +125,7 @@ services:
     name: savebucks-telegram-worker
     env: node
     plan: free
-    buildCommand: cd apps/worker && npm install
+    buildCommand: npm install
     startCommand: cd apps/worker && npm start
     envVars:
       - key: NODE_ENV
