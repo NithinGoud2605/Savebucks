@@ -1,5 +1,6 @@
 import React from 'react'
 import { useToast } from '../Toast'
+import { getCompanyName } from '../../lib/companyUtils'
 
 export function ShareButton({ deal, size = 'sm' }) {
   const toast = useToast()
@@ -7,7 +8,7 @@ export function ShareButton({ deal, size = 'sm' }) {
   const handleShare = async () => {
     const shareData = {
       title: deal.title,
-      text: `Check out this deal: ${deal.title} - ${deal.price ? `$${deal.price}` : 'Free'} at ${deal.merchant}`,
+      text: `Check out this deal: ${deal.title} - ${deal.price ? `$${deal.price}` : 'Free'} at ${getCompanyName(deal)}`,
       url: `${window.location.origin}/deal/${deal.id}`,
     }
 

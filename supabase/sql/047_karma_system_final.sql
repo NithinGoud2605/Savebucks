@@ -303,3 +303,4 @@ COMMENT ON FUNCTION calculate_submission_karma IS 'Calculates karma points based
 COMMENT ON FUNCTION award_karma_on_deal_approval IS 'Awards karma points when deals are approved based on information provided';
 COMMENT ON FUNCTION award_karma_on_coupon_approval IS 'Awards karma points when coupons are approved based on information provided';
 COMMENT ON FUNCTION get_user_karma_breakdown IS 'Returns detailed karma statistics for a user';
+

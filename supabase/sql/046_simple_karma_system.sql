@@ -312,3 +312,4 @@ BEGIN
   RAISE NOTICE 'Automatic karma awarding on deal/coupon approval';
   RAISE NOTICE 'No complex gamification tables required';
 END $$;
+

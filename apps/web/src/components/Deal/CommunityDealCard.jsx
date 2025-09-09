@@ -7,6 +7,7 @@ import { ShareButton } from './ShareButton'
 import { BookmarkButton } from './BookmarkButton'
 import { ExpirationTimer } from './ExpirationTimer'
 import { formatPrice, dateAgo, truncate } from '../../lib/format'
+import { getCompanyName } from '../../lib/companyUtils'
 import { clsx } from 'clsx'
 
 export function CommunityDealCard({ deal, className, compact = false }) {
@@ -263,9 +264,9 @@ export function CommunityDealCard({ deal, className, compact = false }) {
 
           {/* Merchant and category tags */}
           <div className="flex flex-wrap gap-2">
-            {deal.merchant && (
+            {getCompanyName(deal) && (
               <span className="bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 px-3 py-1.5 rounded-full text-sm font-medium border border-blue-200">
-                🏪 {deal.merchant}
+                🏪 {getCompanyName(deal)}
               </span>
             )}
             {deal.category && (

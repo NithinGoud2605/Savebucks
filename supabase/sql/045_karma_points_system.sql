@@ -385,3 +385,4 @@ BEGIN
   RAISE NOTICE 'Automatic karma awarding on deal/coupon approval';
   RAISE NOTICE 'New achievements for detailed submissions';
 END $$;
+

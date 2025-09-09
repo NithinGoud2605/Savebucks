@@ -1,0 +1,81 @@
+services:
+  # Web Frontend Service
+  - type: web
+    name: savebucks-web
+    env: static
+    buildCommand: cd apps/web && npm install && npm run build
+    staticPublishPath: apps/web/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_SITE_URL
+        fromService:
+          type: web
+          name: savebucks-api
+          property: host
+      - key: VITE_API_BASE
+        fromService:
+          type: web
+          name: savebucks-api
+          property: host
+
+  # API Backend Service
+  - type: web
+    name: savebucks-api
+    env: node
+    plan: free
+    buildCommand: cd apps/api && npm install
+    startCommand: cd apps/api && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # Add your environment variables here
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE
+        sync: false
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: SITE_URL
+        fromService:
+          type: web
+          name: savebucks-web
+          property: host
+
+  # Telegram Worker Service
+  - type: worker
+    name: savebucks-telegram-worker
+    env: node
+    plan: free
+    buildCommand: cd apps/worker && npm install
+    startCommand: cd apps/worker && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Add your environment variables here
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_ALLOWED_CHANNELS
+        sync: false
+      - key: TELEGRAM_MIN_TITLE_LEN
+        value: "12"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE
+        sync: false
+      - key: API_BASE
+        fromService:
+          type: web
+          name: savebucks-api
+          property: host

@@ -5,7 +5,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { toast } from '../lib/toast'
 import { formatPrice, dateAgo, truncate } from '../lib/format'
-import SubmitterBadge from '../components/Deal/SubmitterBadge'
 import {
   StarIcon,
   HeartIcon,
@@ -393,17 +392,19 @@ export default function ProfessionalDealPage() {
                 {deal.title}
               </h1>
               
-              {/* Submitter Info */}
-              <div className="mb-4">
-                <SubmitterBadge 
-                  submitter={deal.submitter} 
-                  submitter_id={deal.submitter_id}
-                  created_at={deal.created_at}
-                  size="lg"
-                  showDate={true}
-                />
+              {/* Rating and Reviews Placeholder */}
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <StarIconSolid 
+                      key={i} 
+                      className={`w-5 h-5 ${i < 4 ? 'text-yellow-400' : 'text-gray-300'}`} 
+                    />
+                  ))}
+                  <span className="ml-2 text-sm text-gray-600">(4.2)</span>
+                </div>
+                <span className="text-sm text-blue-600">156 reviews</span>
               </div>
-              
 
               {/* Merchant */}
               <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">

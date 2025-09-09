@@ -13,6 +13,7 @@ import { api } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 import { toast } from '../../lib/toast'
 import { formatPrice, dateAgo } from '../../lib/format'
+import { getCompanyName } from '../../lib/companyUtils'
 import ImageWithFallback from '../ui/ImageWithFallback'
 
 const PersonalizedRecommendations = ({ limit = 6, showTitle = true, className = '' }) => {
@@ -244,13 +245,13 @@ const PersonalizedRecommendations = ({ limit = 6, showTitle = true, className = 
                   )}
                 </div>
 
-                {/* Store Info */}
-                {deal.merchant && (
+                {/* Company Info */}
+                {getCompanyName(deal) && (
                   <div className="mt-2 pt-2 border-t border-gray-100">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-500">from</span>
                       <span className="text-sm font-medium text-gray-700">
-                        {deal.merchant}
+                        {getCompanyName(deal)}
                       </span>
                     </div>
                   </div>

@@ -120,3 +120,4 @@ BEGIN
   RAISE NOTICE 'Policies: permissive for authenticated users';
   RAISE NOTICE 'Triggers: usage count updates';
 END $$;
+

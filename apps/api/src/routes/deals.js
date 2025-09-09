@@ -130,8 +130,7 @@ async function listDeals(tab, filters = {}) {
       discount_amount, original_price, expires_at, category_id, deal_type,
       is_featured, views_count, clicks_count, submitter_id,
       categories(name, slug),
-      companies(name, slug, logo_url),
-      profiles!submitter_id(id, handle, avatar_url, role, karma),
+      companies(name, slug, logo_url, is_verified),
       deal_tags(tags(id, name, slug, color, category))
     `)
     .eq('status','approved');
@@ -359,8 +358,57 @@ r.get('/', async (req, res) => {
     }
     
     const items = await listDeals(tab, filters);
+    
+    // Get unique submitter IDs to fetch profile data
+    const submitterIds = [...new Set(items.map(deal => deal.submitter_id).filter(Boolean))]
+    
+    // Fetch profile data for all submitters
+    let profilesMap = new Map()
+    if (submitterIds.length > 0) {
+      const { data: profiles } = await supaAdmin
+        .from('profiles')
+        .select('id, handle, avatar_url, role, karma')
+        .in('id', submitterIds)
+      
+      if (profiles) {
+        profiles.forEach(profile => {
+          profilesMap.set(profile.id, profile)
+        })
+      }
+    }
+    
+    // Ensure all deals have company data and proper field mapping
+    const enrichedItems = items.map(deal => {
+      if (!deal.companies) {
+        // Create a virtual company object from merchant data or use a default
+        const companyName = deal.merchant || 'Unknown Company'
+        deal.companies = {
+          name: companyName,
+          slug: companyName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').trim('-'),
+          logo_url: null,
+          is_verified: false
+        }
+      }
+      
+      // Map profiles to submitter for consistency with deal page API (same as single deal API)
+      if (deal.submitter_id && profilesMap.has(deal.submitter_id)) {
+        deal.submitter = profilesMap.get(deal.submitter_id)
+      } else if (deal.submitter_id) {
+        // If no profile found but submitter_id exists, create a basic submitter object
+        deal.submitter = {
+          id: deal.submitter_id,
+          handle: `User ${deal.submitter_id}`,
+          avatar_url: null,
+          role: 'user',
+          karma: 0
+        }
+      }
+      
+      return deal
+    })
+    
     // Featured filter if requested
-    let out = items;
+    let out = enrichedItems;
     if (req.query.featured === 'true') {
       const { data: featuredIds } = await supaAdmin
         .from('deals')
@@ -368,10 +416,13 @@ r.get('/', async (req, res) => {
         .eq('is_featured', true)
         .eq('status', 'approved');
       const set = new Set((featuredIds||[]).map(d=>d.id));
-      out = items.filter(d => set.has(d.id));
+      out = enrichedItems.filter(d => set.has(d.id));
     }
     const limit = req.query.limit ? parseInt(req.query.limit) : null;
-    res.json(limit ? out.slice(0, Math.max(0, limit)) : out);
+    const finalResult = limit ? out.slice(0, Math.max(0, limit)) : out;
+    
+    
+    res.json(finalResult);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

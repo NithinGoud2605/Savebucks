@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { VoteButton } from './VoteButton'
 import { formatPrice } from '../../lib/format'
+import { getCompanyName } from '../../lib/companyUtils'
 import { clsx } from 'clsx'
 
 export function CompactDealCard({ deal, className }) {
@@ -20,7 +21,7 @@ export function CompactDealCard({ deal, className }) {
             {deal.title}
           </Link>
           <div className="mt-1 flex items-center gap-2 text-xs text-secondary-600 dark:text-secondary-400">
-            {deal.merchant && <span className="truncate">{deal.merchant}</span>}
+            {getCompanyName(deal) && <span className="truncate">{getCompanyName(deal)}</span>}
             {deal.price && (
               <span className="font-semibold text-green-600 dark:text-green-400">{formatPrice(deal.price, deal.currency)}</span>
             )}
