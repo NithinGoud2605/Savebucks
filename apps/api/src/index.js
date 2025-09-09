@@ -65,8 +65,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendPath = path.join(__dirname, '../../web/dist');
 
-// Serve static files
-app.use(express.static(frontendPath));
+// Serve static files (but only for non-API routes)
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/go/')) {
+    return next();
+  }
+  express.static(frontendPath)(req, res, next);
+});
 
 // Handle React routing - serve index.html for all non-API routes
 app.get('*', (req, res) => {
@@ -74,6 +79,13 @@ app.get('*', (req, res) => {
   if (req.path.startsWith('/api/') || req.path.startsWith('/go/')) {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
+  
+  // Check if the request is for a static file
+  if (req.path.includes('.')) {
+    return res.status(404).send('File not found');
+  }
+  
+  // Serve React app for all other routes
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
