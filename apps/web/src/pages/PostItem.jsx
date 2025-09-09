@@ -6,6 +6,7 @@ import { toast } from '../lib/toast'
 import { Input, Textarea } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
 import { Icon } from '../components/ui/Icon'
+import KarmaIndicator from '../components/Submission/KarmaIndicator'
 
 export default function PostItemOrCoupon() {
   const navigate = useNavigate()
@@ -40,7 +41,6 @@ export default function PostItemOrCoupon() {
                 is_exclusive: false,
                 stock_status: 'unknown',
                 stock_quantity: '',
-                auto_expire: true,
                 showAdvanced: false
               })
   
@@ -108,10 +108,18 @@ export default function PostItemOrCoupon() {
 
   const handleInputChange = (e, formType) => {
     const { name, value } = e.target
+    
+    // Handle date inputs - convert date to ISO string for storage
+    let processedValue = value
+    if ((name === 'starts_at' || name === 'expires_at') && value) {
+      // Convert date input (YYYY-MM-DD) to ISO string for storage
+      processedValue = new Date(value + 'T00:00:00').toISOString()
+    }
+    
     if (formType === 'deal') {
-      setDealData(prev => ({ ...prev, [name]: value }))
+      setDealData(prev => ({ ...prev, [name]: processedValue }))
     } else {
-      setCouponData(prev => ({ ...prev, [name]: value }))
+      setCouponData(prev => ({ ...prev, [name]: processedValue }))
     }
     
     // Clear error when user starts typing
@@ -265,7 +273,6 @@ export default function PostItemOrCoupon() {
         is_exclusive: dealData.is_exclusive,
         stock_status: dealData.stock_status,
         stock_quantity: dealData.stock_quantity ? parseInt(dealData.stock_quantity) : null,
-        auto_expire: dealData.auto_expire
       }
       
       const result = await api.createDeal(dealPayload)
@@ -308,7 +315,6 @@ export default function PostItemOrCoupon() {
         is_exclusive: false,
         stock_status: 'unknown',
         stock_quantity: '',
-        auto_expire: true,
         showAdvanced: false
       })
       setDealImages([])
@@ -543,6 +549,27 @@ export default function PostItemOrCoupon() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
+  // Helper function to format date for input field
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return ''
+    try {
+      // If it's already in YYYY-MM-DD format, return as is
+      if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return dateString
+      }
+      // If it's an ISO string, extract the date part
+      if (dateString.includes('T')) {
+        return dateString.split('T')[0]
+      }
+      // Try to parse as date and format
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return ''
+      return date.toISOString().split('T')[0]
+    } catch (error) {
+      return ''
+    }
+  }
+
   // Show loading while auth is initializing
   if (!isInitialized) {
     return (
@@ -609,6 +636,13 @@ export default function PostItemOrCoupon() {
             <h2 className="text-xl font-bold text-secondary-900 mb-4 text-center">
               Share a Great Deal
             </h2>
+            
+            {/* Karma Points Indicator */}
+            <KarmaIndicator 
+              submissionType="deal" 
+              formData={dealData}
+              className="mb-6"
+            />
             
             <form onSubmit={handleDealSubmit} className="space-y-4">
               {/* Basic Information */}
@@ -806,29 +840,43 @@ export default function PostItemOrCoupon() {
 
                   {/* Timing and Restrictions */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input
-                      label="Start Date"
-                      name="starts_at"
-                      type="datetime-local"
-                      value={dealData.starts_at}
-                      onChange={(e) => handleInputChange(e, 'deal')}
-                      error={errors.starts_at}
-                      description="When deal becomes active"
-                      leftIcon="calendar"
-                      size="sm"
-                    />
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Start Date
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          name="starts_at"
+                          value={formatDateForInput(dealData.starts_at)}
+                          onChange={(e) => handleInputChange(e, 'deal')}
+                          className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
+                          min={new Date().toISOString().split('T')[0]}
+                        />
+                        <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400" />
+                      </div>
+                      <p className="mt-1 text-xs text-secondary-500">When the deal becomes active (optional)</p>
+                      {errors.starts_at && <p className="mt-1 text-sm text-danger-600">{errors.starts_at}</p>}
+                    </div>
                     
-                    <Input
-                      label="Expiration Date"
-                      name="expires_at"
-                      type="datetime-local"
-                      value={dealData.expires_at}
-                      onChange={(e) => handleInputChange(e, 'deal')}
-                      error={errors.expires_at}
-                      description="When deal expires"
-                      leftIcon="clock"
-                      size="sm"
-                    />
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Expiration Date
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          name="expires_at"
+                          value={formatDateForInput(dealData.expires_at)}
+                          onChange={(e) => handleInputChange(e, 'deal')}
+                          className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
+                          min={formatDateForInput(dealData.starts_at) || new Date().toISOString().split('T')[0]}
+                        />
+                        <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400" />
+                      </div>
+                      <p className="mt-1 text-xs text-secondary-500">When the deal expires (optional)</p>
+                      {errors.expires_at && <p className="mt-1 text-sm text-danger-600">{errors.expires_at}</p>}
+                    </div>
                   </div>
 
                   {/* Stock and Status */}
@@ -862,18 +910,6 @@ export default function PostItemOrCoupon() {
                       size="sm"
                     />
                     
-                    <div className="flex items-center space-x-3">
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          name="auto_expire"
-                          checked={dealData.auto_expire}
-                          onChange={(e) => setDealData(prev => ({ ...prev, auto_expire: e.target.checked }))}
-                          className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
-                        />
-                        <span className="text-sm text-secondary-700">Auto-expire</span>
-                      </label>
-                    </div>
                   </div>
 
                   {/* Additional Fields */}
@@ -1024,6 +1060,13 @@ export default function PostItemOrCoupon() {
             <h2 className="text-xl font-bold text-secondary-900 mb-4 text-center">
               Share a Coupon
             </h2>
+            
+            {/* Karma Points Indicator */}
+            <KarmaIndicator 
+              submissionType="coupon" 
+              formData={couponData}
+              className="mb-6"
+            />
             
             <form onSubmit={handleCouponSubmit} className="space-y-4">
               {/* Title Field */}
@@ -1216,29 +1259,43 @@ export default function PostItemOrCoupon() {
 
               {/* Dates Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="Start Date"
-                  name="starts_at"
-                  type="datetime-local"
-                  value={couponData.starts_at}
-                  onChange={(e) => handleInputChange(e, 'coupon')}
-                  error={errors.starts_at}
-                  description="When the coupon becomes valid (optional)"
-                  leftIcon="calendar"
-                  size="sm"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    Start Date
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      name="starts_at"
+                      value={formatDateForInput(couponData.starts_at)}
+                      onChange={(e) => handleInputChange(e, 'coupon')}
+                      className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                    <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400" />
+                  </div>
+                  <p className="mt-1 text-xs text-secondary-500">When the coupon becomes valid (optional)</p>
+                  {errors.starts_at && <p className="mt-1 text-sm text-danger-600">{errors.starts_at}</p>}
+                </div>
                 
-                <Input
-                  label="Expiration Date"
-                  name="expires_at"
-                  type="datetime-local"
-                  value={couponData.expires_at}
-                  onChange={(e) => handleInputChange(e, 'coupon')}
-                  error={errors.expires_at}
-                  description="When the coupon expires (optional)"
-                  leftIcon="clock"
-                  size="sm"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    Expiration Date
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      name="expires_at"
+                      value={formatDateForInput(couponData.expires_at)}
+                      onChange={(e) => handleInputChange(e, 'coupon')}
+                      className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
+                      min={formatDateForInput(couponData.starts_at) || new Date().toISOString().split('T')[0]}
+                    />
+                    <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400" />
+                  </div>
+                  <p className="mt-1 text-xs text-secondary-500">When the coupon expires (optional)</p>
+                  {errors.expires_at && <p className="mt-1 text-sm text-danger-600">{errors.expires_at}</p>}
+                </div>
               </div>
 
               {/* Source URL and Category Row */}

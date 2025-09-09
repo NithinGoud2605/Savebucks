@@ -1,9 +1,26 @@
 import { Router } from 'express';
 import { makeAdminClient } from '../lib/supa.js';
 import { requireAdmin } from '../middleware/requireAdmin.js';
+import multer from 'multer';
+import { randomUUID } from 'crypto';
 
 const r = Router();
 const supaAdmin = makeAdminClient();
+
+// Configure multer for image uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'), false);
+    }
+  },
+});
 
 function bearer(req) {
   const h = req.headers.authorization || '';
@@ -121,7 +138,11 @@ r.get('/deals', requireAdmin, async (req, res) => {
         *,
         companies(id, name, slug, logo_url, is_verified),
         categories(id, name, slug, color),
-        profiles!submitter_id(handle, avatar_url, karma, created_at)
+        profiles!submitter_id(handle, avatar_url, karma, created_at),
+        deal_tags(
+          tag_id,
+          tags(id, name, slug)
+        )
       `)
       .eq('status', status)
       .order('created_at', { ascending: false })
@@ -159,7 +180,11 @@ r.get('/coupons/pending', requireAdmin, async (req, res) => {
         *,
         companies(id, name, slug, logo_url, is_verified),
         categories(id, name, slug, color),
-        profiles!submitter_id(handle, avatar_url, karma, created_at)
+        profiles!submitter_id(handle, avatar_url, karma, created_at),
+        coupon_tags(
+          tag_id,
+          tags(id, name, slug)
+        )
       `)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
@@ -188,7 +213,11 @@ r.get('/coupons', requireAdmin, async (req, res) => {
         *,
         companies(id, name, slug, logo_url, is_verified),
         categories(id, name, slug, color),
-        profiles!submitter_id(handle, avatar_url, karma, created_at)
+        profiles!submitter_id(handle, avatar_url, karma, created_at),
+        coupon_tags(
+          tag_id,
+          tags(id, name, slug)
+        )
       `)
       .eq('status', status)
       .order('created_at', { ascending: false })
@@ -214,13 +243,166 @@ r.get('/coupons', requireAdmin, async (req, res) => {
   }
 });
 
+// Karma calculation function
+function calculateKarmaPoints(submissionType, submissionData) {
+  let fieldCount = 0;
+  let totalPossibleFields;
+  
+  if (submissionType === 'deal') {
+    totalPossibleFields = 15; // Total optional fields for deals
+    
+    // Check each optional field
+    if (submissionData.original_price) fieldCount++;
+    if (submissionData.discount_percentage) fieldCount++;
+    if (submissionData.merchant) fieldCount++;
+    if (submissionData.category_id) fieldCount++;
+    if (submissionData.deal_type && submissionData.deal_type !== 'deal') fieldCount++;
+    if (submissionData.coupon_code) fieldCount++;
+    if (submissionData.coupon_type && submissionData.coupon_type !== 'none') fieldCount++;
+    if (submissionData.starts_at) fieldCount++;
+    if (submissionData.expires_at) fieldCount++;
+    if (submissionData.stock_status && submissionData.stock_status !== 'unknown') fieldCount++;
+    if (submissionData.stock_quantity) fieldCount++;
+    if (submissionData.tags) fieldCount++;
+    if (submissionData.image_url) fieldCount++;
+    if (submissionData.description) fieldCount++;
+    if (submissionData.terms_conditions) fieldCount++;
+    
+  } else if (submissionType === 'coupon') {
+    totalPossibleFields = 10; // Total optional fields for coupons
+    
+    if (submissionData.minimum_order_amount) fieldCount++;
+    if (submissionData.maximum_discount_amount) fieldCount++;
+    if (submissionData.usage_limit) fieldCount++;
+    if (submissionData.usage_limit_per_user) fieldCount++;
+    if (submissionData.starts_at) fieldCount++;
+    if (submissionData.expires_at) fieldCount++;
+    if (submissionData.source_url) fieldCount++;
+    if (submissionData.category_id) fieldCount++;
+    if (submissionData.description) fieldCount++;
+    if (submissionData.terms_conditions) fieldCount++;
+  }
+  
+  // Calculate karma based on field completion percentage
+  if (fieldCount === 0) {
+    return 3; // Only required fields
+  } else if (fieldCount <= totalPossibleFields * 0.3) {
+    return 5; // 30% or less of optional fields
+  } else if (fieldCount <= totalPossibleFields * 0.7) {
+    return 8; // 30-70% of optional fields
+  } else {
+    return 10; // 70%+ of optional fields
+  }
+}
+
+// Review deal (approve/reject with single endpoint)
+r.post('/deals/:id/review', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action, rejection_reason } = req.body;
+
+    if (!action) {
+      return res.status(400).json({ error: 'Action is required. Use "approve" or "reject"' });
+    }
+
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ error: 'Invalid action. Use "approve" or "reject"' });
+    }
+
+    if (action === 'reject' && !rejection_reason) {
+      return res.status(400).json({ error: 'Rejection reason is required' });
+    }
+
+    // First get the deal data to calculate karma (only for approval)
+    let existingDeal = null;
+    if (action === 'approve') {
+      const { data: dealData, error: fetchError } = await supaAdmin
+        .from('deals')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (fetchError) {
+        return res.status(400).json({ error: fetchError.message });
+      }
+      existingDeal = dealData;
+    }
+
+    const updateData = {
+      status: action === 'approve' ? 'approved' : 'rejected',
+      approved_at: new Date().toISOString()
+    };
+
+    if (action === 'reject') {
+      updateData.rejection_reason = rejection_reason;
+    }
+
+    const { data: deal, error } = await supaAdmin
+      .from('deals')
+      .update(updateData)
+      .eq('id', id)
+      .select(`
+        *,
+        companies(name),
+        profiles!submitter_id(handle)
+      `)
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    // Award karma points for approved deals
+    if (action === 'approve' && deal.submitter_id) {
+      const karmaPoints = calculateKarmaPoints('deal', existingDeal);
+      
+      // Get current karma and update it
+      const { data: currentProfile } = await supaAdmin
+        .from('profiles')
+        .select('karma')
+        .eq('id', deal.submitter_id)
+        .single();
+      
+      if (currentProfile) {
+        const newKarma = (currentProfile.karma || 0) + karmaPoints;
+        await supaAdmin
+          .from('profiles')
+          .update({ karma: newKarma })
+          .eq('id', deal.submitter_id);
+        
+        console.log(`Awarded ${karmaPoints} karma points to user ${deal.submitter_id} for detailed deal submission`);
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      deal, 
+      karma_points: action === 'approve' ? calculateKarmaPoints('deal', existingDeal) : null 
+    });
+  } catch (error) {
+    console.error('Error reviewing deal:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Approve deal (alias)
 r.post('/deals/:id/approve', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // First get the deal data to calculate karma
+    const { data: existingDeal, error: fetchError } = await supaAdmin
+      .from('deals')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError) {
+      return res.status(400).json({ error: fetchError.message });
+    }
+    
     const updateData = {
       status: 'approved',
-      approved_by: req.user.id,
       approved_at: new Date().toISOString()
     };
 
@@ -239,7 +421,29 @@ r.post('/deals/:id/approve', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: error.message });
     }
 
-    res.json({ success: true, deal });
+    // Award karma points based on submission completeness
+    if (deal.submitter_id) {
+      const karmaPoints = calculateKarmaPoints('deal', existingDeal);
+      
+      // Get current karma and update it
+      const { data: currentProfile } = await supaAdmin
+        .from('profiles')
+        .select('karma')
+        .eq('id', deal.submitter_id)
+        .single();
+      
+      if (currentProfile) {
+        const newKarma = (currentProfile.karma || 0) + karmaPoints;
+        await supaAdmin
+          .from('profiles')
+          .update({ karma: newKarma })
+          .eq('id', deal.submitter_id);
+      }
+      
+      console.log(`Awarded ${karmaPoints} karma points to user ${deal.submitter_id} for detailed deal submission`);
+    }
+
+    res.json({ success: true, deal, karma_points: calculateKarmaPoints('deal', existingDeal) });
   } catch (error) {
     console.error('Error reviewing deal:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -255,7 +459,6 @@ r.post('/deals/:id/reject', requireAdmin, async (req, res) => {
 
     const updateData = {
       status: 'rejected',
-      approved_by: req.user.id,
       approved_at: new Date().toISOString(),
       rejection_reason: reason,
     };
@@ -296,9 +499,23 @@ r.post('/coupons/:id/review', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Rejection reason is required' });
     }
 
+    // First get the coupon data to calculate karma (only for approval)
+    let existingCoupon = null;
+    if (action === 'approve') {
+      const { data: couponData, error: fetchError } = await supaAdmin
+        .from('coupons')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (fetchError) {
+        return res.status(400).json({ error: fetchError.message });
+      }
+      existingCoupon = couponData;
+    }
+
     const updateData = {
       status: action === 'approve' ? 'approved' : 'rejected',
-      approved_by: req.user.id,
       approved_at: new Date().toISOString()
     };
 
@@ -321,9 +538,385 @@ r.post('/coupons/:id/review', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: error.message });
     }
 
-    res.json({ success: true, coupon });
+    // Award karma points for approved coupons
+    if (action === 'approve' && coupon.submitter_id && existingCoupon) {
+      const karmaPoints = calculateKarmaPoints('coupon', existingCoupon);
+      
+      // Get current karma and update it
+      const { data: currentProfile } = await supaAdmin
+        .from('profiles')
+        .select('karma')
+        .eq('id', coupon.submitter_id)
+        .single();
+      
+      if (currentProfile) {
+        const newKarma = (currentProfile.karma || 0) + karmaPoints;
+        await supaAdmin
+          .from('profiles')
+          .update({ karma: newKarma })
+          .eq('id', coupon.submitter_id);
+      }
+      
+      console.log(`Awarded ${karmaPoints} karma points to user ${coupon.submitter_id} for detailed coupon submission`);
+      
+      res.json({ success: true, coupon, karma_points: karmaPoints });
+    } else {
+      res.json({ success: true, coupon });
+    }
   } catch (error) {
     console.error('Error reviewing coupon:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Edit Deal (Admin)
+r.put('/deals/:id/edit', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      description,
+      url,
+      price,
+      original_price,
+      merchant,
+      company_id,
+      company_name,
+      company_website,
+      category_id,
+      deal_type,
+      discount_percentage,
+      discount_amount,
+      coupon_code,
+      expires_at,
+      deal_images,
+      featured_image,
+      tags
+    } = req.body;
+
+    // Validate required fields
+    if (!title || !url) {
+      return res.status(400).json({ error: 'Title and URL are required' });
+    }
+
+    let finalCompanyId = company_id;
+
+    // Handle company creation if company doesn't exist
+    if (!company_id && company_name) {
+      try {
+        // Check if company already exists
+        const { data: existingCompany } = await supaAdmin
+          .from('companies')
+          .select('id')
+          .ilike('name', company_name)
+          .single();
+
+        if (existingCompany) {
+          finalCompanyId = existingCompany.id;
+        } else {
+          // Create new company
+          const { data: newCompany, error: companyError } = await supaAdmin
+            .from('companies')
+            .insert([{
+              name: company_name,
+              slug: company_name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+              website_url: company_website || null,
+              status: 'active',
+              created_by: req.user.id
+            }])
+            .select('id')
+            .single();
+
+          if (companyError) {
+            console.error('Error creating company:', companyError);
+            return res.status(400).json({ error: 'Failed to create company: ' + companyError.message });
+          }
+
+          finalCompanyId = newCompany.id;
+        }
+      } catch (error) {
+        console.error('Error handling company:', error);
+        return res.status(400).json({ error: 'Failed to handle company information' });
+      }
+    }
+
+    // Update deal
+    const updateData = {
+      title: title.trim(),
+      description: description?.trim() || null,
+      url: url.trim(),
+      price: price ? parseFloat(price) : null,
+      original_price: original_price ? parseFloat(original_price) : null,
+      merchant: merchant?.trim() || null,
+      company_id: finalCompanyId,
+      category_id: category_id || null,
+      deal_type: deal_type || null,
+      discount_percentage: discount_percentage ? parseFloat(discount_percentage) : null,
+      discount_amount: discount_amount ? parseFloat(discount_amount) : null,
+      coupon_code: coupon_code?.trim() || null,
+      expires_at: expires_at || null,
+      deal_images: deal_images || null,
+      featured_image: featured_image || null,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: deal, error } = await supaAdmin
+      .from('deals')
+      .update(updateData)
+      .eq('id', id)
+      .select(`
+        *,
+        companies(id, name, slug, logo_url, is_verified),
+        categories(id, name, slug, color),
+        profiles!submitter_id(handle, avatar_url, karma, created_at)
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error updating deal:', error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    // Handle tags if provided
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      try {
+        // Remove existing deal tags
+        const { error: deleteError } = await supaAdmin
+          .from('deal_tags')
+          .delete()
+          .eq('deal_id', id);
+
+        if (deleteError) {
+          console.error('Error deleting existing tags:', deleteError);
+        }
+
+        // Process each tag
+        for (const tag of tags) {
+          let tagId;
+          
+          if (typeof tag === 'number' || (typeof tag === 'string' && !isNaN(tag))) {
+            // Existing tag ID
+            tagId = parseInt(tag);
+          } else if (typeof tag === 'string') {
+            // New tag - create it
+            const { data: newTag, error: tagError } = await supaAdmin
+              .from('tags')
+              .upsert([{
+                name: tag.trim().toLowerCase(),
+                slug: tag.trim().toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                usage_count: 0
+              }], {
+                onConflict: 'name',
+                ignoreDuplicates: false
+              })
+              .select('id')
+              .single();
+
+            if (tagError) {
+              console.error('Error creating tag:', tagError);
+              continue;
+            }
+            
+            tagId = newTag.id;
+          } else {
+            continue;
+          }
+
+          // Associate tag with deal
+          const { error: associationError } = await supaAdmin
+            .from('deal_tags')
+            .insert([{
+              deal_id: id,
+              tag_id: tagId
+            }]);
+
+          if (associationError) {
+            console.error('Error associating tag with deal:', associationError);
+          }
+        }
+
+      } catch (tagError) {
+        console.error('Error processing tags:', tagError);
+        // Don't fail the entire request if tags fail
+      }
+    }
+
+    res.json({ success: true, deal });
+  } catch (error) {
+    console.error('Error editing deal:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Edit Coupon (Admin)
+r.put('/coupons/:id/edit', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      description,
+      coupon_code,
+      discount_value,
+      discount_type,
+      company_id,
+      company_name,
+      company_website,
+      category_id,
+      minimum_order_amount,
+      maximum_discount_amount,
+      usage_limit,
+      expires_at,
+      terms_conditions,
+      tags
+    } = req.body;
+
+    // Validate required fields
+    if (!title || !coupon_code) {
+      return res.status(400).json({ error: 'Title and coupon code are required' });
+    }
+
+    let finalCompanyId = company_id;
+
+    // Handle company creation if company doesn't exist
+    if (!company_id && company_name) {
+      try {
+        // Check if company already exists
+        const { data: existingCompany } = await supaAdmin
+          .from('companies')
+          .select('id')
+          .ilike('name', company_name)
+          .single();
+
+        if (existingCompany) {
+          finalCompanyId = existingCompany.id;
+        } else {
+          // Create new company
+          const { data: newCompany, error: companyError } = await supaAdmin
+            .from('companies')
+            .insert([{
+              name: company_name,
+              slug: company_name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+              website_url: company_website || null,
+              status: 'active',
+              created_by: req.user.id
+            }])
+            .select('id')
+            .single();
+
+          if (companyError) {
+            console.error('Error creating company:', companyError);
+            return res.status(400).json({ error: 'Failed to create company: ' + companyError.message });
+          }
+
+          finalCompanyId = newCompany.id;
+        }
+      } catch (error) {
+        console.error('Error handling company:', error);
+        return res.status(400).json({ error: 'Failed to handle company information' });
+      }
+    }
+
+    // Update coupon
+    const updateData = {
+      title: title.trim(),
+      description: description?.trim() || null,
+      coupon_code: coupon_code.trim(),
+      discount_value: discount_value ? parseFloat(discount_value) : null,
+      discount_type: discount_type || 'percentage',
+      company_id: finalCompanyId,
+      category_id: category_id || null,
+      minimum_order_amount: minimum_order_amount ? parseFloat(minimum_order_amount) : null,
+      maximum_discount_amount: maximum_discount_amount ? parseFloat(maximum_discount_amount) : null,
+      usage_limit: usage_limit ? parseInt(usage_limit) : null,
+      expires_at: expires_at || null,
+      terms_conditions: terms_conditions?.trim() || null,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: coupon, error } = await supaAdmin
+      .from('coupons')
+      .update(updateData)
+      .eq('id', id)
+      .select(`
+        *,
+        companies(id, name, slug, logo_url, is_verified),
+        categories(id, name, slug, color),
+        profiles!submitter_id(handle, avatar_url, karma, created_at)
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error updating coupon:', error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    // Handle tags if provided
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      try {
+        // Remove existing coupon tags
+        const { error: deleteError } = await supaAdmin
+          .from('coupon_tags')
+          .delete()
+          .eq('coupon_id', id);
+
+        if (deleteError) {
+          console.error('Error deleting existing coupon tags:', deleteError);
+        }
+
+        // Process each tag
+        for (const tag of tags) {
+          let tagId;
+          
+          if (typeof tag === 'number' || (typeof tag === 'string' && !isNaN(tag))) {
+            // Existing tag ID
+            tagId = parseInt(tag);
+          } else if (typeof tag === 'string') {
+            // New tag - create it
+            const { data: newTag, error: tagError } = await supaAdmin
+              .from('tags')
+              .upsert([{
+                name: tag.trim().toLowerCase(),
+                slug: tag.trim().toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                usage_count: 0
+              }], {
+                onConflict: 'name',
+                ignoreDuplicates: false
+              })
+              .select('id')
+              .single();
+
+            if (tagError) {
+              console.error('Error creating tag:', tagError);
+              continue;
+            }
+            
+            tagId = newTag.id;
+          } else {
+            continue;
+          }
+
+          // Associate tag with coupon
+          const { error: associationError } = await supaAdmin
+            .from('coupon_tags')
+            .insert([{
+              coupon_id: id,
+              tag_id: tagId
+            }]);
+
+          if (associationError) {
+            console.error('Error associating tag with coupon:', associationError);
+          }
+        }
+
+      } catch (tagError) {
+        console.error('Error processing coupon tags:', tagError);
+        // Don't fail the entire request if tags fail
+      }
+    }
+
+    res.json({ success: true, coupon });
+  } catch (error) {
+    console.error('Error editing coupon:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -1107,6 +1700,332 @@ r.delete('/reports/:id', requireAdmin, async (req, res) => {
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: 'Failed to delete report' });
+  }
+});
+
+
+
+// Delete Deal (Admin only)
+r.delete('/deals/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // First, delete associated images from storage
+    const { data: images } = await supaAdmin
+      .from('images')
+      .select('storage_path')
+      .eq('entity_type', 'deal')
+      .eq('entity_id', id);
+    
+    if (images && images.length > 0) {
+      const pathsToDelete = images.map(img => img.storage_path);
+      await supaAdmin.storage
+        .from('images')
+        .remove(pathsToDelete);
+    }
+    
+    // Delete associated records (tags, votes, etc.)
+    await supaAdmin
+      .from('deal_tags')
+      .delete()
+      .eq('deal_id', id);
+    
+    await supaAdmin
+      .from('deal_votes')
+      .delete()
+      .eq('deal_id', id);
+    
+    await supaAdmin
+      .from('images')
+      .delete()
+      .eq('entity_type', 'deal')
+      .eq('entity_id', id);
+    
+    // Finally, delete the deal
+    const { error } = await supaAdmin
+      .from('deals')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    res.json({ success: true, message: 'Deal deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting deal:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete Coupon (Admin only)
+r.delete('/coupons/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // First, delete associated images from storage
+    const { data: images } = await supaAdmin
+      .from('images')
+      .select('storage_path')
+      .eq('entity_type', 'coupon')
+      .eq('entity_id', id);
+    
+    if (images && images.length > 0) {
+      const pathsToDelete = images.map(img => img.storage_path);
+      await supaAdmin.storage
+        .from('images')
+        .remove(pathsToDelete);
+    }
+    
+    // Delete associated records (tags, votes, etc.)
+    await supaAdmin
+      .from('coupon_tags')
+      .delete()
+      .eq('coupon_id', id);
+    
+    await supaAdmin
+      .from('coupon_votes')
+      .delete()
+      .eq('coupon_id', id);
+    
+    await supaAdmin
+      .from('images')
+      .delete()
+      .eq('entity_type', 'coupon')
+      .eq('entity_id', id);
+    
+    // Finally, delete the coupon
+    const { error } = await supaAdmin
+      .from('coupons')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    res.json({ success: true, message: 'Coupon deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting coupon:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update/Edit Coupon
+r.put('/coupons/:id/edit', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body };
+    const tags = updateData.tags;
+    
+    // Handle company creation/association
+    if (updateData.company_name && !updateData.company_id) {
+      // Create new company
+      const { data: newCompany, error: companyError } = await supaAdmin
+        .from('companies')
+        .insert({
+          name: updateData.company_name,
+          slug: updateData.company_name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          website_url: updateData.company_website || null
+        })
+        .select()
+        .single();
+      
+      if (companyError) {
+        return res.status(400).json({ error: `Failed to create company: ${companyError.message}` });
+      }
+      
+      updateData.company_id = newCompany.id;
+    }
+    
+    // Remove company creation fields and tags from coupon update
+    delete updateData.company_name;
+    delete updateData.company_website;
+    delete updateData.tags;
+    
+    const { data: coupon, error } = await supaAdmin
+      .from('coupons')
+      .update(updateData)
+      .eq('id', id)
+      .select(`
+        *,
+        companies(name, website_url),
+        profiles!submitter_id(handle)
+      `)
+      .single();
+      
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    // Handle tags if provided
+    if (tags && Array.isArray(tags)) {
+      // Remove existing coupon tags
+      await supaAdmin.from('coupon_tags').delete().eq('coupon_id', id);
+      
+      // Process and add new tags
+      const tagIds = [];
+      for (const tag of tags) {
+        if (typeof tag === 'string') {
+          // Create new tag
+          const tagSlug = tag.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+          const { data: newTag, error: tagError } = await supaAdmin
+            .from('tags')
+            .upsert({ 
+              name: tag, 
+              slug: tagSlug,
+              created_at: new Date().toISOString()
+            }, {
+              onConflict: 'slug'
+            })
+            .select()
+            .single();
+          
+          if (!tagError && newTag) {
+            tagIds.push(newTag.id);
+          }
+        } else if (typeof tag === 'number') {
+          // Existing tag ID
+          tagIds.push(tag);
+        }
+      }
+      
+      // Create coupon-tag associations
+      if (tagIds.length > 0) {
+        const couponTagRows = tagIds.map(tag_id => ({ coupon_id: parseInt(id), tag_id }));
+        await supaAdmin.from('coupon_tags').insert(couponTagRows);
+      }
+    }
+    
+    res.json({ success: true, coupon });
+  } catch (error) {
+    console.error('Error updating coupon:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get all tags for admin management
+r.get('/tags', requireAdmin, async (req, res) => {
+  try {
+    const { data: tags, error } = await supaAdmin
+      .from('tags')
+      .select('*')
+      .order('name');
+      
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    res.json(tags || []);
+  } catch (error) {
+    console.error('Error fetching tags:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Run expiration check manually
+r.post('/expire-items', requireAdmin, async (req, res) => {
+  try {
+    const { data, error } = await supaAdmin.rpc('handle_expired_items');
+    
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    res.json({ 
+      success: true, 
+      expired_count: data || 0,
+      message: `Successfully expired ${data || 0} items`
+    });
+  } catch (error) {
+    console.error('Error running expiration check:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get items expiring soon
+r.get('/expiring-soon', requireAdmin, async (req, res) => {
+  try {
+    const hours = parseInt(req.query.hours) || 24;
+    const { data, error } = await supaAdmin.rpc('get_expiring_soon', { hours_ahead: hours });
+    
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error fetching expiring items:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Upload images for admin use
+r.post('/upload-image', requireAdmin, upload.single('image'), async (req, res) => {
+  try {
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
+
+    // Check if images bucket exists
+    const { data: buckets, error: bucketError } = await supaAdmin.storage.listBuckets();
+    if (bucketError) {
+      console.error('Error listing buckets:', bucketError);
+      return res.status(500).json({ error: 'Storage service unavailable' });
+    }
+    
+    const imagesBucket = buckets.find(bucket => bucket.id === 'images');
+    if (!imagesBucket) {
+      console.error('Images bucket not found. Available buckets:', buckets.map(b => b.id));
+      return res.status(500).json({ error: 'Images storage bucket not configured' });
+    }
+    
+
+    // Generate unique filename
+    const fileExtension = req.file.originalname.split('.').pop();
+    const fileName = `admin-${randomUUID()}.${fileExtension}`;
+    const filePath = `admin-uploads/${fileName}`;
+
+
+    // Upload to Supabase Storage
+    const { data, error } = await supaAdmin.storage
+      .from('images')
+      .upload(filePath, req.file.buffer, {
+        contentType: req.file.mimetype,
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Storage upload error:', error);
+      return res.status(500).json({ 
+        error: 'Failed to upload image', 
+        details: error.message,
+        code: error.statusCode 
+      });
+    }
+
+
+    // Get public URL
+    const { data: urlData } = supaAdmin.storage
+      .from('images')
+      .getPublicUrl(filePath);
+
+
+    res.json({
+      success: true,
+      imageUrl: urlData.publicUrl,
+      fileName: fileName,
+      filePath: filePath
+    });
+
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).json({ 
+      error: error.message,
+      stack: error.stack 
+    });
   }
 });
 

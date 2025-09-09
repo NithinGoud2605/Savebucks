@@ -37,6 +37,7 @@ import { api } from '../lib/api'
 import { setPageMeta } from '../lib/head'
 import { useAuth } from '../hooks/useAuth'
 import { formatPrice, dateAgo, formatCompactNumber } from '../lib/format'
+import SubmitterBadge from '../components/Deal/SubmitterBadge'
 
 const CompanyPage = () => {
   const { slug } = useParams()
@@ -794,6 +795,17 @@ const CouponCard = ({ coupon }) => {
         <h3 className="text-lg font-semibold text-secondary-900 mb-2 line-clamp-2">
           {coupon.title}
         </h3>
+        
+        {/* Submitter Info */}
+        <div className="mb-3">
+          <SubmitterBadge 
+            submitter={coupon.profiles} 
+            submitter_id={coupon.submitter_id}
+            created_at={coupon.created_at}
+            size="sm"
+            showDate={true}
+          />
+        </div>
         
         {coupon.description && (
           <p className="text-sm text-secondary-600 mb-4 line-clamp-2">

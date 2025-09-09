@@ -9,6 +9,58 @@ import path from 'path';
 const r = Router();
 const supaAdmin = makeAdminClient();
 
+// Karma calculation function
+function calculateKarmaPoints(submissionType, submissionData) {
+  let fieldCount = 0;
+  let totalPossibleFields;
+  
+  if (submissionType === 'deal') {
+    totalPossibleFields = 15; // Total optional fields for deals
+    
+    // Check each optional field
+    if (submissionData.original_price) fieldCount++;
+    if (submissionData.discount_percentage) fieldCount++;
+    if (submissionData.merchant) fieldCount++;
+    if (submissionData.category_id) fieldCount++;
+    if (submissionData.deal_type && submissionData.deal_type !== 'deal') fieldCount++;
+    if (submissionData.coupon_code) fieldCount++;
+    if (submissionData.coupon_type && submissionData.coupon_type !== 'none') fieldCount++;
+    if (submissionData.starts_at) fieldCount++;
+    if (submissionData.expires_at) fieldCount++;
+    if (submissionData.stock_status && submissionData.stock_status !== 'unknown') fieldCount++;
+    if (submissionData.stock_quantity) fieldCount++;
+    if (submissionData.tags) fieldCount++;
+    if (submissionData.image_url) fieldCount++;
+    if (submissionData.description) fieldCount++;
+    if (submissionData.terms_conditions) fieldCount++;
+    
+  } else if (submissionType === 'coupon') {
+    totalPossibleFields = 10; // Total optional fields for coupons
+    
+    if (submissionData.minimum_order_amount) fieldCount++;
+    if (submissionData.maximum_discount_amount) fieldCount++;
+    if (submissionData.usage_limit) fieldCount++;
+    if (submissionData.usage_limit_per_user) fieldCount++;
+    if (submissionData.starts_at) fieldCount++;
+    if (submissionData.expires_at) fieldCount++;
+    if (submissionData.source_url) fieldCount++;
+    if (submissionData.category_id) fieldCount++;
+    if (submissionData.description) fieldCount++;
+    if (submissionData.terms_conditions) fieldCount++;
+  }
+  
+  // Calculate karma based on field completion percentage
+  if (fieldCount === 0) {
+    return 3; // Only required fields
+  } else if (fieldCount <= totalPossibleFields * 0.3) {
+    return 5; // 30% or less of optional fields
+  } else if (fieldCount <= totalPossibleFields * 0.7) {
+    return 8; // 30-70% of optional fields
+  } else {
+    return 10; // 70%+ of optional fields
+  }
+}
+
 // Configure multer for image uploads
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -74,11 +126,12 @@ async function listDeals(tab, filters = {}) {
     .from('deals')
     .select(`
       id, title, url, price, merchant, created_at, approved_at, status,
-      description, image_url, coupon_code, coupon_type, discount_percentage,
+      description, image_url, deal_images, featured_image, coupon_code, coupon_type, discount_percentage,
       discount_amount, original_price, expires_at, category_id, deal_type,
-      is_featured, views_count, clicks_count,
+      is_featured, views_count, clicks_count, submitter_id,
       categories(name, slug),
       companies(name, slug, logo_url),
+      profiles!submitter_id(id, handle, avatar_url, role, karma),
       deal_tags(tags(id, name, slug, color, category))
     `)
     .eq('status','approved');
@@ -173,6 +226,8 @@ async function listDeals(tab, filters = {}) {
       store: d.companies?.name || d.merchant,
       description: d.description,
       image_url: d.image_url,
+      deal_images: d.deal_images,
+      featured_image: d.featured_image,
       created: createdSec,
       ups: v.ups || 0,
       downs: v.downs || 0,
@@ -329,9 +384,12 @@ r.get('/:id', async (req, res) => {
     const { data: d, error: dErr } = await supaAdmin
       .from('deals')
       .select(`
-        id,title,url,price,merchant,description,image_url,deal_images,featured_image,created_at,status,category_id,deal_type,is_featured,views_count,clicks_count,expires_at,original_price,discount_percentage,discount_amount,coupon_code,coupon_type,company_id,
+        id,title,url,price,merchant,description,image_url,deal_images,featured_image,created_at,status,category_id,deal_type,is_featured,views_count,clicks_count,expires_at,original_price,discount_percentage,discount_amount,coupon_code,coupon_type,company_id,submitter_id,
         companies(
           id,name,slug,logo_url,website_url,is_verified,description,founded_year,headquarters,employee_count,revenue_range,social_media,contact_info,business_hours,payment_methods,shipping_info,return_policy,customer_service,faq_url,blog_url,newsletter_signup,loyalty_program,mobile_app_url,app_store_rating,play_store_rating,trustpilot_rating,trustpilot_reviews_count,bbb_rating,bbb_accreditation,certifications,awards,featured_image,banner_image,gallery_images,video_url,rating,total_reviews,status,created_at,updated_at
+        ),
+        profiles!submitter_id(
+          id,handle,avatar_url,karma,created_at,role
         )
       `)
       .eq('id', id)
@@ -402,6 +460,8 @@ r.get('/:id', async (req, res) => {
       original_price: d.original_price, discount_percentage: d.discount_percentage,
       discount_amount: d.discount_amount, coupon_code: d.coupon_code, coupon_type: d.coupon_type,
       company: d.companies, // Include full company information
+      submitter: d.profiles, // Include submitter information
+      submitter_id: d.submitter_id, // Include submitter ID
       tags,
       userVote // Include user's current vote
     });
@@ -413,48 +473,108 @@ r.get('/:id', async (req, res) => {
 /** Create deal (JWT required; RLS + trigger sets submitter_id) */
 r.post('/', async (req, res) => {
   try {
-    const token = bearer(req);
-    if (!token) return res.status(401).json({ error: 'auth required' });
-    
-    const supaUser = await createSafeUserClient(token, res);
-    if (!supaUser) return; // Exit if client creation failed
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
-    const { title, url, price = null, merchant = null, description = null, image_url = null, deal_images = null, featured_image = null } = req.body || {};
+    const { 
+      title, 
+      url, 
+      price = null, 
+      original_price = null,
+      merchant = null, 
+      description = null, 
+      image_url = null, 
+      deal_images = null, 
+      featured_image = null,
+      category_id = null,
+      company_id = null,
+      deal_type = 'deal',
+      discount_percentage = null,
+      discount_amount = null,
+      coupon_code = null,
+      coupon_type = 'none',
+      minimum_order_amount = null,
+      maximum_discount_amount = null,
+      terms_conditions = null,
+      starts_at = null,
+      expires_at = null,
+      tags = null,
+      is_featured = false,
+      is_exclusive = false,
+      stock_status = 'unknown',
+      stock_quantity = null,
+    } = req.body || {};
+    
     if (!title || !url) return res.status(400).json({ error: 'title and url required' });
 
-    const { data, error } = await supaUser
+    const { data, error } = await supaAdmin
       .from('deals')
       .insert([{ 
-        title, 
+        title: title.trim(), 
         url: normalizeUrl(url), 
-        price, 
-        merchant, 
-        description, 
-        image_url, 
-        deal_images, 
-        featured_image,
-        status: 'pending' 
+        price: price ? parseFloat(price) : null,
+        original_price: original_price ? parseFloat(original_price) : null,
+        merchant: merchant?.trim() || null, 
+        description: description?.trim() || null, 
+        image_url: image_url?.trim() || null, 
+        deal_images: deal_images || null, 
+        featured_image: featured_image || null,
+        category_id: category_id ? parseInt(category_id) : null,
+        company_id: company_id ? parseInt(company_id) : null,
+        deal_type: deal_type || 'deal',
+        discount_percentage: discount_percentage ? parseFloat(discount_percentage) : null,
+        discount_amount: discount_amount ? parseFloat(discount_amount) : null,
+        coupon_code: coupon_code?.trim() || null,
+        coupon_type: coupon_type || 'none',
+        minimum_order_amount: minimum_order_amount ? parseFloat(minimum_order_amount) : null,
+        maximum_discount_amount: maximum_discount_amount ? parseFloat(maximum_discount_amount) : null,
+        terms_conditions: terms_conditions?.trim() || null,
+        starts_at: starts_at || null,
+        expires_at: expires_at || null,
+        is_featured: Boolean(is_featured),
+        is_exclusive: Boolean(is_exclusive),
+        stock_status: stock_status || 'unknown',
+        stock_quantity: stock_quantity ? parseInt(stock_quantity) : null,
+        status: 'pending',
+        submitter_id: req.user.id
       }])
       .select()
       .single();
     if (error) throw error;
 
-    // Auto-attach hashtags from title/description as tags
+    // Handle tags - use provided tags or parse from title/description
     try {
-      const slugs = parseHashtags(title, description);
-      if (slugs.length > 0) {
-        const tagIds = await ensureTagsReturnIds(slugs);
+      let tagSlugs = [];
+      
+      // Use provided tags if available
+      if (tags && Array.isArray(tags)) {
+        tagSlugs = tags.map(tag => tag.trim().toLowerCase().replace(/[^a-z0-9]/g, '-')).filter(tag => tag);
+      } else if (typeof tags === 'string' && tags.trim()) {
+        tagSlugs = tags.split(',').map(tag => tag.trim().toLowerCase().replace(/[^a-z0-9]/g, '-')).filter(tag => tag);
+      }
+      
+      // If no tags provided, parse from title/description
+      if (tagSlugs.length === 0) {
+        tagSlugs = parseHashtags(title, description);
+      }
+      
+      if (tagSlugs.length > 0) {
+        const tagIds = await ensureTagsReturnIds(tagSlugs);
         if (tagIds.length > 0) {
           const dealTagRows = tagIds.map(tag_id => ({ deal_id: data.id, tag_id }));
-          await supaUser.from('deal_tags').insert(dealTagRows);
+          await supaAdmin.from('deal_tags').insert(dealTagRows);
         }
       }
-    } catch (_) {}
+    } catch (error) {
+      console.error('Error handling tags:', error);
+    }
 
     res.status(201).json({
       id: data.id, title: data.title, url: data.url, price: data.price,
       merchant: data.merchant, created: Math.floor(new Date(data.created_at).getTime()/1000),
-      ups: 0, downs: 0, deal_images: data.deal_images, featured_image: data.featured_image
+      ups: 0, downs: 0, deal_images: data.deal_images, featured_image: data.featured_image,
+      karma_points: calculateKarmaPoints('deal', req.body)
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -555,19 +675,17 @@ r.post('/:id/vote', async (req, res) => {
 /** Comment (JWT required; RLS enforces deal approved) */
 r.post('/:id/comment', async (req, res) => {
   try {
-    const token = bearer(req);
-    if (!token) return res.status(401).json({ error: 'auth required' });
-    
-    const supaUser = await createSafeUserClient(token, res);
-    if (!supaUser) return; // Exit if client creation failed
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     const id = Number(req.params.id);
     const { body, parent_id = null } = req.body || {};
     if (!body || !body.trim()) return res.status(400).json({ error: 'body required' });
 
-    const { data, error } = await supaUser
+    const { data, error } = await supaAdmin
       .from('comments')
-      .insert([{ deal_id: id, body: body.trim(), parent_id }])
+      .insert([{ deal_id: id, body: body.trim(), parent_id, user_id: req.user.id }])
       .select('id,deal_id,user_id,body,parent_id,created_at')
       .single();
     if (error) throw error;
@@ -581,23 +699,22 @@ r.post('/:id/comment', async (req, res) => {
   /** Report deal (JWT required) */
   r.post('/:id/report', async (req, res) => {
     try {
-      const token = bearer(req);
-      if (!token) return res.status(401).json({ error: 'auth required' });
-      
-      const supaUser = await createSafeUserClient(token, res);
-      if (!supaUser) return; // Exit if client creation failed
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
 
       const id = Number(req.params.id);
       const { reason, note = null } = req.body || {};
       if (!reason || !reason.trim()) return res.status(400).json({ error: 'reason required' });
       if (reason.length < 3 || reason.length > 500) return res.status(400).json({ error: 'reason must be 3-500 characters' });
 
-      const { data, error } = await supaUser
+      const { data, error } = await supaAdmin
         .from('reports')
         .insert([{ 
           deal_id: id, 
           reason: reason.trim(), 
-          note: note?.trim() || null 
+          note: note?.trim() || null,
+          reporter_id: req.user.id
         }])
         .select('id,deal_id,reporter_id,reason,note,created_at')
         .single();
@@ -612,11 +729,9 @@ r.post('/:id/comment', async (req, res) => {
   /** Upload deal images (JWT required) */
   r.post('/:id/images', upload.array('images', 5), async (req, res) => {
     try {
-      const token = bearer(req);
-      if (!token) return res.status(401).json({ error: 'auth required' });
-      
-      const supaUser = await createSafeUserClient(token, res);
-      if (!supaUser) return; // Exit if client creation failed
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
 
       const dealId = Number(req.params.id);
       if (!req.files || req.files.length === 0) {
@@ -624,7 +739,7 @@ r.post('/:id/comment', async (req, res) => {
       }
 
       // Verify deal exists and user owns it
-      const { data: deal, error: dealError } = await supaUser
+      const { data: deal, error: dealError } = await supaAdmin
         .from('deals')
         .select('id, submitter_id')
         .eq('id', dealId)
@@ -694,7 +809,7 @@ r.post('/:id/comment', async (req, res) => {
           featured_image: imageUrls[0] // First image as featured
         };
 
-        const { error: updateError } = await supaUser
+        const { error: updateError } = await supaAdmin
           .from('deals')
           .update(updateData)
           .eq('id', dealId);
@@ -762,3 +877,4 @@ r.post('/:id/click', async (req, res) => {
 })
 
 export default r;
+

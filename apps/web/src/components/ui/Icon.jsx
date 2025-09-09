@@ -42,6 +42,9 @@ const iconMap = {
   percent: LucideIcons.Percent,
   gift: LucideIcons.Gift,
   ticket: LucideIcons.Ticket,
+  store: LucideIcons.Store,
+  hash: LucideIcons.Hash,
+  package: LucideIcons.Package,
   
   // Content & Media
   image: LucideIcons.Image,

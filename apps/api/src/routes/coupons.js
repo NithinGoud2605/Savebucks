@@ -259,11 +259,9 @@ router.get('/:id', async (req, res) => {
 // Create new coupon
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const token = bearer(req)
-    if (!token) return res.status(401).json({ error: 'Authentication required' })
-    
-    const supaUser = await createSafeUserClient(token, res)
-    if (!supaUser) return; // Exit if client creation failed
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
     const {
       title,
       description,
@@ -291,26 +289,27 @@ router.post('/', requireAuth, async (req, res) => {
       })
     }
 
-    const { data: coupon, error } = await supaUser
+    const { data: coupon, error } = await supabase
       .from('coupons')
       .insert([{
         title: title.trim(),
-        description: description?.trim(),
+        description: description?.trim() || null,
         coupon_code: coupon_code.trim().toUpperCase(),
-        coupon_type,
+        coupon_type: coupon_type || 'percentage',
         discount_value: discount_value ? parseFloat(discount_value) : null,
         minimum_order_amount: minimum_order_amount ? parseFloat(minimum_order_amount) : null,
         maximum_discount_amount: maximum_discount_amount ? parseFloat(maximum_discount_amount) : null,
         company_id: parseInt(company_id),
         category_id: category_id ? parseInt(category_id) : null,
-        terms_conditions: terms_conditions?.trim(),
+        terms_conditions: terms_conditions?.trim() || null,
         usage_limit: usage_limit ? parseInt(usage_limit) : null,
         usage_limit_per_user: usage_limit_per_user ? parseInt(usage_limit_per_user) : 1,
         starts_at: starts_at || null,
         expires_at: expires_at || null,
-        source_url: source_url?.trim(),
-        tags: tags || [],
-        is_exclusive: is_exclusive || false
+        source_url: source_url?.trim() || null,
+        is_exclusive: Boolean(is_exclusive),
+        status: 'pending',
+        submitter_id: req.user.id
       }])
       .select()
       .single()
@@ -319,16 +318,29 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: error.message })
     }
 
-    // Auto-attach hashtags from title/description as tags
+    // Handle tags - use provided tags or parse from title/description
     try {
-      const slugs = extractHashtagSlugs(`${title} ${description || ''}`)
-      if (slugs.length > 0) {
+      let tagSlugs = [];
+      
+      // Use provided tags if available
+      if (tags && Array.isArray(tags)) {
+        tagSlugs = tags.map(tag => tag.trim().toLowerCase().replace(/[^a-z0-9]/g, '-')).filter(tag => tag);
+      } else if (typeof tags === 'string' && tags.trim()) {
+        tagSlugs = tags.split(',').map(tag => tag.trim().toLowerCase().replace(/[^a-z0-9]/g, '-')).filter(tag => tag);
+      }
+      
+      // If no tags provided, parse from title/description
+      if (tagSlugs.length === 0) {
+        tagSlugs = extractHashtagSlugs(`${title} ${description || ''}`);
+      }
+      
+      if (tagSlugs.length > 0) {
         const { data: existing } = await supabase
           .from('tags')
           .select('id, slug')
-          .in('slug', slugs)
+          .in('slug', tagSlugs)
         const existingMap = new Map((existing || []).map(t => [t.slug, t.id]))
-        const missing = slugs.filter(s => !existingMap.has(s))
+        const missing = tagSlugs.filter(s => !existingMap.has(s))
         if (missing.length > 0) {
           const toInsert = missing.map(slug => ({
             name: slug.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
@@ -343,13 +355,15 @@ router.post('/', requireAuth, async (req, res) => {
             .select('id, slug')
           ;(inserted || []).forEach(t => existingMap.set(t.slug, t.id))
         }
-        const tagIds = slugs.map(s => existingMap.get(s)).filter(Boolean)
+        const tagIds = tagSlugs.map(s => existingMap.get(s)).filter(Boolean)
         if (tagIds.length > 0) {
           const rows = tagIds.map(tag_id => ({ coupon_id: coupon.id, tag_id }))
           await supabase.from('coupon_tags').insert(rows)
         }
       }
-    } catch (_) {}
+    } catch (error) {
+      console.error('Error handling tags:', error);
+    }
 
     res.status(201).json(coupon)
   } catch (error) {

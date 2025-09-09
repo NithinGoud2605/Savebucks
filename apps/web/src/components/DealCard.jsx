@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
+import SubmitterBadge from './Deal/SubmitterBadge';
 
 export default function DealCard({ deal, variant = 'default', index = 0 }) {
   const qc = useQueryClient();
@@ -433,21 +434,33 @@ export default function DealCard({ deal, variant = 'default', index = 0 }) {
             </div>
 
             {/* Meta Info */}
-            <div className="flex items-center gap-4 text-xs text-gray-500">
-              <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                <span>{timeAgo(deal.created)}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Eye className="w-4 h-4" />
-                <span>{deal.view_count || 0} views</span>
-              </div>
-              {deal.expires_at && (
-                <div className="flex items-center gap-1 text-orange-500">
+            <div className="space-y-2">
+              {/* Submitter Info */}
+              <SubmitterBadge 
+                submitter={deal.profiles} 
+                submitter_id={deal.submitter_id}
+                created_at={deal.created_at}
+                size="sm"
+                showDate={false}
+              />
+              
+              {/* Stats */}
+              <div className="flex items-center gap-4 text-xs text-gray-500">
+                <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  <span>Expires {new Date(deal.expires_at).toLocaleDateString()}</span>
+                  <span>{timeAgo(deal.created)}</span>
                 </div>
-              )}
+                <div className="flex items-center gap-1">
+                  <Eye className="w-4 h-4" />
+                  <span>{deal.view_count || 0} views</span>
+                </div>
+                {deal.expires_at && (
+                  <div className="flex items-center gap-1 text-orange-500">
+                    <Clock className="w-4 h-4" />
+                    <span>Expires {new Date(deal.expires_at).toLocaleDateString()}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

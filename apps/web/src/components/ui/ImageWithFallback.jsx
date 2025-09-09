@@ -22,14 +22,37 @@ const ImageWithFallback = ({
     }
   }
 
+  const isValidImageUrl = (url) => {
+    if (!url) return false;
+    
+    try {
+      const urlObj = new URL(url);
+      
+      // Check for obviously invalid URLs
+      if (urlObj.hostname === 'localhost' && !urlObj.pathname.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
+        return false;
+      }
+      
+      // Check for non-image file extensions
+      const pathname = urlObj.pathname.toLowerCase();
+      if (pathname.match(/\.(html|htm|php|asp|aspx|jsp|js|css|txt|pdf|doc|docx)$/)) {
+        return false;
+      }
+      
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   const getImageSrc = () => {
-    if (imageError && !proxyError) {
+    if (imageError && !proxyError && isValidImageUrl(src)) {
       return `/api/proxy/image?url=${encodeURIComponent(src)}`
     }
     return src
   }
 
-  if (proxyError || !src) {
+  if (proxyError || !src || !isValidImageUrl(src)) {
     if (showPlaceholder) {
       return (
         <div className={`flex items-center justify-center bg-gray-100 text-gray-400 ${fallbackClassName || className}`}>

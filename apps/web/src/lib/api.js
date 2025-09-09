@@ -586,15 +586,54 @@ export const api = {
     return apiRequest(`/api/admin/coupons/pending?${params}`)
   },
   
-  reviewDeal: (dealId, action, rejectionReason = null) => apiRequest(`/api/admin/deals/${dealId}/review`, {
+  reviewDeal: ({ dealId, action, reason }) => apiRequest(`/api/admin/deals/${dealId}/review`, {
     method: 'POST',
-    body: { action, rejection_reason: rejectionReason },
+    body: { action, rejection_reason: reason },
   }),
   
-  reviewCoupon: (couponId, action, rejectionReason = null) => apiRequest(`/api/admin/coupons/${couponId}/review`, {
+  reviewCoupon: ({ couponId, action, reason }) => apiRequest(`/api/admin/coupons/${couponId}/review`, {
     method: 'POST',
-    body: { action, rejection_reason: rejectionReason },
+    body: { action, rejection_reason: reason },
   }),
+
+  editDeal: (dealId, updates) => apiRequest(`/api/admin/deals/${dealId}/edit`, {
+    method: 'PUT',
+    body: updates,
+  }),
+
+  editCoupon: (couponId, updates) => apiRequest(`/api/admin/coupons/${couponId}/edit`, {
+    method: 'PUT',
+    body: updates,
+  }),
+
+  // Delete functions
+  deleteDeal: (dealId) => apiRequest(`/api/admin/deals/${dealId}`, {
+    method: 'DELETE',
+  }),
+
+  deleteCoupon: (couponId) => apiRequest(`/api/admin/coupons/${couponId}`, {
+    method: 'DELETE',
+  }),
+  
+  // Upload image for admin use
+  uploadImage: (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    return fetch(`${API_BASE}/api/admin/upload-image`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+      },
+      body: formData,
+    }).then(async (response) => {
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new ApiError(errorData.error || 'Upload failed', response.status);
+      }
+      return response.json();
+    });
+  },
   
   getAdminUsers: (params = {}) => {
     const searchParams = new URLSearchParams()

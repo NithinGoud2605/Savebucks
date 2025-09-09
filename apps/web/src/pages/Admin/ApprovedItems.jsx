@@ -1,9 +1,19 @@
-import React, { useMemo, useState } from 'react'
-import { useDebounce } from '../../hooks/useDebounce'
+import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
 import { Skeleton } from '../../components/Loader/Skeleton'
-import { CheckCircleIcon, PencilSquareIcon, MagnifyingGlassIcon, TagIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline'
+import AdminEditModal from '../../components/Admin/AdminEditModal'
+import { ConfirmModal } from '../../components/ui/Modal'
+import { toast } from '../../lib/toast'
+import {
+  CheckCircleIcon,
+  PencilSquareIcon,
+  MagnifyingGlassIcon,
+  TagIcon,
+  TrashIcon,
+  EyeIcon,
+  ClipboardDocumentListIcon
+} from '@heroicons/react/24/outline'
 
 const SearchBar = ({ value, onChange, placeholder }) => {
   return (
@@ -19,58 +29,27 @@ const SearchBar = ({ value, onChange, placeholder }) => {
   )
 }
 
-const EditRow = ({ item, type, onCancel, onSave }) => {
-  const [form, setForm] = useState(() => ({
-    title: item.title || '',
-    description: item.description || '',
-    merchant: item.merchant || '',
-    price: item.price ?? '',
-    original_price: item.original_price ?? '',
-    coupon_code: item.coupon_code || '',
-    coupon_type: item.coupon_type || '',
-    image_url: item.image_url || '',
-  }))
-
-  const update = (k, v) => setForm((p) => ({ ...p, [k]: v }))
+const ItemRow = ({ item, type, onEdit, onDelete, onView }) => {
+  const currentImage = item.featured_image || item.deal_images?.[0] || item.coupon_images?.[0] || item.image_url
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <input className="input" value={form.title} onChange={(e)=>update('title', e.target.value)} placeholder="Title" />
-        <input className="input" value={form.merchant} onChange={(e)=>update('merchant', e.target.value)} placeholder="Merchant" />
-        {type === 'deals' && (
-          <>
-            <input className="input" value={form.price} onChange={(e)=>update('price', e.target.value)} placeholder="Price" />
-            <input className="input" value={form.original_price} onChange={(e)=>update('original_price', e.target.value)} placeholder="Original Price" />
-          </>
-        )}
-        {type === 'coupons' && (
-          <>
-            <input className="input" value={form.coupon_code} onChange={(e)=>update('coupon_code', e.target.value)} placeholder="Coupon Code" />
-            <input className="input" value={form.coupon_type} onChange={(e)=>update('coupon_type', e.target.value)} placeholder="Coupon Type" />
-          </>
-        )}
-        <input className="input" value={form.image_url} onChange={(e)=>update('image_url', e.target.value)} placeholder="Image URL" />
-      </div>
-      <textarea className="input" rows={3} value={form.description} onChange={(e)=>update('description', e.target.value)} placeholder="Description" />
-      <div className="flex justify-end gap-2">
-        <button onClick={onCancel} className="px-4 py-2 border rounded-lg">Cancel</button>
-        <button onClick={()=>onSave(form)} className="px-4 py-2 bg-primary-600 text-white rounded-lg">Save</button>
-      </div>
-    </div>
-  )
-}
-
-const ItemRow = ({ item, type, onEdit }) => {
-  return (
-    <div className="bg-white border border-secondary-200 rounded-lg p-4">
+    <div className="bg-white border border-secondary-200 rounded-lg p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start gap-4">
         <div className="w-16 h-16 bg-secondary-100 rounded overflow-hidden flex items-center justify-center">
-          {item.image_url ? (
-            <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
-          ) : (
+          {currentImage ? (
+            <img 
+              src={currentImage} 
+              alt={item.title} 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.style.display = 'none'
+                e.target.nextSibling.style.display = 'flex'
+              }}
+            />
+          ) : null}
+          <div className="w-full h-full flex items-center justify-center" style={{ display: currentImage ? 'none' : 'flex' }}>
             <TagIcon className="w-6 h-6 text-secondary-400" />
-          )}
+          </div>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -80,18 +59,69 @@ const ItemRow = ({ item, type, onEdit }) => {
             </span>
           </div>
           <div className="text-xs text-secondary-600 mb-2">
-            {type === 'deals' ? item.merchant : item.companies?.name} • {new Date(item.created_at).toLocaleDateString()}
+            {type === 'deals' ? (item.merchant || item.companies?.name) : item.companies?.name} • {new Date(item.created_at).toLocaleDateString()}
           </div>
           {type === 'deals' && (
             <div className="text-sm text-secondary-800 mb-2">
-              {item.price != null && <span className="font-semibold">${item.price}</span>} {item.original_price && <span className="line-through text-secondary-500 ml-2">${item.original_price}</span>}
+              {item.price != null && <span className="font-semibold">${item.price}</span>} 
+              {item.original_price && <span className="line-through text-secondary-500 ml-2">${item.original_price}</span>}
+            </div>
+          )}
+          {type === 'coupons' && item.coupon_code && (
+            <div className="text-sm text-secondary-800 mb-2">
+              <span className="font-semibold">Code: {item.coupon_code}</span>
             </div>
           )}
           <div className="text-sm text-secondary-700 line-clamp-2">{item.description}</div>
+          
+          {/* Tags */}
+          {item.deal_tags && item.deal_tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {item.deal_tags.slice(0, 3).map((tag, index) => (
+                <span key={index} className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
+                  {tag.tags?.name || tag}
+                </span>
+              ))}
+              {item.deal_tags.length > 3 && (
+                <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
+                  +{item.deal_tags.length - 3} more
+                </span>
+              )}
+            </div>
+          )}
+          {item.coupon_tags && item.coupon_tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {item.coupon_tags.slice(0, 3).map((tag, index) => (
+                <span key={index} className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
+                  {tag.tags?.name || tag}
+                </span>
+              ))}
+              {item.coupon_tags.length > 3 && (
+                <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
+                  +{item.coupon_tags.length - 3} more
+                </span>
+              )}
+            </div>
+          )}
         </div>
-        <div className="flex-shrink-0">
-          <button onClick={onEdit} className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-secondary-50">
+        <div className="flex-shrink-0 flex gap-2">
+          <button 
+            onClick={onView} 
+            className="inline-flex items-center gap-1 px-3 py-2 text-sm border border-secondary-300 rounded-lg hover:bg-secondary-50 text-secondary-700"
+          >
+            <EyeIcon className="w-4 h-4" /> View
+          </button>
+          <button 
+            onClick={onEdit} 
+            className="inline-flex items-center gap-1 px-3 py-2 text-sm border border-primary-300 rounded-lg hover:bg-primary-50 text-primary-700"
+          >
             <PencilSquareIcon className="w-4 h-4" /> Edit
+          </button>
+          <button 
+            onClick={onDelete} 
+            className="inline-flex items-center gap-1 px-3 py-2 text-sm border border-red-300 rounded-lg hover:bg-red-50 text-red-700"
+          >
+            <TrashIcon className="w-4 h-4" /> Delete
           </button>
         </div>
       </div>
@@ -102,90 +132,203 @@ const ItemRow = ({ item, type, onEdit }) => {
 const ApprovedItems = () => {
   const [activeTab, setActiveTab] = useState('deals')
   const [search, setSearch] = useState('')
-  const [editingId, setEditingId] = useState(null)
   const [page, setPage] = useState(1)
-  const debounced = useDebounce(search, 350)
-  const qc = useQueryClient()
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [itemToEdit, setItemToEdit] = useState(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState(null)
 
-  const { data: deals, isLoading: loadingDeals } = useQuery({
-    queryKey: ['admin', 'approved', 'deals', debounced, page],
-    queryFn: () => api.listAdminDeals({ status: 'approved', search: debounced, page }),
+  const queryClient = useQueryClient()
+
+  // Fetch approved deals
+  const { data: approvedDeals, isLoading: dealsLoading } = useQuery({
+    queryKey: ['admin', 'approved', 'deals', search, page],
+    queryFn: () => api.listAdminDeals({ status: 'approved', search, page, limit: 20 }),
     enabled: activeTab === 'deals'
   })
 
-  const { data: coupons, isLoading: loadingCoupons } = useQuery({
-    queryKey: ['admin', 'approved', 'coupons', debounced, page],
-    queryFn: () => api.listAdminCoupons({ status: 'approved', search: debounced, page }),
+  // Fetch approved coupons
+  const { data: approvedCoupons, isLoading: couponsLoading } = useQuery({
+    queryKey: ['admin', 'approved', 'coupons', search, page],
+    queryFn: () => api.listAdminCoupons({ status: 'approved', search, page, limit: 20 }),
     enabled: activeTab === 'coupons'
   })
 
-  const updateDeal = useMutation({
-    mutationFn: ({ id, updates }) => api.updateDealAdmin(id, updates),
+  // Delete deal mutation
+  const deleteDealMutation = useMutation({
+    mutationFn: (dealId) => api.deleteDeal(dealId),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin', 'approved', 'deals'] })
-      setEditingId(null)
+      queryClient.invalidateQueries({ queryKey: ['admin', 'approved', 'deals'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] })
+      toast.success('Deal deleted successfully')
+      setShowDeleteDialog(false)
+      setItemToDelete(null)
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to delete deal')
     }
   })
 
-  const updateCoupon = useMutation({
-    mutationFn: ({ id, updates }) => api.updateCouponAdmin(id, updates),
+  // Delete coupon mutation
+  const deleteCouponMutation = useMutation({
+    mutationFn: (couponId) => api.deleteCoupon(couponId),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin', 'approved', 'coupons'] })
-      setEditingId(null)
+      queryClient.invalidateQueries({ queryKey: ['admin', 'approved', 'coupons'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] })
+      toast.success('Coupon deleted successfully')
+      setShowDeleteDialog(false)
+      setItemToDelete(null)
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to delete coupon')
     }
   })
 
-  const items = activeTab === 'deals' ? (deals || []) : (coupons || [])
-  const loading = activeTab === 'deals' ? loadingDeals : loadingCoupons
+  const handleEdit = (item) => {
+    setItemToEdit(item)
+    setShowEditModal(true)
+  }
+
+  const handleDelete = (item) => {
+    setItemToDelete(item)
+    setShowDeleteDialog(true)
+  }
+
+  const handleView = (item) => {
+    if (activeTab === 'deals') {
+      window.open(`/deal/${item.id}`, '_blank')
+    } else {
+      window.open(`/company/${item.companies?.slug}`, '_blank')
+    }
+  }
+
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      if (activeTab === 'deals') {
+        deleteDealMutation.mutate(itemToDelete.id)
+      } else {
+        deleteCouponMutation.mutate(itemToDelete.id)
+      }
+    }
+  }
+
+  const handleEditSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin', 'approved', activeTab] })
+    setShowEditModal(false)
+    setItemToEdit(null)
+    toast.success(`${activeTab.slice(0, -1)} updated successfully!`)
+  }
+
+  const items = activeTab === 'deals' ? (approvedDeals || []) : (approvedCoupons || [])
+  const loading = activeTab === 'deals' ? dealsLoading : couponsLoading
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-secondary-900">Approved Items</h2>
-          <p className="text-secondary-600 mt-1">Search and edit approved deals and coupons</p>
+          <p className="text-secondary-600 mt-1">Manage and edit approved deals and coupons</p>
         </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
         <div className="flex gap-2">
-          <button onClick={()=>{setActiveTab('deals'); setEditingId(null)}} className={`px-3 py-2 rounded-lg border ${activeTab==='deals'?'border-primary-300 bg-primary-50 text-primary-700':'border-secondary-200 text-secondary-700'}`}>Deals</button>
-          <button onClick={()=>{setActiveTab('coupons'); setEditingId(null)}} className={`px-3 py-2 rounded-lg border ${activeTab==='coupons'?'border-primary-300 bg-primary-50 text-primary-700':'border-secondary-200 text-secondary-700'}`}>Coupons</button>
+          <button 
+            onClick={() => { setActiveTab('deals'); setPage(1) }} 
+            className={`px-3 py-2 rounded-lg border ${
+              activeTab === 'deals' 
+                ? 'border-primary-300 bg-primary-50 text-primary-700' 
+                : 'border-secondary-200 text-secondary-700'
+            }`}
+          >
+            Deals
+          </button>
+          <button 
+            onClick={() => { setActiveTab('coupons'); setPage(1) }} 
+            className={`px-3 py-2 rounded-lg border ${
+              activeTab === 'coupons' 
+                ? 'border-primary-300 bg-primary-50 text-primary-700' 
+                : 'border-secondary-200 text-secondary-700'
+            }`}
+          >
+            Coupons
+          </button>
         </div>
         <div className="flex-1">
-          <SearchBar value={search} onChange={setSearch} placeholder={`Search approved ${activeTab}`} />
+          <SearchBar 
+            value={search} 
+            onChange={setSearch} 
+            placeholder={`Search approved ${activeTab}`} 
+          />
         </div>
       </div>
 
       {loading ? (
         <div className="space-y-3">
-          {[...Array(5)].map((_,i)=>(<Skeleton key={i} className="h-24" />))}
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
         </div>
       ) : items && items.length > 0 ? (
         <div className="space-y-3">
-          {items.map((it)=> (
-            <div key={it.id} className="">
-              {editingId === it.id ? (
-                <EditRow
-                  item={it}
-                  type={activeTab}
-                  onCancel={()=>setEditingId(null)}
-                  onSave={(form)=> activeTab==='deals' ? updateDeal.mutate({ id: it.id, updates: form }) : updateCoupon.mutate({ id: it.id, updates: form })}
-                />
-              ) : (
-                <ItemRow item={it} type={activeTab} onEdit={()=>setEditingId(it.id)} />
-              )}
-            </div>
+          {items.map((item) => (
+            <ItemRow
+              key={item.id}
+              item={item}
+              type={activeTab}
+              onEdit={() => handleEdit(item)}
+              onDelete={() => handleDelete(item)}
+              onView={() => handleView(item)}
+            />
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 text-secondary-600">No approved {activeTab} found.</div>
+        <div className="text-center py-12 text-secondary-600">
+          <ClipboardDocumentListIcon className="w-12 h-12 mx-auto mb-4 text-secondary-400" />
+          <p>No approved {activeTab} found.</p>
+          {search && (
+            <p className="text-sm mt-2">Try adjusting your search terms.</p>
+          )}
+        </div>
       )}
+
+      {/* Edit Modal */}
+      {showEditModal && itemToEdit && (
+        <AdminEditModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false)
+            setItemToEdit(null)
+          }}
+          item={itemToEdit}
+          type={activeTab}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmModal
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowDeleteDialog(false)
+            setItemToDelete(null)
+          }
+        }}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setShowDeleteDialog(false)
+          setItemToDelete(null)
+        }}
+        title={`Delete ${activeTab.slice(0, -1)}`}
+        description={`Are you sure you want to delete "${itemToDelete?.title}"? This action cannot be undone and will also remove all associated images, tags, and votes.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        loading={deleteDealMutation.isPending || deleteCouponMutation.isPending}
+      />
     </div>
   )
 }
 
 export default ApprovedItems
-
-
-

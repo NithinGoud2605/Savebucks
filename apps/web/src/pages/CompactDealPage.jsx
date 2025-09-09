@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { clsx } from 'clsx'
 import { formatPrice, dateAgo, truncate } from '../lib/format'
+import SubmitterBadge from '../components/Deal/SubmitterBadge'
 import { useAuth } from '../hooks/useAuth'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
@@ -285,10 +286,19 @@ export default function CompactDealPage() {
                   <h1 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
                     {deal.title}
                   </h1>
-                  <div className="flex items-center text-sm text-gray-600">
+                  <div className="flex items-center text-sm text-gray-600 mb-2">
                     <BuildingStorefrontIcon className="h-4 w-4 mr-1" />
                     {deal.merchant}
                   </div>
+                  
+                  {/* Submitter Info */}
+                  <SubmitterBadge 
+                    submitter={deal.submitter} 
+                    submitter_id={deal.submitter_id}
+                    created_at={deal.created_at}
+                    size="sm"
+                    showDate={true}
+                  />
                 </div>
 
                 {/* Price Section - Compact */}
