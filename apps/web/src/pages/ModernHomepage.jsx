@@ -220,7 +220,7 @@ const DealSection = ({ section }) => {
   // Determine what to display - prioritize personalized, fallback to trending, ultimate fallback to any deals
   const displayData = (deals && deals.length > 0) ? deals : 
                      (fallbackDeals && fallbackDeals.length > 0) ? fallbackDeals : 
-                     (ultimateFallback && ultimateFallback.length > 0) ? ultimateFallback : null
+                     (ultimateFallback && ultimateFallback.length > 0) ? ultimateFallback : []
   const isFallback = section.isPersonalized && (!deals || deals.length === 0)
 
   return (
@@ -453,7 +453,7 @@ export default function ModernHomepage() {
                     <div className="text-sm font-semibold text-gray-900 mb-2">Failed to load coupons</div>
                     <p className="text-gray-600 text-xs">Please try again later.</p>
                   </div>
-                ) : coupons && coupons.length > 0 ? (
+                ) : coupons && Array.isArray(coupons) && coupons.length > 0 ? (
                   <div className="space-y-1">
                     {coupons.map((coupon, index) => (
                       <CompactCouponCard key={coupon.id} coupon={coupon} index={index} />
@@ -502,7 +502,7 @@ export default function ModernHomepage() {
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
                   </div>
-                ) : leaderboardData && leaderboardData.length > 0 ? (
+                ) : leaderboardData && Array.isArray(leaderboardData) && leaderboardData.length > 0 ? (
                   <div className="space-y-2">
                     {leaderboardData.map((user, index) => (
                       <LeaderboardCard key={user.id} user={user} rank={index + 1} />
