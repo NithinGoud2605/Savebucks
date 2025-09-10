@@ -85,3 +85,4 @@ $$;
 COMMENT ON FUNCTION auto_expire_deals IS 'Automatically expires deals that have passed their expiration time (simplified version without auto_expire column)';
 COMMENT ON FUNCTION get_deal_expiration_info IS 'Returns expiration information for a deal including time remaining and urgency level';
 
+

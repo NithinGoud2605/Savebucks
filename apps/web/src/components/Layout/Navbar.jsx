@@ -101,6 +101,14 @@ const Navbar = () => {
     retry: 2
   })
 
+  // Get user profile data for enhanced display
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile', user?.id],
+    queryFn: () => api.getUser(user?.user_metadata?.handle || user?.id),
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000 // 5 minutes
+  })
+
   // Track user session (heartbeat)
   useEffect(() => {
     if (user) {
@@ -629,32 +637,32 @@ const Navbar = () => {
                   >
                     <div className="flex items-center justify-start gap-2 p-2">
                       <Avatar.Root className="flex h-8 w-8 select-none items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary-500 to-primary-600">
-                  {user.user_metadata?.avatar_url ? (
+                        {userProfile?.avatar_url ? (
                           <Avatar.Image
                             className="h-full w-full object-cover"
-                      src={user.user_metadata.avatar_url}
-                            alt={user.user_metadata?.full_name || user.email}
-                    />
-                  ) : (
+                            src={userProfile.avatar_url}
+                            alt={userProfile.display_name || userProfile.handle || user.email}
+                          />
+                        ) : (
                           <Avatar.Fallback className="flex h-full w-full items-center justify-center rounded-full bg-primary-600 text-xs font-medium text-white">
-                            {user.user_metadata?.full_name?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
+                            {(userProfile?.display_name || userProfile?.handle || user.email)?.[0]?.toUpperCase() || 'U'}
                           </Avatar.Fallback>
                         )}
                       </Avatar.Root>
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none text-secondary-900">
-                          {user.user_metadata?.full_name || 'User'}
+                          {userProfile?.display_name || userProfile?.handle || user.user_metadata?.full_name || 'User'}
                         </p>
                         <p className="text-xs leading-none text-secondary-500">
-                        {user.email}
-                      </p>
-                    </div>
+                          {userProfile?.karma ? `${userProfile.karma} karma` : user.email}
+                        </p>
+                      </div>
                     </div>
                     <Separator.Root className="mx-1 h-px bg-secondary-200" />
                     
                     <DropdownMenu.Item asChild>
                       <Link
-                        to={`/user/${user?.user_metadata?.handle || user?.id}`}
+                        to={`/user/${userProfile?.handle || user?.user_metadata?.handle || user?.id}`}
                         className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-secondary-100 focus:text-secondary-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
                       >
                         <UserIcon className="mr-2 h-4 w-4" />
@@ -662,46 +670,6 @@ const Navbar = () => {
                       </Link>
                     </DropdownMenu.Item>
                     
-                    <DropdownMenu.Item asChild>
-                      <Link
-                        to="/achievements"
-                        className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-secondary-100 focus:text-secondary-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                      >
-                        <TrophyIcon className="mr-2 h-4 w-4" />
-                        Achievements
-                      </Link>
-                    </DropdownMenu.Item>
-                    
-                    <DropdownMenu.Item asChild>
-                      <Link
-                        to="/saved-searches"
-                        className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-secondary-100 focus:text-secondary-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                      >
-                        <BookmarkIcon className="mr-2 h-4 w-4" />
-                        Saved Searches
-                      </Link>
-                    </DropdownMenu.Item>
-                    
-                    <DropdownMenu.Item asChild>
-                      <Link
-                        to="/saved-items"
-                        className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-secondary-100 focus:text-secondary-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                      >
-                        <BookmarkIcon className="mr-2 h-4 w-4" />
-                        Saved Items
-                      </Link>
-                    </DropdownMenu.Item>
-                    
-                    
-                    <DropdownMenu.Item asChild>
-                      <Link
-                        to="/settings"
-                        className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-secondary-100 focus:text-secondary-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                      >
-                        <CogIcon className="mr-2 h-4 w-4" />
-                        Settings
-                      </Link>
-                    </DropdownMenu.Item>
                     
                     <Separator.Root className="mx-1 h-px bg-secondary-200" />
                     
@@ -755,13 +723,13 @@ const Navbar = () => {
                     {/* Mobile Search */}
                     <form onSubmit={handleSearch}>
                       <div className="relative">
-                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary-400" />
+                        <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-500" />
                         <input
                           type="text"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder="Search deals, coupons, stores..."
-                          className="h-10 w-full rounded-lg border border-secondary-300 bg-white pl-10 pr-4 text-sm placeholder:text-secondary-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                          className="h-12 w-full rounded-2xl border-2 border-gray-200 bg-white pl-12 pr-4 text-base font-medium placeholder:text-gray-400 placeholder:font-normal focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-100 focus:placeholder-gray-300 transition-all duration-300 shadow-sm focus:shadow-lg"
                         />
                       </div>
                     </form>
@@ -814,28 +782,30 @@ const Navbar = () => {
                         <Separator.Root className="h-px bg-secondary-200" />
                         <div className="flex items-center space-x-3 px-3 py-2">
                           <Avatar.Root className="flex h-8 w-8 select-none items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary-500 to-primary-600">
-                            {user.user_metadata?.avatar_url ? (
+                            {userProfile?.avatar_url ? (
                               <Avatar.Image
                                 className="h-full w-full object-cover"
-                                src={user.user_metadata.avatar_url}
-                                alt={user.user_metadata?.full_name || user.email}
+                                src={userProfile.avatar_url}
+                                alt={userProfile.display_name || userProfile.handle || user.email}
                               />
                             ) : (
                               <Avatar.Fallback className="flex h-full w-full items-center justify-center rounded-full bg-primary-600 text-xs font-medium text-white">
-                                {user.user_metadata?.full_name?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
+                                {(userProfile?.display_name || userProfile?.handle || user.email)?.[0]?.toUpperCase() || 'U'}
                               </Avatar.Fallback>
                             )}
                           </Avatar.Root>
                           <div>
                             <p className="text-sm font-medium text-secondary-900">
-                              {user.user_metadata?.full_name || 'User'}
+                              {userProfile?.display_name || userProfile?.handle || user.user_metadata?.full_name || 'User'}
                             </p>
-                            <p className="text-xs text-secondary-500">{user.email}</p>
+                            <p className="text-xs text-secondary-500">
+                              {userProfile?.karma ? `${userProfile.karma} karma` : user.email}
+                            </p>
                           </div>
                         </div>
                         
                         <Link
-                          to={`/user/${user?.user_metadata?.handle || user?.id}`}
+                          to={`/user/${userProfile?.handle || user?.user_metadata?.handle || user?.id}`}
                           onClick={() => setIsMenuOpen(false)}
                           className="flex items-center space-x-2 rounded-lg px-3 py-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900"
                         >
@@ -843,42 +813,6 @@ const Navbar = () => {
                           <span>My Profile</span>
                         </Link>
                         
-                        <Link
-                          to="/achievements"
-                          onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center space-x-2 rounded-lg px-3 py-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900"
-                        >
-                          <TrophyIcon className="h-5 w-5" />
-                          <span>Achievements</span>
-                        </Link>
-                        
-                        <Link
-                          to="/saved-searches"
-                  onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center space-x-2 rounded-lg px-3 py-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900"
-                >
-                          <BookmarkIcon className="h-5 w-5" />
-                          <span>Saved Searches</span>
-                </Link>
-
-                <Link
-                          to="/saved-items"
-                  onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center space-x-2 rounded-lg px-3 py-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900"
-                >
-                          <BookmarkIcon className="h-5 w-5" />
-                          <span>Saved Items</span>
-                </Link>
-
-
-                <Link
-                          to="/settings"
-                  onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center space-x-2 rounded-lg px-3 py-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900"
-                >
-                          <CogIcon className="h-5 w-5" />
-                          <span>Settings</span>
-                </Link>
                         
                         <Separator.Root className="h-px bg-secondary-200" />
                         

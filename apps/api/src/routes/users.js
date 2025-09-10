@@ -1,12 +1,39 @@
 import express from 'express'
 import { makeAdminClient } from '../lib/supa.js'
+import multer from 'multer'
+import { randomUUID } from 'crypto'
 
 const router = express.Router()
 const supabase = makeAdminClient()
 
+// Configure multer for avatar uploads
+const storage = multer.memoryStorage()
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Check if file is an image
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true)
+    } else {
+      cb(new Error('Only image files are allowed'), false)
+    }
+  }
+})
+
 // Helper function to check authentication
 const requireAuth = (req, res, next) => {
+  console.log('🔐 Auth check:', { 
+    hasUser: !!req.user, 
+    userId: req.user?.id,
+    endpoint: req.path,
+    method: req.method 
+  })
+  
   if (!req.user) {
+    console.log('❌ No user in request')
     return res.status(401).json({ error: 'Authentication required' })
   }
   next()
@@ -115,13 +142,29 @@ router.get('/:identifier/profile', async (req, res) => {
     // Get user's favorite categories (placeholder for future implementation)
     const favoriteCategories = []
 
+    // Get follower counts
+    const [followersResult, followingResult] = await Promise.all([
+      supabase
+        .from('user_follows')
+        .select('id', { count: 'exact' })
+        .eq('following_id', profile.id)
+        .eq('follow_type', 'user')
+        .eq('is_active', true),
+      supabase
+        .from('user_follows')
+        .select('id', { count: 'exact' })
+        .eq('follower_id', profile.id)
+        .eq('follow_type', 'user')
+        .eq('is_active', true)
+    ])
+
     const profileData = {
       ...profile,
       stats: {
         deals_count: dealsResult.count || 0,
         coupons_count: couponsResult.count || 0,
-        followers_count: 0, // Will be implemented when user_follows table exists
-        following_count: 0, // Will be implemented when user_follows table exists
+        followers_count: followersResult.count || 0,
+        following_count: followingResult.count || 0,
         total_views: totalViews,
         profile_views: (profile.profile_views_count || 0) + 1
       },
@@ -451,6 +494,8 @@ router.get('/:handle/followers', async (req, res) => {
         )
       `)
       .eq('following_id', user.id)
+      .eq('follow_type', 'user')
+      .eq('is_active', true)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
@@ -500,6 +545,8 @@ router.get('/:handle/following', async (req, res) => {
         )
       `)
       .eq('follower_id', user.id)
+      .eq('follow_type', 'user')
+      .eq('is_active', true)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
@@ -531,12 +578,20 @@ router.put('/:handle/profile', requireAuth, async (req, res) => {
       timezone, language, is_public, allow_messages, allow_following
     } = req.body
 
-    // Verify user can update this profile
-    const { data: profile } = await supabase
+    // Check if identifier is a UUID (user ID) or handle
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(handle)
+    
+    let userQuery = supabase
       .from('profiles')
       .select('id, handle')
-      .eq('handle', handle)
-      .single()
+
+    if (isUUID) {
+      userQuery = userQuery.eq('id', handle)
+    } else {
+      userQuery = userQuery.eq('handle', handle)
+    }
+
+    const { data: profile } = await userQuery.single()
 
     if (!profile) {
       return res.status(404).json({ error: 'User not found' })
@@ -581,37 +636,105 @@ router.put('/:handle/profile', requireAuth, async (req, res) => {
 })
 
 // Upload/update profile picture
-router.post('/:handle/avatar', requireAuth, async (req, res) => {
+router.post('/:handle/avatar', requireAuth, (req, res, next) => {
+  upload.single('avatar')(req, res, (err) => {
+    if (err) {
+      console.log('❌ Multer error:', err.message)
+      return res.status(400).json({ error: err.message })
+    }
+    next()
+  })
+}, async (req, res) => {
   try {
     const { handle } = req.params
     const userId = req.user.id
-    const { avatar_url } = req.body
 
-    // Verify user can update this profile
-    const { data: profile } = await supabase
+    console.log(`Avatar upload request: ${userId} for ${handle}`)
+
+    // Check if identifier is a UUID (user ID) or handle
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(handle)
+    
+    let userQuery = supabase
       .from('profiles')
       .select('id')
-      .eq('handle', handle)
-      .single()
+
+    if (isUUID) {
+      userQuery = userQuery.eq('id', handle)
+    } else {
+      userQuery = userQuery.eq('handle', handle)
+    }
+
+    const { data: profile } = await userQuery.single()
 
     if (!profile || profile.id !== userId) {
       return res.status(403).json({ error: 'Unauthorized' })
     }
 
-    // Update avatar
-    const { data: updatedProfile, error } = await supabase
-      .from('profiles')
-      .update({
-        avatar_url,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', userId)
-      .select('avatar_url')
-      .single()
+    // Check if this is a file upload or URL update
+    if (req.file) {
+      // File upload
+      console.log(`File received: ${req.file.originalname}, size: ${req.file.size}, type: ${req.file.mimetype}`)
 
-    if (error) throw error
+      // Generate unique filename
+      const fileExtension = req.file.originalname.split('.').pop()
+      const fileName = `avatar-${userId}-${randomUUID()}.${fileExtension}`
+      const filePath = `avatars/${fileName}`
 
-    res.json({ avatar_url: updatedProfile.avatar_url })
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(filePath, req.file.buffer, {
+          contentType: req.file.mimetype,
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError)
+        return res.status(500).json({ error: 'Failed to upload avatar' })
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('images')
+        .getPublicUrl(filePath)
+
+      // Update profile with new avatar URL
+      const { data: updatedProfile, error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+        .select('avatar_url')
+        .single()
+
+      if (updateError) {
+        console.error('Profile update error:', updateError)
+        return res.status(500).json({ error: 'Failed to update profile' })
+      }
+
+      console.log(`Avatar uploaded successfully: ${publicUrl}`)
+      res.json({ avatar_url: updatedProfile.avatar_url })
+    } else if (req.body.avatar_url) {
+      // Direct URL update
+      const { data: updatedProfile, error } = await supabase
+        .from('profiles')
+        .update({
+          avatar_url: req.body.avatar_url,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+        .select('avatar_url')
+        .single()
+
+      if (error) throw error
+
+      res.json({ avatar_url: updatedProfile.avatar_url })
+    } else {
+      return res.status(400).json({ error: 'No file or avatar_url provided' })
+    }
   } catch (error) {
     console.error('Update avatar error:', error)
     res.status(500).json({ error: 'Internal server error' })
@@ -624,18 +747,30 @@ router.post('/:handle/follow', requireAuth, async (req, res) => {
     const { handle } = req.params
     const followerId = req.user.id
 
-    // Get the user to follow
-    const { data: userToFollow } = await supabase
+    console.log(`Follow request: ${followerId} wants to follow ${handle}`)
+
+    // Check if identifier is a UUID (user ID) or handle
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(handle)
+    
+    let userQuery = supabase
       .from('profiles')
       .select('id')
-      .eq('handle', handle)
-      .single()
+
+    if (isUUID) {
+      userQuery = userQuery.eq('id', handle)
+    } else {
+      userQuery = userQuery.eq('handle', handle)
+    }
+
+    const { data: userToFollow } = await userQuery.single()
 
     if (!userToFollow) {
+      console.log(`User not found: ${handle}`)
       return res.status(404).json({ error: 'User not found' })
     }
 
     if (userToFollow.id === followerId) {
+      console.log(`Cannot follow self: ${followerId}`)
       return res.status(400).json({ error: 'Cannot follow yourself' })
     }
 
@@ -645,23 +780,29 @@ router.post('/:handle/follow', requireAuth, async (req, res) => {
       .select('id')
       .eq('follower_id', followerId)
       .eq('following_id', userToFollow.id)
+      .eq('follow_type', 'user')
+      .eq('is_active', true)
       .single()
 
     if (existingFollow) {
       // Unfollow
+      console.log(`Unfollowing: ${followerId} -> ${userToFollow.id}`)
       await supabase
         .from('user_follows')
-        .delete()
+        .update({ is_active: false })
         .eq('id', existingFollow.id)
 
       res.json({ following: false })
     } else {
       // Follow
+      console.log(`Following: ${followerId} -> ${userToFollow.id}`)
       await supabase
         .from('user_follows')
         .insert({
           follower_id: followerId,
-          following_id: userToFollow.id
+          following_id: userToFollow.id,
+          follow_type: 'user',
+          is_active: true
         })
 
       res.json({ following: true })
@@ -703,6 +844,8 @@ router.get('/:identifier/follow-status', requireAuth, async (req, res) => {
       .select('id')
       .eq('follower_id', userId)
       .eq('following_id', userToCheck.id)
+      .eq('follow_type', 'user')
+      .eq('is_active', true)
       .single()
 
     res.json({ following: !!followStatus })

@@ -32,3 +32,4 @@ CREATE INDEX IF NOT EXISTS idx_deals_is_exclusive ON public.deals(is_exclusive);
 CREATE INDEX IF NOT EXISTS idx_deals_views_count ON public.deals(views_count);
 CREATE INDEX IF NOT EXISTS idx_deals_clicks_count ON public.deals(clicks_count);
 
+

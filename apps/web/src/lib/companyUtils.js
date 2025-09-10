@@ -76,3 +76,4 @@ export function getCompanyLink(deal) {
   return slug ? `/company/${slug}` : '#'
 }
 
+

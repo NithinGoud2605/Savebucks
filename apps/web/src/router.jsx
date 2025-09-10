@@ -69,7 +69,7 @@ export const router = createBrowserRouter([
         path: 'search',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <UnifiedSearchResults />
+            <SearchResults />
           </Suspense>
         ),
       },

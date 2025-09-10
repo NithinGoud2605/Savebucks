@@ -313,3 +313,4 @@ BEGIN
   RAISE NOTICE 'No complex gamification tables required';
 END $$;
 
+

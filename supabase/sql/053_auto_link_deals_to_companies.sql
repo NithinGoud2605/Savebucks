@@ -125,3 +125,4 @@ BEGIN
     RAISE NOTICE 'Auto-linking completed. % out of % deals now have company links.', linked_count, total_deals;
 END $$;
 
+

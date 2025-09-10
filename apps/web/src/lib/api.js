@@ -400,8 +400,9 @@ export const api = {
     formData.append('avatar', file)
     return apiRequest(`/api/users/${handle}/avatar`, {
       method: 'POST',
-      body: formData,
-      headers: {} // Remove Content-Type to let browser set it with boundary
+      body: formData
+      // Don't override headers - let apiRequest handle auth headers
+      // Content-Type will be automatically set by browser for FormData
     })
   },
   
@@ -1369,4 +1370,26 @@ export const api = {
       body: restaurantData,
     }),
   },
+
+  // Generic HTTP methods for enterprise search
+  get: (url, options = {}) => apiRequest(url, { method: 'GET', ...options }),
+  post: (url, data, options = {}) => apiRequest(url, { 
+    method: 'POST', 
+    body: JSON.stringify(data),
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers
+    },
+    ...options 
+  }),
+  put: (url, data, options = {}) => apiRequest(url, { 
+    method: 'PUT', 
+    body: JSON.stringify(data),
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers
+    },
+    ...options 
+  }),
+  delete: (url, options = {}) => apiRequest(url, { method: 'DELETE', ...options }),
 }
