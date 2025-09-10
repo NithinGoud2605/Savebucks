@@ -277,33 +277,35 @@ export function CommunityDealCard({ deal, className, compact = false }) {
           </div>
 
           {/* Stats bar */}
-          <div className="flex items-center justify-between text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
+          <div className="flex items-center justify-between text-xs text-gray-600 bg-gray-50 rounded-lg p-3">
             <div className="flex items-center space-x-4">
-              {deal.views > 0 && (
-                <div className="flex items-center space-x-1">
-                  <span className="text-blue-500">👁️</span>
-                  <span>{deal.views.toLocaleString()}</span>
-                </div>
-              )}
+              <div className="flex items-center space-x-1">
+                <Eye className="w-3 h-3 text-blue-500" />
+                <span>{(deal.views_count || deal.views || 0).toLocaleString()}</span>
+              </div>
               
               {commentCount > 0 && (
                 <Link 
                   to={`/deal/${deal.id}#comments`}
                   className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
                 >
-                  <span className="text-green-500">💬</span>
+                  <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                  </svg>
                   <span>{commentCount}</span>
                 </Link>
               )}
               
               <div className="flex items-center space-x-1">
-                <span className="text-red-500">❤️</span>
+                <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L10 4.414 4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
                 <span>{Math.max(0, score)}</span>
               </div>
             </div>
             
             <div className="text-xs text-gray-400">
-              ID: #{deal.id}
+              {timeAgo(deal.created_at)}
             </div>
           </div>
 

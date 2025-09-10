@@ -131,6 +131,7 @@ async function listDeals(tab, filters = {}) {
       is_featured, views_count, clicks_count, submitter_id,
       categories(name, slug),
       companies(name, slug, logo_url, is_verified),
+      profiles!submitter_id(id, handle, avatar_url, karma, role),
       deal_tags(tags(id, name, slug, color, category))
     `)
     .eq('status','approved');
@@ -241,8 +242,11 @@ async function listDeals(tab, filters = {}) {
       company: d.companies,
       deal_type: d.deal_type,
       is_featured: d.is_featured,
-      view_count: d.views_count || 0,
+      views_count: d.views_count || 0,
+      view_count: d.views_count || 0, // Keep both for compatibility
       clicks_count: d.clicks_count || 0,
+      submitter: d.profiles, // Include submitter information
+      submitter_id: d.submitter_id,
       savings,
       discount_text: discountText,
       free_shipping: d.is_free_shipping || false
@@ -359,30 +363,12 @@ r.get('/', async (req, res) => {
     
     const items = await listDeals(tab, filters);
     
-    // Get unique submitter IDs to fetch profile data
-    const submitterIds = [...new Set(items.map(deal => deal.submitter_id).filter(Boolean))]
-    
-    // Fetch profile data for all submitters
-    let profilesMap = new Map()
-    if (submitterIds.length > 0) {
-      const { data: profiles } = await supaAdmin
-        .from('profiles')
-        .select('id, handle, avatar_url, role, karma')
-        .in('id', submitterIds)
-      
-      if (profiles) {
-        profiles.forEach(profile => {
-          profilesMap.set(profile.id, profile)
-        })
-      }
-    }
-    
     // Ensure all deals have company data and proper field mapping
     const enrichedItems = items.map(deal => {
-      if (!deal.companies) {
+      if (!deal.company) {
         // Create a virtual company object from merchant data or use a default
         const companyName = deal.merchant || 'Unknown Company'
-        deal.companies = {
+        deal.company = {
           name: companyName,
           slug: companyName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').trim('-'),
           logo_url: null,
@@ -390,10 +376,8 @@ r.get('/', async (req, res) => {
         }
       }
       
-      // Map profiles to submitter for consistency with deal page API (same as single deal API)
-      if (deal.submitter_id && profilesMap.has(deal.submitter_id)) {
-        deal.submitter = profilesMap.get(deal.submitter_id)
-      } else if (deal.submitter_id) {
+      // Ensure submitter information is properly formatted
+      if (deal.submitter_id && !deal.submitter) {
         // If no profile found but submitter_id exists, create a basic submitter object
         deal.submitter = {
           id: deal.submitter_id,

@@ -13,14 +13,14 @@ export function CompactDealCard({ deal, className }) {
   const currentImage = images[0] || deal.image_url
 
   return (
-    <article className={clsx('bg-white dark:bg-secondary-900 border border-secondary-200 dark:border-secondary-800 rounded-xl p-4 hover:shadow-medium transition-shadow', className)}>
-      <div className="flex items-center gap-3">
+    <article className={clsx('bg-white dark:bg-secondary-900 border border-secondary-200 dark:border-secondary-800 rounded-md p-2 hover:shadow-medium transition-shadow', className)}>
+      <div className="flex items-center gap-2">
         <VoteButton dealId={deal.id} votes={score} userVote={deal.user_vote} />
         <div className="min-w-0 flex-1">
-          <Link to={`/deal/${deal.id}`} className="block text-sm sm:text-base font-semibold text-secondary-900 dark:text-secondary-50 hover:text-primary-600 truncate">
+          <Link to={`/deal/${deal.id}`} className="block text-xs font-semibold text-secondary-900 dark:text-secondary-50 hover:text-primary-600 line-clamp-2">
             {deal.title}
           </Link>
-          <div className="mt-1 flex items-center gap-2 text-xs text-secondary-600 dark:text-secondary-400">
+          <div className="mt-0.5 flex items-center gap-1 text-xs text-secondary-600 dark:text-secondary-400">
             {getCompanyName(deal) && <span className="truncate">{getCompanyName(deal)}</span>}
             {deal.price && (
               <span className="font-semibold text-green-600 dark:text-green-400">{formatPrice(deal.price, deal.currency)}</span>
@@ -28,7 +28,7 @@ export function CompactDealCard({ deal, className }) {
           </div>
         </div>
         {currentImage && (
-          <img src={currentImage} alt="" className="w-14 h-14 rounded-lg object-cover hidden sm:block" loading="lazy" />
+          <img src={currentImage} alt="" className="w-10 h-10 rounded-md object-cover hidden sm:block" loading="lazy" />
         )}
       </div>
     </article>

@@ -132,9 +132,9 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
             window.location.href = `/deal/${deal.id}`
           }}
         >
-          <div className="flex">
+          <div className="flex p-2">
             {/* Image */}
-            <div className="w-20 h-20 flex-shrink-0 bg-gray-100">
+            <div className="w-12 h-12 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden">
               <ImageWithFallback
                 src={currentImage}
                 alt={deal.title}
@@ -144,34 +144,47 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
             </div>
 
             {/* Content */}
-            <div className="flex-1 p-3 min-w-0">
-              <div className="text-xs text-primary-600 mb-1">
-                {companyName}
+            <div className="flex-1 ml-2 min-w-0">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-1">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-gray-900 text-xs line-clamp-2 group-hover:text-primary-600 transition-colors">
+                    {deal.title}
+                  </h3>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-xs text-primary-600 font-medium">{companyName}</span>
+                    <span className="text-xs text-gray-400">•</span>
+                    <span className="text-xs text-gray-500">by {submitterName}</span>
+                  </div>
+                </div>
               </div>
-              <div className="text-xs text-gray-500 mb-1">
-                by {submitterName}
-              </div>
-              <h3 className="font-medium text-gray-900 text-sm line-clamp-2 group-hover:text-primary-600 transition-colors">
-                {deal.title}
-              </h3>
               
-              <div className="flex items-center justify-between mt-2">
-                <div className="flex items-center gap-2">
+              {/* Price and Stats */}
+              <div className="flex items-center justify-between mt-1">
+                <div className="flex items-center gap-1">
                   {deal.price && (
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-xs font-semibold text-gray-900">
                       ${Number(deal.price).toFixed(2)}
                     </span>
                   )}
                   {discountPercentage > 0 && (
-                    <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded">
+                    <span className="text-xs bg-red-100 text-red-600 px-1 py-0.5 rounded">
                       -{discountPercentage}%
                     </span>
                   )}
                 </div>
                 
-                <div className="flex items-center gap-1 text-gray-400">
-                  <Eye className="w-3 h-3" />
-                  <span className="text-xs">{deal.views_count || 0}</span>
+                <div className="flex items-center gap-2 text-gray-400">
+                  <div className="flex items-center gap-0.5">
+                    <Eye className="w-3 h-3" />
+                    <span className="text-xs">{deal.views_count || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L10 4.414 4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-xs">{deal.ups || 0}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -198,7 +211,7 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
         }}
       >
         {/* Image Section */}
-        <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+        <div className="relative aspect-[3/2] overflow-hidden bg-gray-100">
           <ImageWithFallback
             src={currentImage}
             alt={deal.title}
@@ -276,55 +289,49 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
         </div>
 
         {/* Content Section */}
-        <div className="p-4">
-          {/* Company & Category */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex flex-col">
-              <span className="text-xs font-medium text-primary-600 bg-primary-50 px-2 py-1 rounded-md">
-                {companyName}
-              </span>
-              <span className="text-xs text-gray-500 mt-1">
-                by {submitterName}
-              </span>
-            </div>
-            <div className="flex items-center gap-1 text-gray-400">
-              <Eye className="w-3 h-3" />
-              <span className="text-xs">{deal.views_count || 0}</span>
+        <div className="p-3">
+          {/* Header */}
+          <div className="mb-2">
+            <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1 group-hover:text-primary-600 transition-colors">
+              {deal.title}
+            </h3>
+            <div className="flex items-center gap-1 text-xs text-gray-600">
+              <span className="text-primary-600 font-medium">{companyName}</span>
+              <span className="text-gray-400">•</span>
+              <span>by {submitterName}</span>
             </div>
           </div>
-
-          {/* Title */}
-          <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-3 group-hover:text-primary-600 transition-colors">
-            {deal.title}
-          </h3>
 
           {/* Price Section */}
-          <div className="flex items-end justify-between mb-3">
-            <div>
-              {deal.price ? (
-                <div className="flex items-baseline gap-2">
-                  <span className="text-xl font-bold text-gray-900">
-                    ${Number(deal.price).toFixed(2)}
+          <div className="mb-3">
+            {deal.price ? (
+              <div className="flex items-baseline gap-2">
+                <span className="text-lg font-bold text-gray-900">
+                  ${Number(deal.price).toFixed(2)}
+                </span>
+                {deal.original_price && deal.original_price > deal.price && (
+                  <span className="text-sm text-gray-500 line-through">
+                    ${Number(deal.original_price).toFixed(2)}
                   </span>
-                  {deal.original_price && deal.original_price > deal.price && (
-                    <span className="text-sm text-gray-500 line-through">
-                      ${Number(deal.original_price).toFixed(2)}
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <span className="text-sm text-gray-500">Price not available</span>
-              )}
-              
-              {deal.discount_amount && (
-                <div className="text-xs text-green-600 font-medium mt-1">
-                  Save ${Number(deal.discount_amount).toFixed(2)}
-                </div>
-              )}
-            </div>
+                )}
+                {discountPercentage > 0 && (
+                  <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-medium">
+                    -{discountPercentage}% OFF
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span className="text-sm text-gray-500">Price not available</span>
+            )}
+            
+            {deal.discount_amount && (
+              <div className="text-xs text-green-600 font-medium mt-0.5">
+                Save ${Number(deal.discount_amount).toFixed(2)}
+              </div>
+            )}
           </div>
 
-          {/* Actions */}
+          {/* Actions and Stats */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <motion.button
@@ -336,7 +343,7 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
                   handleDealClick('deal_card_external_link')
                   window.open(deal.url, '_blank')
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all"
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md shadow-sm hover:shadow-md transition-all"
               >
                 Get Deal
                 <ExternalLink className="w-3 h-3" />
@@ -349,7 +356,7 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
                   handleSave()
                 }}
                 disabled={isSaving}
-                className={`p-2 rounded-lg border transition-all ${
+                className={`p-1.5 rounded-md border transition-all ${
                   isSaved 
                     ? 'bg-primary-50 border-primary-200 text-primary-600' 
                     : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
@@ -357,28 +364,29 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
                 title={isSaved ? 'Remove from saved items' : 'Save deal'}
               >
                 {isSaved ? (
-                  <BookmarkCheck className="w-4 h-4 fill-current" />
+                  <BookmarkCheck className="w-3 h-3 fill-current" />
                 ) : (
-                  <Bookmark className="w-4 h-4" />
+                  <Bookmark className="w-3 h-3" />
                 )}
               </button>
             </div>
 
-            {/* Meta Info */}
-            <div className="text-right">
-              <div className="flex items-center gap-1 text-gray-400 mb-1">
+            {/* Stats */}
+            <div className="flex items-center gap-3 text-gray-500">
+              <div className="flex items-center gap-0.5">
+                <Eye className="w-3 h-3" />
+                <span className="text-xs">{deal.views_count || 0}</span>
+              </div>
+              <div className="flex items-center gap-0.5">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L10 4.414 4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+                <span className="text-xs">{deal.ups || 0}</span>
+              </div>
+              <div className="flex items-center gap-0.5">
                 <Clock className="w-3 h-3" />
                 <span className="text-xs">{timeAgo(deal.created)}</span>
               </div>
-              {deal.submitter_id && (
-                <SubmitterBadge 
-                  submitter={deal.submitter} 
-                  submitter_id={deal.submitter_id}
-                  created_at={deal.created_at}
-                  size="xs"
-                  showDate={false}
-                />
-              )}
             </div>
           </div>
         </div>

@@ -388,11 +388,11 @@ export const api = {
   getDealTags: () => apiRequest('/api/deal-tags'),
 
   // Users
-  getUser: (handle) => apiRequest(`/api/users/${handle}`),
+  getUser: (handle) => apiRequest(`/api/users/${handle}/profile`),
   
-  updateUserProfile: (handle, profileData) => apiRequest(`/api/users/${handle}`, {
+  updateUserProfile: (handle, profileData) => apiRequest(`/api/users/${handle}/profile`, {
     method: 'PUT',
-    body: profileData,
+    body: JSON.stringify(profileData),
   }),
   
   uploadAvatar: (handle, file) => {
@@ -725,6 +725,93 @@ export const api = {
     const searchParams = new URLSearchParams(params)
     return await apiRequest(`/api/deals/${dealId}/similar?${searchParams}`)
   },
+
+  // Unified Search
+  search: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        if (key === 'tags' && Array.isArray(value)) {
+          // Handle tag arrays
+          value.forEach(tag => searchParams.append('tags', tag.toString()))
+        } else {
+          searchParams.append(key, value.toString())
+        }
+      }
+    })
+    return apiRequest(`/api/search?${searchParams}`)
+  },
+
+  getSearchSuggestions: (query, type = 'all') => {
+    const params = new URLSearchParams({ q: query, type })
+    return apiRequest(`/api/search/suggestions?${params}`)
+  },
+
+  getPopularSearches: (limit = 10) => {
+    const params = new URLSearchParams({ limit: limit.toString() })
+    return apiRequest(`/api/search/popular?${params}`)
+  },
+
+  // User Profile
+  getUserProfile: (handle) => {
+    return apiRequest(`/api/users/${handle}/profile`)
+  },
+  
+  getUserDeals: (handle, page = 1, limit = 20) => {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() })
+    return apiRequest(`/api/users/${handle}/deals?${params}`)
+  },
+  
+  getUserCoupons: (handle, page = 1, limit = 20) => {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() })
+    return apiRequest(`/api/users/${handle}/coupons?${params}`)
+  },
+  
+  getUserActivity: (handle, page = 1, limit = 20) => {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() })
+    return apiRequest(`/api/users/${handle}/activity?${params}`)
+  },
+
+  // Follow/Unfollow functionality
+  getFollowStatus: (handle) => {
+    return apiRequest(`/api/users/${handle}/follow-status`)
+  },
+
+  toggleFollow: (handle) => {
+    return apiRequest(`/api/users/${handle}/follow`, {
+      method: 'POST'
+    })
+  },
+
+  // User followers/following
+  getUserFollowers: (handle, page = 1, limit = 20) => {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() })
+    return apiRequest(`/api/users/${handle}/followers?${params}`)
+  },
+
+  getUserFollowing: (handle, page = 1, limit = 20) => {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() })
+    return apiRequest(`/api/users/${handle}/following?${params}`)
+  },
+
+  // User achievements
+  getUserAchievements: (handle) => {
+    return apiRequest(`/api/users/${handle}/achievements`)
+  },
+
+  // User leaderboard position
+  getUserLeaderboard: (handle) => {
+    return apiRequest(`/api/users/${handle}/leaderboard`)
+  },
+
+
+  // Update user avatar
+  updateUserAvatar: (handle, avatarUrl) => {
+    return apiRequest(`/api/users/${handle}/avatar`, {
+      method: 'POST',
+      body: JSON.stringify({ avatar_url: avatarUrl })
+    })
+  },
   
   trackDealView: (dealId) => apiRequest(`/api/deals/${dealId}/view`, {
     method: 'POST',
@@ -800,7 +887,7 @@ export const api = {
   
   // Users
   getUserProfile: async (handle) => {
-    return await apiRequest(`/api/users/${handle}`)
+    return await apiRequest(`/api/users/${handle}/profile`)
   },
   
   getUserDeals: async (handle, status = 'all') => {

@@ -6,12 +6,14 @@ import { Skeleton } from './components/Loader/Skeleton'
 // Lazy load components for code splitting
 const ListPage = React.lazy(() => import('./pages/ListPage'))
 const SearchResults = React.lazy(() => import('./pages/SearchResults'))
+const UnifiedSearchResults = React.lazy(() => import('./pages/UnifiedSearchResults'))
 const ModernHomepage = React.lazy(() => import('./pages/ModernHomepage'))
 const ProfessionalDealPage = React.lazy(() => import('./pages/ProfessionalDealPage'))
 const PostItem = React.lazy(() => import('./pages/PostItem'))
 const AdminPage = React.lazy(() => import('./pages/Admin/AdminPage'))
 const TagManagement = React.lazy(() => import('./pages/Admin/TagManagement'))
 const Profile = React.lazy(() => import('./pages/Profile'))
+const UserProfile = React.lazy(() => import('./pages/UserProfile'))
 const ForumsHome = React.lazy(() => import('./pages/Forums/ForumsHome'))
 const ForumThreads = React.lazy(() => import('./pages/Forums/ForumThreads'))
 const ThreadComposer = React.lazy(() => import('./pages/Forums/ThreadComposer'))
@@ -66,7 +68,7 @@ export const router = createBrowserRouter([
         path: 'search',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <SearchResults />
+            <UnifiedSearchResults />
           </Suspense>
         ),
       },
@@ -227,6 +229,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <Profile />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'user/:handle',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <UserProfile />
           </Suspense>
         ),
       },

@@ -44,6 +44,7 @@ import {
   ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/solid'
 import NotificationBell from '../User/NotificationBell'
+import UnifiedSearch from '../Search/UnifiedSearch.jsx'
 
 // Utility function for class variants
 const cn = (...classes) => classes.filter(Boolean).join(' ')
@@ -257,25 +258,12 @@ const Navbar = () => {
             
             {/* Search Bar */}
             <div className="relative w-80">
-              <form onSubmit={handleSearch}>
-                <div className="relative">
-                  <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary-400" />
-                  <input
-                    ref={searchRef}
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search deals, coupons, stores..."
-                    className="h-10 w-full rounded-xl border border-secondary-300 bg-white pl-12 pr-4 text-sm placeholder:text-secondary-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
-                  />
-              <button
-                    type="submit"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-secondary-400 hover:bg-secondary-100 hover:text-primary-600 transition-colors"
-              >
-                    <SparklesIcon className="h-4 w-4" />
-              </button>
-                </div>
-              </form>
+              <UnifiedSearch
+                placeholder="Search deals, coupons, companies, or tags..."
+                showFilters={false}
+                autoFocus={false}
+                className="w-full"
+              />
             </div>
 
             {/* Navigation Menu */}
@@ -660,6 +648,16 @@ const Navbar = () => {
                     
                     <DropdownMenu.Item asChild>
                       <Link
+                        to={`/user/${user?.user_metadata?.handle || user?.id}`}
+                        className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-secondary-100 focus:text-secondary-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                      >
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        My Profile
+                      </Link>
+                    </DropdownMenu.Item>
+                    
+                    <DropdownMenu.Item asChild>
+                      <Link
                         to="/achievements"
                         className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-secondary-100 focus:text-secondary-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
                       >
@@ -804,7 +802,7 @@ const Navbar = () => {
 
                     {/* Mobile User Menu */}
                     {user ? (
-                      <div className="space-y-2">
+                        <div className="space-y-2">
                         <Separator.Root className="h-px bg-secondary-200" />
                         <div className="flex items-center space-x-3 px-3 py-2">
                           <Avatar.Root className="flex h-8 w-8 select-none items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary-500 to-primary-600">
@@ -827,6 +825,15 @@ const Navbar = () => {
                             <p className="text-xs text-secondary-500">{user.email}</p>
                           </div>
                         </div>
+                        
+                        <Link
+                          to={`/user/${user?.user_metadata?.handle || user?.id}`}
+                          onClick={() => setIsMenuOpen(false)}
+                          className="flex items-center space-x-2 rounded-lg px-3 py-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900"
+                        >
+                          <UserIcon className="h-5 w-5" />
+                          <span>My Profile</span>
+                        </Link>
                         
                         <Link
                           to="/achievements"

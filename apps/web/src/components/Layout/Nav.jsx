@@ -7,6 +7,7 @@ import { getSiteName } from '../../lib/affFlags'
 import { clsx } from 'clsx'
 import { useAuth } from '../../hooks/useAuth.js'
 import { AdvancedSearch } from '../Search/AdvancedSearch.jsx'
+import UnifiedSearch from '../Search/UnifiedSearch.jsx'
 
 export function Nav() {
   const location = useLocation()
@@ -88,46 +89,12 @@ export function Nav() {
           <div className="flex items-center space-x-4">
             {/* Search */}
             <div className="relative hidden md:block">
-              <div className="flex items-center space-x-2">
-                <div className="relative">
-                  <input
-                    id="search"
-                    type="text"
-                    placeholder="Search deals..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => setIsSearchFocused(true)}
-                    onBlur={() => setIsSearchFocused(false)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && searchQuery.trim()) {
-                        window.location.href = `/search?search=${encodeURIComponent(searchQuery.trim())}`
-                      }
-                    }}
-                    className="input w-64 pl-10 pr-4 bg-white"
-                  />
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  {!isSearchFocused && (
-                    <kbd className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-secondary-400">
-                      /
-                    </kbd>
-                  )}
-                </div>
-                
-                {/* Advanced Search Button */}
-                <button
-                  onClick={() => setShowAdvancedSearch(true)}
-                  className="btn btn-secondary text-sm px-3 py-2 flex items-center"
-                  title="Advanced Search"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
-                  </svg>
-                </button>
-              </div>
+              <UnifiedSearch
+                placeholder="Search deals, coupons, companies, or tags..."
+                showFilters={false}
+                autoFocus={false}
+                className="w-80"
+              />
             </div>
 
 
