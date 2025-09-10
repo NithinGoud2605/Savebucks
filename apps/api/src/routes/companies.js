@@ -972,4 +972,133 @@ router.get('/search/name', async (req, res) => {
   }
 })
 
+// Admin endpoint to update company details with restaurant options
+router.put('/admin/:id/update', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params
+    const {
+      // Basic company fields
+      name,
+      slug,
+      description,
+      website_url,
+      logo_url,
+      headquarters,
+      contact_info,
+      status,
+      is_verified,
+      
+      // Restaurant-specific fields
+      is_restaurant,
+      latitude,
+      longitude,
+      address,
+      city,
+      state,
+      zip_code,
+      country,
+      phone,
+      website,
+      cuisine_type,
+      price_range,
+      restaurant_hours
+    } = req.body
+
+    console.log('🔧 Admin updating company:', id, { is_restaurant, cuisine_type, price_range })
+
+    // Check if company exists
+    const { data: existingCompany, error: checkError } = await supabase
+      .from('companies')
+      .select('id, name, slug')
+      .eq('id', id)
+      .single()
+
+    if (checkError || !existingCompany) {
+      return res.status(404).json({ error: 'Company not found' })
+    }
+
+    // Prepare update data
+    const updateData = {
+      updated_at: new Date().toISOString()
+    }
+
+    // Add basic fields if provided
+    if (name !== undefined) updateData.name = name.trim()
+    if (slug !== undefined) updateData.slug = slug.trim().toLowerCase()
+    if (description !== undefined) updateData.description = description?.trim()
+    if (website_url !== undefined) updateData.website_url = website_url?.trim()
+    if (logo_url !== undefined) updateData.logo_url = logo_url?.trim()
+    if (headquarters !== undefined) updateData.headquarters = headquarters?.trim()
+    if (contact_info !== undefined) updateData.contact_info = contact_info
+    if (status !== undefined) updateData.status = status
+    if (is_verified !== undefined) updateData.is_verified = is_verified
+
+    // Add restaurant-specific fields if provided
+    if (is_restaurant !== undefined) updateData.is_restaurant = is_restaurant
+    if (latitude !== undefined) updateData.latitude = latitude ? parseFloat(latitude) : null
+    if (longitude !== undefined) updateData.longitude = longitude ? parseFloat(longitude) : null
+    if (address !== undefined) updateData.address = address?.trim()
+    if (city !== undefined) updateData.city = city?.trim()
+    if (state !== undefined) updateData.state = state?.trim()
+    if (zip_code !== undefined) updateData.zip_code = zip_code?.trim()
+    if (country !== undefined) updateData.country = country?.trim()
+    if (phone !== undefined) updateData.phone = phone?.trim()
+    if (website !== undefined) updateData.website = website?.trim()
+    if (cuisine_type !== undefined) updateData.cuisine_type = cuisine_type?.trim()
+    if (price_range !== undefined) updateData.price_range = price_range?.trim()
+    if (restaurant_hours !== undefined) updateData.restaurant_hours = restaurant_hours
+
+    // Update the company
+    const { data: updatedCompany, error } = await supabase
+      .from('companies')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating company:', error)
+      return res.status(500).json({ error: 'Failed to update company' })
+    }
+
+    console.log('✅ Company updated successfully:', updatedCompany.name)
+
+    res.json({
+      success: true,
+      data: updatedCompany,
+      message: 'Company updated successfully'
+    })
+
+  } catch (error) {
+    console.error('Error in admin company update:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin endpoint to get company details for editing
+router.get('/admin/:id/edit', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const { data: company, error } = await supabase
+      .from('companies')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error || !company) {
+      return res.status(404).json({ error: 'Company not found' })
+    }
+
+    res.json({
+      success: true,
+      data: company
+    })
+
+  } catch (error) {
+    console.error('Error fetching company for edit:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 export default router

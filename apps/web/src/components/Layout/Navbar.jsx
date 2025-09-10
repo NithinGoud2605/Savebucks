@@ -37,7 +37,8 @@ import {
   BoltIcon,
   HomeIcon,
   GiftIcon,
-  BuildingOfficeIcon
+  BuildingOfficeIcon,
+  MapPinIcon
 } from '@heroicons/react/24/outline'
 import { 
   FireIcon, 
@@ -45,6 +46,7 @@ import {
 } from '@heroicons/react/24/solid'
 import NotificationBell from '../User/NotificationBell'
 import UnifiedSearch from '../Search/UnifiedSearch.jsx'
+import LocationSearchBar from '../Search/LocationSearchBar'
 
 // Utility function for class variants
 const cn = (...classes) => classes.filter(Boolean).join(' ')
@@ -242,35 +244,33 @@ const Navbar = () => {
           <div className="flex h-16 items-center justify-between">
           
           {/* Logo */}
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-3">
-              <div className="flex h-30 w-30 items-center justify-center">
+          <div className="flex items-center flex-shrink-0">
+            <Link to="/" className="flex items-center">
+              <div className="flex h-16 w-16 items-center justify-center">
                 <img 
                   src="/logo.svg" 
                   alt="SaveBucks Logo" 
-                  className="h-20 w-20 object-contain"
+                  className="h-16 w-16 object-contain"
                 />
               </div>
-
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex lg:items-center lg:space-x-6">
+          <div className="hidden lg:flex lg:items-center lg:flex-1 lg:space-x-6 overflow-visible">
             
-            {/* Search Bar */}
-            <div className="relative w-80">
-              <UnifiedSearch
-                placeholder="Search deals, coupons, companies, or tags..."
-                showFilters={false}
-                autoFocus={false}
+            {/* Search Bar - Full Width */}
+            <div className="relative flex-1 overflow-visible">
+              <LocationSearchBar
+                placeholder="Search for deals, coupons, stores..."
+                showLocationSelector={true}
                 className="w-full"
               />
             </div>
 
             {/* Navigation Menu */}
-            <NavigationMenu.Root className="relative z-10 flex max-w-max flex-1 items-center justify-center">
-              <NavigationMenu.List className="group flex flex-1 list-none items-center justify-center space-x-1">
+            <NavigationMenu.Root className="relative z-10 flex max-w-max items-center justify-center flex-shrink-0">
+              <NavigationMenu.List className="group flex list-none items-center justify-center space-x-1">
                 
                 {/* Categories Dropdown */}
                 <NavigationMenu.Item>
@@ -570,6 +570,7 @@ const Navbar = () => {
                   </NavigationMenu.Link>
                 </NavigationMenu.Item>
 
+
                 {/* Saved Items Link */}
                 <NavigationMenu.Item>
                   <NavigationMenu.Link asChild>
@@ -589,17 +590,20 @@ const Navbar = () => {
           </div>
             </NavigationMenu.Root>
 
-            {/* Post Deal Button */}
-                         <Link
-               to="/post"
-               className="hidden md:inline-flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-             >
-               <PlusIcon className="h-5 w-5" />
-               <span>Post Deal/Coupon</span>
-             </Link>
+            {/* Right Side Actions */}
+            <div className="flex items-center space-x-3 flex-shrink-0">
+              {/* Post Deal Button */}
+              <Link
+                to="/post"
+                className="hidden lg:inline-flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                <PlusIcon className="h-4 w-4" />
+                <span className="hidden xl:inline">Post Deal/Coupon</span>
+                <span className="xl:hidden">Post</span>
+              </Link>
 
-            {/* User Menu */}
-            {user ? (
+              {/* User Menu */}
+              {user ? (
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
                   <button className="flex h-10 w-10 items-center justify-center rounded-full border border-secondary-200 bg-white hover:bg-secondary-50 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-colors">
@@ -722,10 +726,11 @@ const Navbar = () => {
                 </Link>
               </div>
             )}
+            </div>
           </div>
 
             {/* Mobile Menu Button */}
-          <div className="flex lg:hidden">
+          <div className="flex lg:hidden flex-shrink-0">
             <Dialog.Root open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <Dialog.Trigger asChild>
                 <button className="inline-flex items-center justify-center rounded-lg p-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20">
@@ -790,6 +795,7 @@ const Navbar = () => {
                         <UserGroupIcon className="h-5 w-5" />
                         <span>Community</span>
                       </Link>
+
                     </nav>
 
                                          {/* Mobile Post Deal Button */}

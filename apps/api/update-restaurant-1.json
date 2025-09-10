@@ -1,0 +1,24 @@
+{
+  "latitude": 37.7749,
+  "longitude": -122.4194,
+  "address": "123 Test Street",
+  "city": "Test City",
+  "state": "CA",
+  "zip_code": "90210",
+  "country": "US",
+  "phone": "(555) 123-4567",
+  "website": "https://testpizzapalace.com",
+  "is_restaurant": true,
+  "restaurant_hours": {
+    "monday": "9:00-22:00",
+    "tuesday": "9:00-22:00",
+    "wednesday": "9:00-22:00",
+    "thursday": "9:00-22:00",
+    "friday": "9:00-23:00",
+    "saturday": "9:00-23:00",
+    "sunday": "10:00-21:00"
+  },
+  "cuisine_type": "Italian",
+  "price_range": "$$",
+  "status": "approved"
+}

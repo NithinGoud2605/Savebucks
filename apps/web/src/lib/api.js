@@ -678,6 +678,11 @@ export const api = {
     method: 'PUT',
     body: companyData,
   }),
+
+  updateCompanyAdmin: (companyId, companyData) => apiRequest(`/api/companies/admin/${companyId}/update`, {
+    method: 'PUT',
+    body: companyData,
+  }),
   
   featureDeal: (dealId, featured) => apiRequest(`/api/admin/deals/${dealId}/feature`, {
     method: 'POST',
@@ -1324,6 +1329,44 @@ export const api = {
     updateXPConfig: (config) => apiRequest('/api/gamification/xp-config', {
       method: 'PUT',
       body: config,
+    }),
+  },
+
+  // Restaurants
+  restaurants: {
+    getNearby: (params = {}) => {
+      const searchParams = new URLSearchParams()
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== '') {
+          searchParams.append(key, value)
+        }
+      })
+      return apiRequest(`/api/restaurants/nearby?${searchParams}`)
+    },
+
+    getDeals: (restaurantId, params = {}) => {
+      const searchParams = new URLSearchParams(params)
+      return apiRequest(`/api/restaurants/${restaurantId}/deals?${searchParams}`)
+    },
+
+    search: (params = {}) => {
+      const searchParams = new URLSearchParams()
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== '') {
+          searchParams.append(key, value)
+        }
+      })
+      return apiRequest(`/api/restaurants/search?${searchParams}`)
+    },
+
+    create: (restaurantData) => apiRequest('/api/restaurants', {
+      method: 'POST',
+      body: restaurantData,
+    }),
+
+    update: (restaurantId, restaurantData) => apiRequest(`/api/restaurants/${restaurantId}`, {
+      method: 'PUT',
+      body: restaurantData,
     }),
   },
 }

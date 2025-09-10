@@ -1,0 +1,15 @@
+{
+  "name": "Test Pizza Palace",
+  "slug": "test-pizza-palace",
+  "description": "A test restaurant for API testing",
+  "address": "123 Test Street",
+  "city": "Test City",
+  "state": "CA",
+  "zip_code": "90210",
+  "latitude": 37.7749,
+  "longitude": -122.4194,
+  "cuisine_type": "Italian",
+  "price_range": "$$",
+  "phone": "(555) 123-4567",
+  "website": "https://testpizzapalace.com"
+}

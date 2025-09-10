@@ -19,6 +19,7 @@ import {
   Store
 } from 'lucide-react'
 import { NewDealCard } from '../components/Deal/NewDealCard'
+import RestaurantSection from '../components/Homepage/RestaurantSection'
 
 // Use the new NewDealCard component
 const DealCard = ({ deal, index }) => {
@@ -411,8 +412,17 @@ export default function ModernHomepage() {
           <div className="lg:w-[70%] w-full lg:order-1 order-2">
             {/* Deal Sections */}
             <div className="space-y-8 lg:space-y-12">
-              {Array.isArray(dealSections) && dealSections.map((section) => (
-                <DealSection key={section.id} section={section} />
+              {Array.isArray(dealSections) && dealSections.map((section, index) => (
+                <React.Fragment key={section.id}>
+                  <DealSection section={section} />
+                  {/* Add Restaurant Section after "Just for You" */}
+                  {section.id === 'just-for-you' && (
+                    <div className="mt-8 lg:mt-12">
+                      {console.log('🏠 Homepage: Rendering RestaurantSection after Just for You')}
+                      <RestaurantSection />
+                    </div>
+                  )}
+                </React.Fragment>
               ))}
             </div>
 

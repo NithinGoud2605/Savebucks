@@ -1,0 +1,12 @@
+{
+  "name": "Test Pizza Palace",
+  "slug": "test-pizza-palace",
+  "description": "A test restaurant for API testing with delicious Italian cuisine",
+  "website_url": "https://testpizzapalace.com",
+  "category_id": 3,
+  "headquarters": "Test City, CA",
+  "contact_info": {
+    "phone": "(555) 123-4567",
+    "email": "info@testpizzapalace.com"
+  }
+}

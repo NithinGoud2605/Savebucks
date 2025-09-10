@@ -73,7 +73,29 @@ const CompanyManagement = () => {
     meta_title: '',
     meta_description: '',
     meta_keywords: [],
-    canonical_url: ''
+    canonical_url: '',
+    // Restaurant-specific fields
+    is_restaurant: false,
+    latitude: '',
+    longitude: '',
+    address: '',
+    city: '',
+    state: '',
+    zip_code: '',
+    country: 'US',
+    phone: '',
+    website: '',
+    cuisine_type: '',
+    price_range: '',
+    restaurant_hours: {
+      monday: '',
+      tuesday: '',
+      wednesday: '',
+      thursday: '',
+      friday: '',
+      saturday: '',
+      sunday: ''
+    }
   })
 
   const queryClient = useQueryClient()
@@ -98,7 +120,7 @@ const CompanyManagement = () => {
 
   // Update company mutation
   const updateCompanyMutation = useMutation({
-    mutationFn: ({ id, data }) => api.updateCompany(id, data),
+    mutationFn: ({ id, data }) => api.updateCompanyAdmin(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] })
       setEditingCompany(null)
@@ -146,7 +168,29 @@ const CompanyManagement = () => {
       meta_title: '',
       meta_description: '',
       meta_keywords: [],
-      canonical_url: ''
+      canonical_url: '',
+      // Restaurant-specific fields
+      is_restaurant: false,
+      latitude: '',
+      longitude: '',
+      address: '',
+      city: '',
+      state: '',
+      zip_code: '',
+      country: 'US',
+      phone: '',
+      website: '',
+      cuisine_type: '',
+      price_range: '',
+      restaurant_hours: {
+        monday: '',
+        tuesday: '',
+        wednesday: '',
+        thursday: '',
+        friday: '',
+        saturday: '',
+        sunday: ''
+      }
     })
     setShowAdditionalDetails(false)
   }
@@ -227,7 +271,29 @@ const CompanyManagement = () => {
       meta_title: company.meta_title || '',
       meta_description: company.meta_description || '',
       meta_keywords: company.meta_keywords || [],
-      canonical_url: company.canonical_url || ''
+      canonical_url: company.canonical_url || '',
+      // Restaurant-specific fields
+      is_restaurant: company.is_restaurant || false,
+      latitude: company.latitude || '',
+      longitude: company.longitude || '',
+      address: company.address || '',
+      city: company.city || '',
+      state: company.state || '',
+      zip_code: company.zip_code || '',
+      country: company.country || 'US',
+      phone: company.phone || '',
+      website: company.website || '',
+      cuisine_type: company.cuisine_type || '',
+      price_range: company.price_range || '',
+      restaurant_hours: company.restaurant_hours || {
+        monday: '',
+        tuesday: '',
+        wednesday: '',
+        thursday: '',
+        friday: '',
+        saturday: '',
+        sunday: ''
+      }
     })
     setShowCreateModal(true)
   }
@@ -927,6 +993,251 @@ const CompanyManagement = () => {
                   placeholder="Admin notes about this company..."
                   className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
+              </div>
+
+              {/* Restaurant Information */}
+              <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-secondary-900">Restaurant Information</h3>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      name="is_restaurant"
+                      checked={formData.is_restaurant}
+                      onChange={handleInputChange}
+                      className="rounded border-secondary-300 text-orange-600 focus:ring-orange-500"
+                    />
+                    <span className="text-sm font-medium text-secondary-700">
+                      This is a restaurant
+                    </span>
+                  </label>
+                </div>
+                
+                {formData.is_restaurant && (
+                  <div className="space-y-6">
+                    {/* Location Information */}
+                    <div>
+                      <h4 className="text-md font-medium text-secondary-800 mb-3">Location Details</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-secondary-700 mb-2">
+                            Address *
+                          </label>
+                          <input
+                            type="text"
+                            name="address"
+                            value={formData.address}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="123 Main Street"
+                            required={formData.is_restaurant}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-secondary-700 mb-2">
+                            City *
+                          </label>
+                          <input
+                            type="text"
+                            name="city"
+                            value={formData.city}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="San Francisco"
+                            required={formData.is_restaurant}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-secondary-700 mb-2">
+                            State *
+                          </label>
+                          <input
+                            type="text"
+                            name="state"
+                            value={formData.state}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="CA"
+                            required={formData.is_restaurant}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-secondary-700 mb-2">
+                            ZIP Code
+                          </label>
+                          <input
+                            type="text"
+                            name="zip_code"
+                            value={formData.zip_code}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="94102"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-secondary-700 mb-2">
+                            Country
+                          </label>
+                          <select
+                            name="country"
+                            value={formData.country}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          >
+                            <option value="US">United States</option>
+                            <option value="CA">Canada</option>
+                            <option value="UK">United Kingdom</option>
+                            <option value="AU">Australia</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Coordinates */}
+                    <div>
+                      <h4 className="text-md font-medium text-secondary-800 mb-3">Coordinates (for location-based search)</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-secondary-700 mb-2">
+                            Latitude *
+                          </label>
+                          <input
+                            type="number"
+                            name="latitude"
+                            value={formData.latitude}
+                            onChange={handleInputChange}
+                            step="any"
+                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="37.7749"
+                            required={formData.is_restaurant}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-secondary-700 mb-2">
+                            Longitude *
+                          </label>
+                          <input
+                            type="number"
+                            name="longitude"
+                            value={formData.longitude}
+                            onChange={handleInputChange}
+                            step="any"
+                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="-122.4194"
+                            required={formData.is_restaurant}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Restaurant Details */}
+                    <div>
+                      <h4 className="text-md font-medium text-secondary-800 mb-3">Restaurant Details</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-secondary-700 mb-2">
+                            Cuisine Type
+                          </label>
+                          <select
+                            name="cuisine_type"
+                            value={formData.cuisine_type}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          >
+                            <option value="">Select cuisine type</option>
+                            <option value="Italian">Italian</option>
+                            <option value="American">American</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="Mexican">Mexican</option>
+                            <option value="Japanese">Japanese</option>
+                            <option value="Indian">Indian</option>
+                            <option value="Thai">Thai</option>
+                            <option value="French">French</option>
+                            <option value="Mediterranean">Mediterranean</option>
+                            <option value="Korean">Korean</option>
+                            <option value="Vietnamese">Vietnamese</option>
+                            <option value="Greek">Greek</option>
+                            <option value="Middle Eastern">Middle Eastern</option>
+                            <option value="Seafood">Seafood</option>
+                            <option value="Steakhouse">Steakhouse</option>
+                            <option value="Fast Food">Fast Food</option>
+                            <option value="Pizza">Pizza</option>
+                            <option value="Burgers">Burgers</option>
+                            <option value="Cafe">Cafe</option>
+                            <option value="Bakery">Bakery</option>
+                            <option value="Dessert">Dessert</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-secondary-700 mb-2">
+                            Price Range
+                          </label>
+                          <select
+                            name="price_range"
+                            value={formData.price_range}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          >
+                            <option value="">Select price range</option>
+                            <option value="$">$ - Budget friendly</option>
+                            <option value="$$">$$ - Moderate</option>
+                            <option value="$$$">$$$ - Expensive</option>
+                            <option value="$$$$">$$$$ - Very expensive</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-secondary-700 mb-2">
+                            Restaurant Phone
+                          </label>
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="(555) 123-4567"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-secondary-700 mb-2">
+                            Restaurant Website
+                          </label>
+                          <input
+                            type="url"
+                            name="website"
+                            value={formData.website}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="https://restaurant.com"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Restaurant Hours */}
+                    <div>
+                      <h4 className="text-md font-medium text-secondary-800 mb-3">Restaurant Hours</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {Object.entries(formData.restaurant_hours).map(([day, hours]) => (
+                          <div key={day}>
+                            <label className="block text-sm font-medium text-secondary-700 mb-2 capitalize">
+                              {day}
+                            </label>
+                            <input
+                              type="text"
+                              name={`restaurant_hours.${day}`}
+                              value={hours}
+                              onChange={handleInputChange}
+                              className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                              placeholder="9:00-22:00 or Closed"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Additional Details Toggle */}
