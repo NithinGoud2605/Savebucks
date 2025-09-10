@@ -71,7 +71,6 @@ export default function PostItemOrCoupon() {
               
               // Image upload state
               const [dealImages, setDealImages] = useState([])
-              const [couponImages, setCouponImages] = useState([])
               const [isUploading, setIsUploading] = useState(false)
 
   // Redirect to sign in if not authenticated (only after auth is initialized)
@@ -386,22 +385,16 @@ export default function PostItemOrCoupon() {
         usage_limit_per_user: parseInt(couponData.usage_limit_per_user),
         starts_at: couponData.starts_at || null,
         expires_at: couponData.expires_at || null,
-        source_url: couponData.source_url.trim() || null,
         tags: couponData.tags,
         is_exclusive: false
       }
+
+      // Only include source_url if it's provided and not empty
+      if (couponData.source_url && couponData.source_url.trim()) {
+        couponPayload.source_url = couponData.source_url.trim()
+      }
       
       const result = await api.createCoupon(couponPayload)
-      
-      // Upload images if any
-      if (couponImages.length > 0) {
-        try {
-          await uploadImages(result.id, 'coupon')
-        } catch (error) {
-          console.error('Error uploading images:', error)
-          toast.warning('Coupon created but image upload failed')
-        }
-      }
       
       toast.success('Coupon submitted successfully! It will be reviewed by moderators and appear on the site once approved.')
       
@@ -425,7 +418,6 @@ export default function PostItemOrCoupon() {
         tags: [],
         showAdvanced: false
       })
-      setCouponImages([])
       
       // Navigate to home page with success notification
       navigate('/', { 
@@ -443,12 +435,14 @@ export default function PostItemOrCoupon() {
     }
   }
 
-  // Image upload functions
+  // Image upload functions (deals only)
   const handleImageUpload = (e, formType) => {
+    if (formType !== 'deal') return // Only handle deals
+    
     const files = Array.from(e.target.files)
-    const maxFiles = formType === 'deal' ? 5 : 3
-    const maxSize = formType === 'deal' ? 10 : 5 // MB
-    const currentImages = formType === 'deal' ? dealImages.length : couponImages.length
+    const maxFiles = 5
+    const maxSize = 10 // MB
+    const currentImages = dealImages.length
     
     if (currentImages + files.length > maxFiles) {
       toast.error(`Maximum ${maxFiles} images allowed. You can add ${maxFiles - currentImages} more.`)
@@ -470,41 +464,28 @@ export default function PostItemOrCoupon() {
       return true
     })
     
-    if (formType === 'deal') {
-      setDealImages(prev => [...prev, ...validFiles])
-      if (validFiles.length > 0) {
-        toast.success(`Added ${validFiles.length} image${validFiles.length !== 1 ? 's' : ''}`)
-      }
-    } else {
-      setCouponImages(prev => [...prev, ...validFiles])
-      if (validFiles.length > 0) {
-        toast.success(`Added ${validFiles.length} image${validFiles.length !== 1 ? 's' : ''}`)
-      }
+    setDealImages(prev => [...prev, ...validFiles])
+    if (validFiles.length > 0) {
+      toast.success(`Added ${validFiles.length} image${validFiles.length !== 1 ? 's' : ''}`)
     }
   }
 
   const removeImage = (index, formType) => {
     if (formType === 'deal') {
       setDealImages(prev => prev.filter((_, i) => i !== index))
-    } else {
-      setCouponImages(prev => prev.filter((_, i) => i !== index))
     }
   }
 
   const uploadImages = async (entityId, formType) => {
     if (formType === 'deal' && dealImages.length === 0) return
-    if (formType === 'coupon' && couponImages.length === 0) return
     
     setIsUploading(true)
     try {
       if (formType === 'deal') {
         await api.uploadDealImages(entityId, dealImages)
         setDealImages([])
-      } else {
-        await api.uploadCouponImages(entityId, couponImages)
-        setCouponImages([])
+        toast.success('Images uploaded successfully!')
       }
-      toast.success('Images uploaded successfully!')
     } catch (error) {
       console.error('Error uploading images:', error)
       toast.error('Failed to upload images')
@@ -528,10 +509,12 @@ export default function PostItemOrCoupon() {
     e.preventDefault()
     e.currentTarget.setAttribute('data-dragover', 'false')
     
+    if (formType !== 'deal') return // Only handle deals
+    
     const files = Array.from(e.dataTransfer.files)
-    const maxFiles = formType === 'deal' ? 5 : 3
-    const maxSize = formType === 'deal' ? 10 : 5 // MB
-    const currentImages = formType === 'deal' ? dealImages.length : couponImages.length
+    const maxFiles = 5
+    const maxSize = 10 // MB
+    const currentImages = dealImages.length
     
     if (currentImages + files.length > maxFiles) {
       toast.error(`Maximum ${maxFiles} images allowed. You can add ${maxFiles - currentImages} more.`)
@@ -553,16 +536,9 @@ export default function PostItemOrCoupon() {
       return true
     })
     
-    if (formType === 'deal') {
-      setDealImages(prev => [...prev, ...validFiles])
-      if (validFiles.length > 0) {
-        toast.success(`Added ${validFiles.length} image${validFiles.length !== 1 ? 's' : ''}`)
-      }
-    } else {
-      setCouponImages(prev => [...prev, ...validFiles])
-      if (validFiles.length > 0) {
-        toast.success(`Added ${validFiles.length} image${validFiles.length !== 1 ? 's' : ''}`)
-      }
+    setDealImages(prev => [...prev, ...validFiles])
+    if (validFiles.length > 0) {
+      toast.success(`Added ${validFiles.length} image${validFiles.length !== 1 ? 's' : ''}`)
     }
   }
 
@@ -879,7 +855,7 @@ export default function PostItemOrCoupon() {
                           className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
                           min={new Date().toISOString().split('T')[0]}
                         />
-                        <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400" />
+                        <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400 pointer-events-none" />
                       </div>
                       <p className="mt-1 text-xs text-secondary-500">When the deal becomes active (optional)</p>
                       {errors.starts_at && <p className="mt-1 text-sm text-danger-600">{errors.starts_at}</p>}
@@ -898,7 +874,7 @@ export default function PostItemOrCoupon() {
                           className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
                           min={formatDateForInput(dealData.starts_at) || new Date().toISOString().split('T')[0]}
                         />
-                        <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400" />
+                        <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400 pointer-events-none" />
                       </div>
                       <p className="mt-1 text-xs text-secondary-500">When the deal expires (optional)</p>
                       {errors.expires_at && <p className="mt-1 text-sm text-danger-600">{errors.expires_at}</p>}
@@ -1305,7 +1281,7 @@ export default function PostItemOrCoupon() {
                       className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
                       min={new Date().toISOString().split('T')[0]}
                     />
-                    <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400" />
+                    <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400 pointer-events-none" />
                   </div>
                   <p className="mt-1 text-xs text-secondary-500">When the coupon becomes valid (optional)</p>
                   {errors.starts_at && <p className="mt-1 text-sm text-danger-600">{errors.starts_at}</p>}
@@ -1324,7 +1300,7 @@ export default function PostItemOrCoupon() {
                       className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
                       min={formatDateForInput(couponData.starts_at) || new Date().toISOString().split('T')[0]}
                     />
-                    <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400" />
+                    <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400 pointer-events-none" />
                   </div>
                   <p className="mt-1 text-xs text-secondary-500">When the coupon expires (optional)</p>
                   {errors.expires_at && <p className="mt-1 text-sm text-danger-600">{errors.expires_at}</p>}
@@ -1411,73 +1387,6 @@ export default function PostItemOrCoupon() {
                 size="sm"
               />
 
-              {/* Image Upload Section */}
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-secondary-700">Coupon Images</label>
-                <div 
-                  className="border-2 border-dashed border-secondary-300 rounded-xl p-6 text-center hover:border-primary-400 transition-all duration-200 data-[dragover=true]:border-primary-400 data-[dragover=true]:bg-primary-50"
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, 'coupon')}
-                  data-dragover="false"
-                >
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(e, 'coupon')}
-                    className="hidden"
-                    id="coupon-image-upload"
-                  />
-                  <label htmlFor="coupon-image-upload" className="cursor-pointer">
-                    <Icon name="upload" size="lg" className="mx-auto mb-2 text-secondary-400" />
-                    <p className="text-secondary-600 mb-1">Click to upload images or drag and drop</p>
-                    <p className="text-sm text-secondary-500">Up to 3 images, max 5MB each (JPEG, PNG, WebP, GIF)</p>
-                  </label>
-                </div>
-                
-                {/* Image Preview */}
-                {couponImages.length > 0 && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-secondary-600">
-                        {couponImages.length} image{couponImages.length !== 1 ? 's' : ''} selected
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setCouponImages([])}
-                        className="text-sm text-red-600 hover:text-red-700 font-medium"
-                      >
-                        Clear All
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {couponImages.map((file, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg border border-secondary-200"
-                          />
-                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
-                            <button
-                              type="button"
-                              onClick={() => removeImage(index, 'coupon')}
-                              className="bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                            >
-                              <Icon name="x" size="sm" />
-                            </button>
-                          </div>
-                          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 rounded-b-lg">
-                            <div className="truncate">{file.name.length > 20 ? file.name.substring(0, 17) + '...' : file.name}</div>
-                            <div className="text-xs opacity-75">{formatFileSize(file.size)}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
                 </div>
               )}
 
@@ -1486,11 +1395,11 @@ export default function PostItemOrCoupon() {
                 <Button
                   type="submit"
                   size="md"
-                  loading={isSubmitting || isUploading}
-                  disabled={isSubmitting || isUploading}
+                  loading={isSubmitting}
+                  disabled={isSubmitting}
                   className="min-w-[180px]"
                 >
-                  {isSubmitting ? 'Submitting...' : isUploading ? 'Uploading Images...' : 'Submit Coupon'}
+                  {isSubmitting ? 'Submitting...' : 'Submit Coupon'}
                 </Button>
               </div>
             </form>

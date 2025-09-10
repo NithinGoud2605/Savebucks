@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { Container } from '../components/Layout/Container'
-import DealCard from '../components/DealCard'
+import { NewDealCard } from '../components/Deal/NewDealCard'
 import { Skeleton } from '../components/Loader/Skeleton'
 import { ChevronRightIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline'
 import { TagIcon, FireIcon, ClockIcon } from '@heroicons/react/24/solid'
@@ -291,8 +291,8 @@ const CategoryPage = () => {
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {deals.map((deal) => (
-                <DealCard key={deal.id} deal={deal} />
+              {deals.map((deal, index) => (
+                <NewDealCard key={deal.id} deal={deal} index={index} />
               ))}
             </div>
           </>

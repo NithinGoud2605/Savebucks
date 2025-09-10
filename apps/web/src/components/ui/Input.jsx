@@ -200,6 +200,10 @@ export const Textarea = forwardRef(({
   required,
   rows = 4,
   resize = true,
+  leftIcon,
+  rightIcon,
+  leftElement,
+  rightElement,
   ...props
 }, ref) => {
   const inputState = error ? 'error' : success ? 'success' : warning ? 'warning' : state

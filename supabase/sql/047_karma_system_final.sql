@@ -83,7 +83,7 @@ BEGIN
     END IF;
     
   ELSIF submission_type = 'coupon' THEN
-    total_possible_fields := 10; -- Total optional fields for coupons
+    total_possible_fields := 11; -- Total optional fields for coupons
     
     -- Check each optional field
     IF submission_data->>'minimum_order_amount' IS NOT NULL AND submission_data->>'minimum_order_amount' != '' THEN
@@ -123,6 +123,10 @@ BEGIN
     END IF;
     
     IF submission_data->>'terms_conditions' IS NOT NULL AND submission_data->>'terms_conditions' != '' THEN
+      field_count := field_count + 1;
+    END IF;
+    
+    IF submission_data->>'tags' IS NOT NULL AND submission_data->>'tags' != '' AND submission_data->>'tags' != '[]' THEN
       field_count := field_count + 1;
     END IF;
   END IF;
@@ -214,7 +218,8 @@ BEGIN
       'source_url', NEW.source_url,
       'category_id', NEW.category_id,
       'description', NEW.description,
-      'terms_conditions', NEW.terms_conditions
+      'terms_conditions', NEW.terms_conditions,
+      'tags', NEW.tags
     );
     
     -- Calculate karma points
@@ -236,6 +241,8 @@ $$;
 -- Drop existing triggers if they exist
 DROP TRIGGER IF EXISTS trg_deals_bump_karma ON public.deals;
 DROP TRIGGER IF EXISTS trg_coupons_bump_karma ON public.coupons;
+DROP TRIGGER IF EXISTS trg_deals_award_karma ON public.deals;
+DROP TRIGGER IF EXISTS trg_coupons_award_karma ON public.coupons;
 
 -- Create new triggers for karma awarding
 CREATE TRIGGER trg_deals_award_karma

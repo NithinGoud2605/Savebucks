@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Container } from '../components/Layout/Container'
-import { DealCard } from '../components/Deal/DealCard'
+import { NewDealCard } from '../components/Deal/NewDealCard'
 import { ActivityFeed } from '../components/User/ActivityFeed'
 import { FollowButton } from '../components/User/FollowButton'
 import { MessageButton } from '../components/User/MessageButton'
@@ -376,8 +376,8 @@ export default function Profile() {
                       </button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {profile.recent_deals.slice(0, 4).map(deal => (
-                        <DealCard key={deal.id} deal={deal} />
+                      {profile.recent_deals.slice(0, 4).map((deal, index) => (
+                        <NewDealCard key={deal.id} deal={deal} index={index} />
                       ))}
                     </div>
                   </div>
@@ -461,8 +461,8 @@ export default function Profile() {
                 {/* Deals Grid */}
                 {!dealsLoading && userDeals && userDeals.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {userDeals.map(deal => (
-                      <DealCard key={deal.id} deal={deal} />
+                    {userDeals.map((deal, index) => (
+                      <NewDealCard key={deal.id} deal={deal} index={index} />
                     ))}
                   </div>
                 )}
@@ -470,8 +470,8 @@ export default function Profile() {
                 {/* Fallback to profile deals if no filtered deals */}
                 {!dealsLoading && (!userDeals || userDeals.length === 0) && (profile.deals || []).length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {(profile.deals || []).map(deal => (
-                      <DealCard key={deal.id} deal={deal} />
+                    {(profile.deals || []).map((deal, index) => (
+                      <NewDealCard key={deal.id} deal={deal} index={index} />
                     ))}
                   </div>
                 )}

@@ -2,7 +2,6 @@ import React from 'react'
 import { Outlet } from 'react-router-dom'
 import { SkipLink } from './components/Layout/SkipLink'
 import Navbar from './components/Layout/Navbar'
-import ModernFooter from './components/Layout/ModernFooter'
 import { ToastProvider } from './components/ui/Toast'
 
 export function App() {
@@ -14,7 +13,6 @@ export function App() {
         <main id="main" className="flex-1">
           <Outlet />
         </main>
-        <ModernFooter />
       </div>
     </ToastProvider>
   )

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Container } from '../components/Layout/Container'
-import { DealCard } from '../components/Deal/DealCard'
+import { NewDealCard } from '../components/Deal/NewDealCard'
 import { TagChips } from '../components/Deal/TagChips'
 import { AdSlot } from '../components/AdSlot'
 import { SkeletonList } from '../components/Loader/Skeleton'
@@ -778,10 +778,9 @@ export default function ListPage() {
         )}>
           {filteredDeals.map((deal, index) => (
             <div key={deal.id}>
-              <DealCard 
+              <NewDealCard 
                 deal={deal} 
-                compact={viewMode === 'compact'}
-                enhanced={viewMode === 'comfortable'}
+                index={index}
               />
               
               {/* Strategic Ad Placement */}

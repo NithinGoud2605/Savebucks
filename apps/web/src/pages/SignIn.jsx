@@ -124,8 +124,12 @@ export default function SignIn() {
         {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-3 mb-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-lg">
-              <span className="text-xl font-bold text-white">SB</span>
+            <div className="flex h-12 w-12 items-center justify-center">
+              <img 
+                src="/logo.svg" 
+                alt="SaveBucks Logo" 
+                className="h-10 w-10 object-contain"
+              />
             </div>
             <span className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
               SaveBucks

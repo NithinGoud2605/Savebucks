@@ -15,7 +15,8 @@ import {
   Gift,
   Flame,
   Loader2,
-  Sparkles
+  Sparkles,
+  Store
 } from 'lucide-react'
 import { NewDealCard } from '../components/Deal/NewDealCard'
 
@@ -226,12 +227,12 @@ const DealSection = ({ section }) => {
   return (
     <div className="deal-section">
       {/* Section Header */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-          {section.isPersonalized && <Sparkles className="w-6 h-6 text-blue-500" />}
+      <div className="mb-4 lg:mb-6">
+        <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+          {section.isPersonalized && <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 text-blue-500" />}
           {isFallback ? 'Just for You' : section.title}
         </h2>
-        <p className="text-gray-600">
+        <p className="text-sm lg:text-base text-gray-600">
           {isFallback ? 'Trending deals we think you\'ll love' : section.subtitle}
         </p>
       </div>
@@ -242,11 +243,11 @@ const DealSection = ({ section }) => {
           <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
         </div>
       ) : displayData && Array.isArray(displayData) && displayData.length > 0 ? (
-        <div className={`grid gap-4 ${
-          section.limit === 4 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' :
-          section.limit === 6 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
-          section.limit === 8 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' :
-          'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+        <div className={`grid gap-3 sm:gap-4 ${
+          section.limit === 4 ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-4' :
+          section.limit === 6 ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3' :
+          section.limit === 8 ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-4' :
+          'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
         }`}>
           {displayData.map((item, index) => {
             // Handle both recommendation objects and deal objects
@@ -373,7 +374,7 @@ export default function ModernHomepage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Main Content - 70:30 Layout */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <section className="container mx-auto px-3 sm:px-6 lg:px-8 py-6 lg:py-8">
         {/* Success Message */}
         {showSuccessMessage && (
           <motion.div
@@ -405,41 +406,41 @@ export default function ModernHomepage() {
           </motion.div>
         )}
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Left Side - Deals (70%) */}
-          <div className="lg:w-[70%]">
+          <div className="lg:w-[70%] w-full lg:order-1 order-2">
             {/* Deal Sections */}
-            <div className="space-y-12">
+            <div className="space-y-8 lg:space-y-12">
               {Array.isArray(dealSections) && dealSections.map((section) => (
                 <DealSection key={section.id} section={section} />
               ))}
             </div>
 
             {/* View All Deals Button */}
-            <div className="text-center mt-12">
+            <div className="text-center mt-8 lg:mt-12">
               <Link 
                 to="/new" 
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-2.5 lg:py-3 px-5 lg:px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm lg:text-base"
               >
                 View All Deals
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5" />
               </Link>
             </div>
           </div>
 
           {/* Right Side - Coupons & Leaderboard (30%) */}
-          <div className="lg:w-[30%]">
-            <div className="sticky top-8 space-y-8">
+          <div className="lg:w-[30%] w-full lg:order-2 order-1">
+            <div className="lg:sticky lg:top-8 space-y-6 lg:space-y-8">
               {/* Coupons Section */}
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-gray-900">Latest Coupons</h2>
+                <div className="flex items-center justify-between mb-3 lg:mb-4">
+                  <h2 className="text-lg lg:text-xl font-bold text-gray-900">Latest Coupons</h2>
                   <Link 
                     to="/companies" 
-                    className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center gap-1"
+                    className="text-primary-600 hover:text-primary-700 text-xs lg:text-sm font-medium flex items-center gap-1"
                   >
                     View All
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-3 h-3 lg:w-4 lg:h-4" />
                   </Link>
                 </div>
 
@@ -469,24 +470,24 @@ export default function ModernHomepage() {
 
               {/* Leaderboard Section */}
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-gray-900">Leaderboard</h2>
+                <div className="flex items-center justify-between mb-3 lg:mb-4">
+                  <h2 className="text-lg lg:text-xl font-bold text-gray-900">Leaderboard</h2>
                   <Link 
                     to="/leaderboard" 
-                    className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center gap-1"
+                    className="text-primary-600 hover:text-primary-700 text-xs lg:text-sm font-medium flex items-center gap-1"
                   >
                     View All
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-3 h-3 lg:w-4 lg:h-4" />
                   </Link>
                 </div>
 
                 {/* Period Selector */}
-                <div className="flex space-x-1 mb-3 bg-gray-100 p-1 rounded-lg">
+                <div className="flex space-x-1 mb-3 bg-gray-100 p-0.5 lg:p-1 rounded-lg">
                   {['week', 'month', 'alltime'].map((period) => (
                     <button
                       key={period}
                       onClick={() => setLeaderboardPeriod(period)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                      className={`px-2 lg:px-3 py-1 lg:py-1.5 text-xs font-medium rounded-md transition-colors ${
                         leaderboardPeriod === period
                           ? 'bg-white text-primary-600 shadow-sm'
                           : 'text-gray-600 hover:text-gray-900'

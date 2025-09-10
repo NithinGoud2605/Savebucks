@@ -115,7 +115,7 @@ export default function AdminEditModal({
         terms_conditions: item.terms_conditions || '',
         // Coupon specific fields
         discount_value: item.discount_value || '',
-        discount_type: item.discount_type || 'percentage',
+        discount_type: item.coupon_type || 'percentage',
         minimum_order_amount: item.minimum_order_amount || '',
         maximum_discount_amount: item.maximum_discount_amount || '',
         usage_limit: item.usage_limit || ''
@@ -325,7 +325,7 @@ export default function AdminEditModal({
       // Add coupon-specific fields
       if (isCoupon) {
         updates.discount_value = formData.discount_value ? parseFloat(formData.discount_value) : null
-        updates.discount_type = formData.discount_type || 'percentage'
+        updates.coupon_type = formData.discount_type || 'percentage'
         updates.minimum_order_amount = formData.minimum_order_amount ? parseFloat(formData.minimum_order_amount) : null
         updates.maximum_discount_amount = formData.maximum_discount_amount ? parseFloat(formData.maximum_discount_amount) : null
         updates.usage_limit = formData.usage_limit ? parseInt(formData.usage_limit) : null

@@ -244,12 +244,14 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-lg">
-                <span className="text-lg font-bold text-white">SB</span>
+              <div className="flex h-30 w-30 items-center justify-center">
+                <img 
+                  src="/logo.svg" 
+                  alt="SaveBucks Logo" 
+                  className="h-20 w-20 object-contain"
+                />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
-                SaveBucks
-              </span>
+
             </Link>
           </div>
 

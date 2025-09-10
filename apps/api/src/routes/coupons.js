@@ -289,28 +289,41 @@ router.post('/', requireAuth, async (req, res) => {
       })
     }
 
+    // Build the insert object with only the core required fields
+    const insertData = {
+      title: title.trim(),
+      description: description?.trim() || null,
+      coupon_code: coupon_code.trim().toUpperCase(),
+      coupon_type: coupon_type || 'percentage',
+      discount_value: discount_value ? parseFloat(discount_value) : null,
+      minimum_order_amount: minimum_order_amount ? parseFloat(minimum_order_amount) : null,
+      maximum_discount_amount: maximum_discount_amount ? parseFloat(maximum_discount_amount) : null,
+      company_id: parseInt(company_id),
+      category_id: category_id ? parseInt(category_id) : null,
+      terms_conditions: terms_conditions?.trim() || null,
+      starts_at: starts_at || null,
+      expires_at: expires_at || null,
+      is_exclusive: Boolean(is_exclusive),
+      status: 'pending',
+      submitter_id: req.user.id
+    }
+
+    // Conditionally include optional fields that might not exist in the database schema
+    if (usage_limit !== undefined && usage_limit !== null && usage_limit !== '') {
+      insertData.usage_limit = parseInt(usage_limit)
+    }
+    
+    if (usage_limit_per_user !== undefined && usage_limit_per_user !== null && usage_limit_per_user !== '') {
+      insertData.usage_limit_per_user = parseInt(usage_limit_per_user)
+    }
+    
+    if (source_url && typeof source_url === 'string' && source_url.trim()) {
+      insertData.source_url = source_url.trim()
+    }
+
     const { data: coupon, error } = await supabase
       .from('coupons')
-      .insert([{
-        title: title.trim(),
-        description: description?.trim() || null,
-        coupon_code: coupon_code.trim().toUpperCase(),
-        coupon_type: coupon_type || 'percentage',
-        discount_value: discount_value ? parseFloat(discount_value) : null,
-        minimum_order_amount: minimum_order_amount ? parseFloat(minimum_order_amount) : null,
-        maximum_discount_amount: maximum_discount_amount ? parseFloat(maximum_discount_amount) : null,
-        company_id: parseInt(company_id),
-        category_id: category_id ? parseInt(category_id) : null,
-        terms_conditions: terms_conditions?.trim() || null,
-        usage_limit: usage_limit ? parseInt(usage_limit) : null,
-        usage_limit_per_user: usage_limit_per_user ? parseInt(usage_limit_per_user) : 1,
-        starts_at: starts_at || null,
-        expires_at: expires_at || null,
-        source_url: source_url?.trim() || null,
-        is_exclusive: Boolean(is_exclusive),
-        status: 'pending',
-        submitter_id: req.user.id
-      }])
+      .insert([insertData])
       .select()
       .single()
 

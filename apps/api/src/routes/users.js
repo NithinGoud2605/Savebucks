@@ -800,6 +800,60 @@ router.get('/:handle/achievements', async (req, res) => {
   }
 })
 
+// Get general leaderboard
+router.get('/leaderboard/:period', async (req, res) => {
+  try {
+    const { period } = req.params
+    const { limit = 50 } = req.query
+
+    let dateFilter = ''
+    if (period === 'week') {
+      dateFilter = 'created_at >= NOW() - INTERVAL \'7 days\''
+    } else if (period === 'month') {
+      dateFilter = 'created_at >= NOW() - INTERVAL \'30 days\''
+    } else if (period === 'year') {
+      dateFilter = 'created_at >= NOW() - INTERVAL \'365 days\''
+    }
+    // 'all_time' or any other value shows all time
+
+    let query = supabase
+      .from('profiles')
+      .select(`
+        id,
+        handle,
+        display_name,
+        avatar_url,
+        karma,
+        created_at
+      `)
+      .order('karma', { ascending: false })
+      .limit(parseInt(limit))
+
+    if (dateFilter) {
+      query = query.filter('created_at', 'gte', 
+        period === 'week' ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() :
+        period === 'month' ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() :
+        new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString()
+      )
+    }
+
+    const { data: leaderboard, error } = await query
+
+    if (error) {
+      console.error('Leaderboard error:', error)
+      return res.status(500).json({ error: 'Internal server error' })
+    }
+
+    res.json({
+      period,
+      leaderboard: leaderboard || []
+    })
+  } catch (error) {
+    console.error('Get leaderboard error:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 // Get user's leaderboard position
 router.get('/:handle/leaderboard', async (req, res) => {
   try {

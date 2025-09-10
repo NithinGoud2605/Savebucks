@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { Container } from '../components/Layout/Container'
-import DealCard from '../components/DealCard'
+import { NewDealCard } from '../components/Deal/NewDealCard'
 import { Skeleton } from '../components/Loader/Skeleton'
 import { formatPrice, dateAgo } from '../lib/format'
 
@@ -208,8 +208,8 @@ const SearchResults = () => {
               </div>
             ) : deals && deals.length > 0 ? (
               <div className="space-y-4">
-                {deals.map((deal) => (
-                  <DealCard key={deal.id} deal={deal} />
+                {deals.map((deal, index) => (
+                  <NewDealCard key={deal.id} deal={deal} index={index} />
                 ))}
               </div>
             ) : (

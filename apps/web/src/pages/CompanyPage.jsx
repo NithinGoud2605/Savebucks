@@ -31,7 +31,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { BookmarkCheck } from 'lucide-react'
 import { Container } from '../components/Layout/Container'
-import { DealCard } from '../components/Deal/DealCard'
+import { NewDealCard } from '../components/Deal/NewDealCard'
 import { Skeleton } from '../components/Loader/Skeleton'
 import { api } from '../lib/api'
 import { setPageMeta } from '../lib/head'
@@ -144,8 +144,8 @@ const CompanyPage = () => {
             Featured Deals
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {deals.slice(0, 6).map((deal) => (
-              <DealCard key={deal.id} deal={deal} />
+            {deals.slice(0, 6).map((deal, index) => (
+              <NewDealCard key={deal.id} deal={deal} index={index} />
             ))}
           </div>
           {deals.length > 6 && (
@@ -202,8 +202,8 @@ const CompanyPage = () => {
       
       {deals.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {deals.map((deal) => (
-            <DealCard key={deal.id} deal={deal} />
+          {deals.map((deal, index) => (
+            <NewDealCard key={deal.id} deal={deal} index={index} />
           ))}
         </div>
       ) : (

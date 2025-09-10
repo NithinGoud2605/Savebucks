@@ -22,6 +22,7 @@ const CategoryPage = React.lazy(() => import('./pages/CategoryPage'))
 const CategoriesPage = React.lazy(() => import('./pages/CategoriesPage'))
 const CompanyPage = React.lazy(() => import('./pages/CompanyPage'))
 const CompaniesPage = React.lazy(() => import('./pages/CompaniesPage'))
+const FilterPage = React.lazy(() => import('./pages/FilterPage'))
 
 const About = React.lazy(() => import('./pages/About'))
 const Privacy = React.lazy(() => import('./pages/Privacy'))
@@ -84,7 +85,7 @@ export const router = createBrowserRouter([
         path: 'trending',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ListPage />
+            <FilterPage />
           </Suspense>
         ),
       },
@@ -92,7 +93,7 @@ export const router = createBrowserRouter([
         path: 'under-20',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ListPage />
+            <FilterPage />
           </Suspense>
         ),
       },
@@ -100,7 +101,7 @@ export const router = createBrowserRouter([
         path: '50-percent-off',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ListPage />
+            <FilterPage />
           </Suspense>
         ),
       },
@@ -108,7 +109,7 @@ export const router = createBrowserRouter([
         path: 'free-shipping',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ListPage />
+            <FilterPage />
           </Suspense>
         ),
       },
@@ -116,7 +117,7 @@ export const router = createBrowserRouter([
         path: 'new-arrivals',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ListPage />
+            <FilterPage />
           </Suspense>
         ),
       },
@@ -124,7 +125,7 @@ export const router = createBrowserRouter([
         path: 'hot-deals',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ListPage />
+            <FilterPage />
           </Suspense>
         ),
       },
@@ -132,7 +133,7 @@ export const router = createBrowserRouter([
         path: 'ending-soon',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ListPage />
+            <FilterPage />
           </Suspense>
         ),
       },

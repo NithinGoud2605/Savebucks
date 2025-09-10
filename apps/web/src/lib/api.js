@@ -885,6 +885,77 @@ export const api = {
   
   getSavedSearches: () => apiRequest('/api/searches'),
   
+  // Filter Categories
+  getTrendingDeals: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value)
+      }
+    })
+    return apiRequest(`/api/filters/trending?${searchParams}`)
+  },
+  
+  getUnder20Deals: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value)
+      }
+    })
+    return apiRequest(`/api/filters/under-20?${searchParams}`)
+  },
+  
+  get50OffDeals: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value)
+      }
+    })
+    return apiRequest(`/api/filters/50-off?${searchParams}`)
+  },
+  
+  getFreeShippingDeals: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value)
+      }
+    })
+    return apiRequest(`/api/filters/free-shipping?${searchParams}`)
+  },
+  
+  getNewArrivalsDeals: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value)
+      }
+    })
+    return apiRequest(`/api/filters/new-arrivals?${searchParams}`)
+  },
+  
+  getHotDeals: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value)
+      }
+    })
+    return apiRequest(`/api/filters/hot-deals?${searchParams}`)
+  },
+  
+  getEndingSoonDeals: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value)
+      }
+    })
+    return apiRequest(`/api/filters/ending-soon?${searchParams}`)
+  },
+  
   // Users
   getUserProfile: async (handle) => {
     return await apiRequest(`/api/users/${handle}/profile`)
