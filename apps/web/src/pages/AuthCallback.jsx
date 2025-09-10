@@ -13,7 +13,75 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Get the session from the URL hash
+        // Check if we have a code parameter (OAuth callback)
+        const code = searchParams.get('code')
+        const error = searchParams.get('error')
+        
+        if (error) {
+          throw new Error(`OAuth error: ${error}`)
+        }
+        
+        if (code) {
+          // Handle OAuth callback with code
+          const { data, error: exchangeError } = await supa.auth.exchangeCodeForSession(code)
+          
+          if (exchangeError) {
+            throw exchangeError
+          }
+          
+          if (data.session && data.session.user) {
+            const user = data.session.user
+            
+            // Store tokens
+            localStorage.setItem('access_token', data.session.access_token)
+            localStorage.setItem('refresh_token', data.session.refresh_token)
+            
+            // Get or create user profile
+            let { data: profile, error: profileError } = await supa
+              .from('profiles')
+              .select('handle, karma, role, created_at')
+              .eq('id', user.id)
+              .single()
+            
+            // If profile doesn't exist, it should be created by the trigger
+            // But let's wait a moment and try again if it's not there
+            if (profileError && profileError.code === 'PGRST116') {
+              await new Promise(resolve => setTimeout(resolve, 1000))
+              const { data: retryProfile } = await supa
+                .from('profiles')
+                .select('handle, karma, role, created_at')
+                .eq('id', user.id)
+                .single()
+              profile = retryProfile
+            }
+            
+            // Update auth service state
+            authService.setUser({
+              id: user.id,
+              email: user.email,
+              handle: profile?.handle || null,
+              karma: profile?.karma || 0,
+              role: profile?.role || 'user',
+              created_at: profile?.created_at,
+              avatar_url: user.user_metadata?.avatar_url || null,
+            })
+            
+            setStatus('success')
+            setMessage(`Welcome${profile?.handle ? ', ' + profile.handle : ''}!`)
+            
+            // Get redirect destination
+            const from = searchParams.get('from') || '/'
+            
+            // Redirect after a short delay
+            setTimeout(() => {
+              navigate(decodeURIComponent(from), { replace: true })
+            }, 1500)
+            
+            return
+          }
+        }
+        
+        // Fallback: try to get existing session
         const { data, error } = await supa.auth.getSession()
         
         if (error) {
