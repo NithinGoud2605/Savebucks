@@ -82,10 +82,10 @@ export default function AuthCallback() {
         }
         
         // Fallback: try to get existing session
-        const { data, error } = await supa.auth.getSession()
+        const { data, error: sessionError } = await supa.auth.getSession()
         
-        if (error) {
-          throw error
+        if (sessionError) {
+          throw sessionError
         }
         
         if (data.session && data.session.user) {
