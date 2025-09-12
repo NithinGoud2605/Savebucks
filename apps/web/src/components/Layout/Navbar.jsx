@@ -256,7 +256,7 @@ const Navbar = () => {
             <Link to="/" className="flex items-center">
               <div className="flex h-16 w-16 items-center justify-center">
                 <img 
-                  src="/logo.svg" 
+                  src="/logo.png" 
                   alt="SaveBucks Logo" 
                   className="h-16 w-16 object-contain"
                 />
@@ -670,6 +670,18 @@ const Navbar = () => {
                       </Link>
                     </DropdownMenu.Item>
                     
+                    {/* Admin Panel Link - Only show for admin users */}
+                    {userProfile?.role === 'admin' && (
+                      <DropdownMenu.Item asChild>
+                        <Link
+                          to="/admin"
+                          className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-secondary-100 focus:text-secondary-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                        >
+                          <Cog6ToothIcon className="mr-2 h-4 w-4" />
+                          Admin Panel
+                        </Link>
+                      </DropdownMenu.Item>
+                    )}
                     
                     <Separator.Root className="mx-1 h-px bg-secondary-200" />
                     
@@ -813,6 +825,17 @@ const Navbar = () => {
                           <span>My Profile</span>
                         </Link>
                         
+                        {/* Admin Panel Link - Only show for admin users */}
+                        {userProfile?.role === 'admin' && (
+                          <Link
+                            to="/admin"
+                            onClick={() => setIsMenuOpen(false)}
+                            className="flex items-center space-x-2 rounded-lg px-3 py-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900"
+                          >
+                            <Cog6ToothIcon className="h-5 w-5" />
+                            <span>Admin Panel</span>
+                          </Link>
+                        )}
                         
                         <Separator.Root className="h-px bg-secondary-200" />
                         
