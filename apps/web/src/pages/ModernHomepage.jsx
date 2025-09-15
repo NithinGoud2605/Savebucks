@@ -16,7 +16,9 @@ import {
   Flame,
   Loader2,
   Sparkles,
-  Store
+  Store,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import { NewDealCard } from '../components/Deal/NewDealCard'
 import { Container } from '../components/Layout/Container'
@@ -89,12 +91,12 @@ const CompactCouponCard = ({ coupon, index }) => {
     <Link 
       to={`/company/${coupon.companies?.slug || coupon.merchant?.toLowerCase().replace(/\s+/g, '-')}?tab=coupons`}
       onClick={handleCouponClick}
-      className="block bg-white rounded border border-gray-200 p-2 hover:shadow-sm transition-all duration-200 hover:border-primary-300 group"
+      className="block bg-white rounded-lg border border-gray-100 p-2 hover:shadow-md hover:border-primary-200 transition-all duration-200 group"
     >
       <div className="flex items-center gap-2">
         {/* Company Logo */}
         <div className="flex-shrink-0">
-          <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center">
+          <div className="w-6 h-6 bg-gray-50 rounded-lg flex items-center justify-center">
             {coupon.companies?.logo_url ? (
               <img 
                 src={coupon.companies.logo_url} 
@@ -109,22 +111,17 @@ const CompactCouponCard = ({ coupon, index }) => {
 
         {/* Coupon Info */}
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-gray-900 text-xs leading-tight mb-1 line-clamp-1">
+          <h3 className="font-semibold text-gray-900 text-xs leading-tight mb-0.5 line-clamp-1">
             {coupon.title}
           </h3>
-          <div className="flex items-center gap-2">
-            <span className="bg-primary-50 text-primary-700 px-1.5 py-0.5 rounded text-xs font-mono font-semibold">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 truncate">
+              {coupon.companies?.name || 'Store'}
+            </span>
+            <span className="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-1.5 py-0.5 rounded text-xs font-bold">
               {coupon.coupon_code}
             </span>
-            <span className="text-xs text-gray-500 truncate">
-              {coupon.companies?.name}
-            </span>
           </div>
-        </div>
-
-        {/* Arrow */}
-        <div className="flex-shrink-0">
-          <ArrowRight className="w-3 h-3 text-gray-400 group-hover:text-primary-600 transition-colors" />
         </div>
       </div>
     </Link>
@@ -134,11 +131,11 @@ const CompactCouponCard = ({ coupon, index }) => {
 // Leaderboard Card Component
 const LeaderboardCard = ({ user, rank }) => {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-3 hover:shadow-sm transition-shadow">
-      <div className="flex items-center gap-3">
+    <div className="bg-white rounded-lg border border-gray-100 p-2.5 hover:shadow-sm transition-all duration-200">
+      <div className="flex items-center gap-2.5">
         {/* Rank */}
         <div className="flex-shrink-0">
-          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
             rank === 1 ? 'bg-yellow-100 text-yellow-800' :
             rank === 2 ? 'bg-gray-100 text-gray-800' :
             rank === 3 ? 'bg-orange-100 text-orange-800' :
@@ -150,15 +147,15 @@ const LeaderboardCard = ({ user, rank }) => {
 
         {/* User Avatar */}
         <div className="flex-shrink-0">
-          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+          <div className="w-6 h-6 bg-gray-50 rounded-full flex items-center justify-center">
             {user.avatar_url ? (
               <img 
                 src={user.avatar_url} 
                 alt={user.handle}
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-6 h-6 rounded-full object-cover"
               />
             ) : (
-              <span className="text-sm font-semibold text-gray-600">
+              <span className="text-xs font-semibold text-gray-600">
                 {user.handle?.charAt(0)?.toUpperCase() || 'U'}
               </span>
             )}
@@ -167,7 +164,7 @@ const LeaderboardCard = ({ user, rank }) => {
 
         {/* User Info */}
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-gray-900 text-sm leading-tight">
+          <h3 className="font-semibold text-gray-900 text-xs leading-tight">
             {user.handle || 'Anonymous'}
           </h3>
           <p className="text-xs text-gray-500">
@@ -176,11 +173,10 @@ const LeaderboardCard = ({ user, rank }) => {
         </div>
 
         {/* Score */}
-        <div className="flex-shrink-0 text-right">
-          <div className="text-sm font-semibold text-primary-600">
+        <div className="flex-shrink-0">
+          <div className="bg-primary-50 text-primary-600 px-2 py-0.5 rounded text-xs font-bold">
             {user.score || 0}
           </div>
-          <div className="text-xs text-gray-500">points</div>
         </div>
       </div>
     </div>
@@ -229,52 +225,78 @@ const DealSection = ({ section }) => {
 
   return (
     <div className="deal-section">
-      {/* Section Header */}
-      <div className="mb-4 lg:mb-6">
-        <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-          {section.isPersonalized && <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 text-blue-500" />}
-          {isFallback ? 'Just for You' : section.title}
-        </h2>
-        <p className="text-sm lg:text-base text-gray-600">
-          {isFallback ? 'Trending deals we think you\'ll love' : section.subtitle}
-        </p>
-      </div>
+        {/* Section Header */}
+        <div className="mb-4 lg:mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xl lg:text-2xl font-bold text-gray-900 flex items-center gap-2">
+              {section.isPersonalized && <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 text-blue-500" />}
+              {isFallback ? 'Just for You' : section.title}
+            </h2>
+            {section.isPersonalized && (
+              <button className="text-sm text-gray-500 hover:text-primary-600 transition-colors flex items-center gap-1">
+                <span>About these deals</span>
+                <Eye className="w-4 h-4" />
+              </button>
+            )}
+            {section.id === 'top-deals-week' && (
+              <button className="text-sm text-primary-600 hover:text-primary-700 transition-colors font-medium">
+                Personalize Frontpage
+              </button>
+            )}
+          </div>
+          <p className="text-sm lg:text-base text-gray-600">
+            {isFallback ? 'Trending deals we think you\'ll love' : section.subtitle}
+          </p>
+        </div>
 
-      {/* Deals Grid - 3-up cards */}
-      {(isLoading || fallbackLoading) && !displayData ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="animate-pulse bg-gray-100 rounded-xl h-[260px]" />
-          ))}
-        </div>
-      ) : displayData && Array.isArray(displayData) && displayData.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {displayData.map((item, index) => {
-            // Handle both recommendation objects and deal objects
-            const deal = item?.recommendation_type ? item?.metadata : item
-            return (
-              <div 
-                key={item?.id || `fallback-${deal?.id || index}`} 
-                className="group block bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all duration-300 overflow-hidden hover:-translate-y-0.5"
-              >
-                {/* Recommendation Badge */}
-                {item?.recommendation_type && (
-                  <div className="absolute top-3 left-3 z-10">
-                    <div className="flex items-center gap-1 px-3 py-1 bg-blue-500 text-white text-xs rounded-full">
-                      <Sparkles className="w-3 h-3" />
-                      <span>Recommended</span>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Card Content with Image-first framing */}
-                <div className="relative overflow-hidden rounded-xl group-hover:[&_img]:scale-105 transition-transform duration-300">
-                  <DealCard deal={deal} index={index} />
-                </div>
-              </div>
-            )
-          })}
-        </div>
+       {/* Deals Horizontal Scroll */}
+       {(isLoading || fallbackLoading) && !displayData ? (
+         <div className="flex gap-3 overflow-x-auto scrollbar-hide">
+           {Array.from({ length: 6 }).map((_, index) => (
+             <div key={index} className="flex-shrink-0 w-64 h-[280px] animate-pulse bg-gray-100 rounded-xl" />
+           ))}
+         </div>
+       ) : displayData && Array.isArray(displayData) && displayData.length > 0 ? (
+         <div className="relative">
+           {/* Scroll container */}
+           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+             {displayData.map((item, index) => {
+               // Handle both recommendation objects and deal objects
+               const deal = item?.recommendation_type ? item?.metadata : item
+               return (
+                 <div 
+                   key={item?.id || `fallback-${deal?.id || index}`} 
+                   className="flex-shrink-0 w-64 group block bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all duration-300 overflow-hidden hover:-translate-y-0.5"
+                 >
+                   {/* Recommendation Badge */}
+                   {item?.recommendation_type && (
+                     <div className="absolute top-2 left-2 z-10">
+                       <div className="flex items-center gap-1 px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                         <Sparkles className="w-3 h-3" />
+                         <span>Recommended</span>
+                       </div>
+                     </div>
+                   )}
+                   
+                   {/* Card Content with Image-first framing */}
+                   <div className="relative overflow-hidden rounded-xl group-hover:[&_img]:scale-105 transition-transform duration-300">
+                     <DealCard deal={deal} index={index} />
+                   </div>
+                 </div>
+               )
+             })}
+           </div>
+           
+           {/* Scroll indicators */}
+           <div className="flex items-center justify-end mt-2 gap-2">
+             <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+               <ChevronLeft className="w-4 h-4" />
+             </button>
+             <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+               <ChevronRight className="w-4 h-4" />
+             </button>
+           </div>
+         </div>
       ) : (
         <div className="text-center py-12">
           <ShoppingCart className="w-8 h-8 text-gray-400 mx-auto mb-2" />
@@ -381,8 +403,8 @@ export default function ModernHomepage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Professional search interface - centered with max width */}
-      <div className="bg-gradient-to-b from-white to-gray-50/30 py-8 border-b border-gray-100">
-        <Container>
+      <div className="bg-gradient-to-b from-white to-gray-50/30 py-6 lg:py-8 border-b border-gray-100">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mx-auto">
             <AdvancedSearchInterface
               showFilters={false}
@@ -392,12 +414,12 @@ export default function ModernHomepage() {
               className="drop-shadow-sm"
             />
           </div>
-        </Container>
+        </div>
       </div>
-      {/* Main Content - CSS Grid Layout */}
-      <section className="py-10 lg:py-12">
-        <Container>
-          <div className="max-w-[1200px] mx-auto">
+      {/* Main Content - CSS Grid Layout - 10% margins on each side */}
+      <section className="py-6 lg:py-8">
+        <div className="w-full px-[10%]">
+          <div className="w-full max-w-none">
             {/* Success Message */}
             {showSuccessMessage && (
               <motion.div
@@ -429,17 +451,17 @@ export default function ModernHomepage() {
               </motion.div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
               {/* Content Column - Center */}
-              <div className="lg:col-span-9">
+              <div className="lg:col-span-8">
                 {/* Deal Sections */}
-                <div className="space-y-8 lg:space-y-12">
+                <div className="space-y-6 lg:space-y-8">
                   {Array.isArray(dealSections) && dealSections.map((section, index) => (
                     <React.Fragment key={section.id}>
                       <DealSection section={section} />
                       {/* Add Restaurant Section after "Just for You" */}
                       {section.id === 'just-for-you' && (
-                        <div className="mt-8 lg:mt-12">
+                        <div className="mt-6 lg:mt-8">
                           <RestaurantSection />
                         </div>
                       )}
@@ -448,7 +470,7 @@ export default function ModernHomepage() {
                 </div>
 
                 {/* View All Deals Button */}
-                <div className="text-center mt-8 lg:mt-12">
+                <div className="text-center mt-6 lg:mt-8">
                   <Link 
                     to="/new" 
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-2.5 lg:py-3 px-5 lg:px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm lg:text-base"
@@ -460,65 +482,65 @@ export default function ModernHomepage() {
               </div>
 
               {/* Right Rail - Coupons & Leaderboard */}
-              <div className="lg:col-span-3">
+              <div className="lg:col-span-4">
                 <div className="lg:sticky lg:top-8 space-y-6 lg:space-y-8">
               {/* Coupons Section */}
               <div>
-                <div className="flex items-center justify-between mb-3 lg:mb-4">
-                  <h2 className="text-lg lg:text-xl font-bold text-gray-900">Latest Coupons</h2>
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-lg font-bold text-gray-900">Latest Coupons</h2>
                   <Link 
                     to="/companies" 
-                    className="text-primary-600 hover:text-primary-700 text-xs lg:text-sm font-medium flex items-center gap-1"
+                    className="text-primary-600 hover:text-primary-700 text-xs font-medium flex items-center gap-1"
                   >
                     View All
-                    <ArrowRight className="w-3 h-3 lg:w-4 lg:h-4" />
+                    <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
 
                 {/* Compact Coupons List */}
                 {couponsLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary-600" />
                   </div>
                 ) : couponsError ? (
-                  <div className="text-center py-8">
-                    <div className="text-sm font-semibold text-gray-900 mb-2">Failed to load coupons</div>
+                  <div className="text-center py-6">
+                    <div className="text-xs font-semibold text-gray-900 mb-1">Failed to load coupons</div>
                     <p className="text-gray-600 text-xs">Please try again later.</p>
                   </div>
                 ) : coupons && Array.isArray(coupons) && coupons.length > 0 ? (
-                  <div className="space-y-1">
-                    {coupons.map((coupon, index) => (
+                  <div className="space-y-1.5">
+                    {coupons.slice(0, 10).map((coupon, index) => (
                       <CompactCouponCard key={coupon?.id || index} coupon={coupon} index={index} />
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <Tag className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">No coupons found</p>
+                  <div className="text-center py-6">
+                    <Tag className="w-6 h-6 text-gray-400 mx-auto mb-1" />
+                    <p className="text-xs text-gray-600">No coupons found</p>
                   </div>
                 )}
               </div>
 
               {/* Leaderboard Section */}
               <div>
-                <div className="flex items-center justify-between mb-3 lg:mb-4">
-                  <h2 className="text-lg lg:text-xl font-bold text-gray-900">Leaderboard</h2>
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-lg font-bold text-gray-900">Leaderboard</h2>
                   <Link 
                     to="/leaderboard" 
-                    className="text-primary-600 hover:text-primary-700 text-xs lg:text-sm font-medium flex items-center gap-1"
+                    className="text-primary-600 hover:text-primary-700 text-xs font-medium flex items-center gap-1"
                   >
                     View All
-                    <ArrowRight className="w-3 h-3 lg:w-4 lg:h-4" />
+                    <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
 
                 {/* Period Selector */}
-                <div className="flex space-x-1 mb-3 bg-gray-100 p-0.5 lg:p-1 rounded-lg">
+                <div className="flex space-x-1 mb-2 bg-gray-100 p-0.5 rounded-lg">
                   {['week', 'month', 'alltime'].map((period) => (
                     <button
                       key={period}
                       onClick={() => setLeaderboardPeriod(period)}
-                      className={`px-2 lg:px-3 py-1 lg:py-1.5 text-xs font-medium rounded-md transition-colors ${
+                      className={`px-2 py-1 text-xs font-medium rounded-md transition-colors ${
                         leaderboardPeriod === period
                           ? 'bg-white text-primary-600 shadow-sm'
                           : 'text-gray-600 hover:text-gray-900'
@@ -531,18 +553,18 @@ export default function ModernHomepage() {
 
                 {/* Leaderboard List */}
                 {leaderboardLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary-600" />
                   </div>
                 ) : leaderboardData && Array.isArray(leaderboardData) && leaderboardData.length > 0 ? (
-                  <div className="space-y-2">
-                    {leaderboardData.map((user, index) => (
+                  <div className="space-y-1.5">
+                    {leaderboardData.slice(0, 5).map((user, index) => (
                       <LeaderboardCard key={user?.id || index} user={user} rank={index + 1} />
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <p className="text-sm text-gray-600">No leaderboard data</p>
+                  <div className="text-center py-6">
+                    <p className="text-xs text-gray-600">No leaderboard data</p>
                   </div>
                 )}
                 </div>
@@ -550,7 +572,7 @@ export default function ModernHomepage() {
             </div>
           </div>
           </div>
-        </Container>
+        </div>
       </section>
     </div>
   )
