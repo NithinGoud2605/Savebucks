@@ -237,38 +237,36 @@ const Navbar = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-secondary-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+      <header className="sticky top-0 z-50 w-full border-b border-gray-200/60 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
+          <div className="flex h-16 items-center justify-between gap-4">
           
           {/* Logo */}
           <div className="flex items-center flex-shrink-0">
-            <Link to="/" className="flex items-center">
-              <div className="flex h-16 w-16 items-center justify-center">
+            <Link to="/" className="flex items-center group">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 p-1.5 group-hover:from-primary-600 group-hover:to-primary-700 transition-all duration-200">
                 <img 
                   src="/logo.png" 
                   alt="SaveBucks Logo" 
-                  className="h-16 w-16 object-contain"
+                  className="h-7 w-7 object-contain filter brightness-0 invert"
                 />
               </div>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex lg:items-center lg:flex-1 lg:space-x-6 overflow-visible">
+          <div className="hidden lg:flex lg:items-center lg:flex-1 lg:justify-center lg:max-w-4xl">
             
-            {/* Search moved to homepage; keep layout balanced */}
-            <div className="flex-1" />
-
             {/* Navigation Menu */}
-            <NavigationMenu.Root className="relative z-10 flex max-w-max items-center justify-center flex-shrink-0">
-              <NavigationMenu.List className="group flex list-none items-center justify-center space-x-1">
+            <NavigationMenu.Root className="relative z-50 flex max-w-max items-center justify-center flex-shrink-0">
+              <NavigationMenu.List className="group flex list-none items-center justify-center space-x-2">
                 
                 {/* Categories Dropdown */}
                 <NavigationMenu.Item>
-                  <NavigationMenu.Trigger className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600 focus:bg-secondary-100 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-secondary-100 data-[active]:bg-secondary-100">
-                    <ShoppingBagIcon className="mr-2 h-4 w-4" />
-                    Categories
+                  <NavigationMenu.Trigger className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600 focus:bg-secondary-100 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-secondary-100 data-[active]:bg-secondary-100">
+                    <ShoppingBagIcon className="mr-1.5 h-4 w-4" />
+                    <span className="hidden xl:inline">Categories</span>
+                    <span className="xl:hidden">Categories</span>
                     <ChevronDownIcon className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
                   </NavigationMenu.Trigger>
                   <NavigationMenu.Content className="absolute top-0 left-0 w-full data-[motion=from-start]:animate-enterFromLeft data-[motion=from-end]:animate-enterFromRight data-[motion=to-start]:animate-exitToLeft data-[motion=to-end]:animate-exitToRight sm:w-auto">
@@ -541,10 +539,11 @@ const Navbar = () => {
                   <NavigationMenu.Link asChild>
             <Link
               to="/companies"
-                      className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600 focus:bg-secondary-100 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-secondary-100"
+                      className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600 focus:bg-secondary-100 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-secondary-100"
             >
-                      <BuildingOfficeIcon className="mr-2 h-4 w-4" />
-                      Companies
+                      <BuildingOfficeIcon className="mr-1.5 h-4 w-4" />
+                      <span className="hidden xl:inline">Companies</span>
+                      <span className="xl:hidden">Stores</span>
             </Link>
                   </NavigationMenu.Link>
                 </NavigationMenu.Item>
@@ -554,10 +553,11 @@ const Navbar = () => {
                   <NavigationMenu.Link asChild>
             <Link
               to="/forums"
-                      className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600 focus:bg-secondary-100 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-secondary-100"
+                      className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600 focus:bg-secondary-100 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-secondary-100"
             >
-                      <UserGroupIcon className="mr-2 h-4 w-4" />
-                      Community
+                      <UserGroupIcon className="mr-1.5 h-4 w-4" />
+                      <span className="hidden xl:inline">Community</span>
+                      <span className="xl:hidden">Forum</span>
             </Link>
                   </NavigationMenu.Link>
                 </NavigationMenu.Item>
@@ -568,10 +568,11 @@ const Navbar = () => {
                   <NavigationMenu.Link asChild>
                     <Link
                       to="/saved-items"
-                      className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600 focus:bg-secondary-100 focus:outline-none"
+                      className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600 focus:bg-secondary-100 focus:outline-none"
                     >
-                      <BookmarkIcon className="mr-2 h-4 w-4" />
-                      Saved Items
+                      <BookmarkIcon className="mr-1.5 h-4 w-4" />
+                      <span className="hidden xl:inline">Saved Items</span>
+                      <span className="xl:hidden">Saved</span>
                     </Link>
                   </NavigationMenu.Link>
                 </NavigationMenu.Item>
@@ -583,23 +584,30 @@ const Navbar = () => {
             </NavigationMenu.Root>
 
             {/* Right Side Actions */}
-            <div className="flex items-center space-x-3 flex-shrink-0">
+            <div className="flex items-center space-x-2 flex-shrink-0">
               {/* Post Deal Button */}
               <Link
                 to="/post"
-                className="hidden lg:inline-flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+                className="hidden lg:inline-flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-3 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-sm"
               >
                 <PlusIcon className="h-4 w-4" />
                 <span className="hidden xl:inline">Post Deal/Coupon</span>
                 <span className="xl:hidden">Post</span>
               </Link>
 
+              {/* Notification Bell */}
+              {user && (
+                <div className="flex-shrink-0">
+                  <NotificationBell />
+                </div>
+              )}
+
               {/* User Menu */}
               {user ? (
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
-                  <button className="flex h-10 w-10 items-center justify-center rounded-full border border-secondary-200 bg-white hover:bg-secondary-50 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-colors">
-                    <Avatar.Root className="flex h-8 w-8 select-none items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary-500 to-primary-600">
+                  <button className="flex h-9 w-9 items-center justify-center rounded-full border border-secondary-200 bg-white hover:bg-secondary-50 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-colors">
+                    <Avatar.Root className="flex h-7 w-7 select-none items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary-500 to-primary-600">
                       {user.user_metadata?.avatar_url ? (
                         <Avatar.Image
                           className="h-full w-full object-cover"
@@ -616,7 +624,7 @@ const Navbar = () => {
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
                   <DropdownMenu.Content
-                    className="z-50 min-w-[220px] overflow-hidden rounded-lg border border-secondary-200 bg-white p-1 text-secondary-900 shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+                    className="z-[60] min-w-[220px] overflow-hidden rounded-lg border border-secondary-200 bg-white p-1 text-secondary-900 shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
                     sideOffset={5}
                   >
                     <div className="flex items-center justify-start gap-2 p-2">
@@ -697,14 +705,14 @@ const Navbar = () => {
           <div className="flex lg:hidden flex-shrink-0">
             <Dialog.Root open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <Dialog.Trigger asChild>
-                <button className="inline-flex items-center justify-center rounded-lg p-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20">
-                  <Bars3Icon className="h-6 w-6" />
+                <button className="inline-flex items-center justify-center rounded-lg p-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-colors">
+                  <Bars3Icon className="h-5 w-5" />
                   <span className="sr-only">Open menu</span>
                 </button>
               </Dialog.Trigger>
               <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-                <Dialog.Content className="fixed left-0 top-0 z-50 h-full w-3/4 max-w-sm border-r border-secondary-200 bg-white p-6 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left">
+                <Dialog.Overlay className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+                <Dialog.Content className="fixed left-0 top-0 z-[70] h-full w-3/4 max-w-sm border-r border-secondary-200 bg-white p-6 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left">
                   <div className="flex items-center justify-between">
                     <Dialog.Title className="text-lg font-semibold">Menu</Dialog.Title>
                     <Dialog.Close asChild>
@@ -843,10 +851,10 @@ const Navbar = () => {
     {/* Secondary Navbar - Filter Tags & Today's Stats */}
     <div className="bg-secondary-50 border-b border-secondary-200">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-12">
+        <div className="flex items-center justify-between h-12 gap-4">
           {/* Filter Tags */}
-          <div className="flex items-center flex-1 overflow-hidden">
-            <div className="flex items-center space-x-3 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center flex-1 overflow-hidden min-w-0">
+            <div className="flex items-center space-x-2 overflow-x-auto scrollbar-hide">
               {filterTags.map((tag) => {
                 const IconComponent = getIconComponent(tag.icon)
                 const colorClasses = getColorClasses(tag.color, tag.active)
@@ -855,10 +863,10 @@ const Navbar = () => {
               <Link
                     key={tag.id}
                     to={tag.path}
-                    className={`flex-shrink-0 flex items-center space-x-2 px-4 py-2 rounded-xl transition-colors cursor-pointer border ${colorClasses}`}
+                    className={`flex-shrink-0 flex items-center space-x-2 px-3 py-1.5 rounded-lg transition-colors cursor-pointer border text-sm ${colorClasses}`}
                   >
-                    <IconComponent className="w-4 h-4" />
-                    <span className="text-sm font-medium">{tag.name}</span>
+                    <IconComponent className="w-3 h-3" />
+                    <span className="font-medium whitespace-nowrap">{tag.name}</span>
               </Link>
                 )
               })}
@@ -866,18 +874,18 @@ const Navbar = () => {
           </div>
           
           {/* Today's Stats */}
-          <div className="hidden md:flex items-center space-x-4 text-xs text-secondary-600">
+          <div className="hidden md:flex items-center space-x-3 text-xs text-secondary-600 flex-shrink-0">
             <div className="flex items-center space-x-1">
               <UserIcon className="w-3 h-3" />
-              <span>Users online: {navbarStats?.stats?.usersOnline?.toLocaleString() || '...'}</span>
+              <span className="whitespace-nowrap">Users: {navbarStats?.stats?.usersOnline?.toLocaleString() || '...'}</span>
             </div>
             <div className="flex items-center space-x-1">
               <FireIcon className="w-3 h-3" />
-              <span>Deals today: {navbarStats?.stats?.dealsToday?.toLocaleString() || '...'}</span>
+              <span className="whitespace-nowrap">Deals: {navbarStats?.stats?.dealsToday?.toLocaleString() || '...'}</span>
             </div>
             <div className="flex items-center space-x-1">
               <TagIcon className="w-3 h-3" />
-              <span>Coupons today: {navbarStats?.stats?.couponsToday?.toLocaleString() || '...'}</span>
+              <span className="whitespace-nowrap">Coupons: {navbarStats?.stats?.couponsToday?.toLocaleString() || '...'}</span>
             </div>
           </div>
             </div>

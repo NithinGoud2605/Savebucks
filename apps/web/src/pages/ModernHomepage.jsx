@@ -240,33 +240,37 @@ const DealSection = ({ section }) => {
         </p>
       </div>
 
-      {/* Deals Grid */}
+      {/* Deals Grid - 3-up cards */}
       {(isLoading || fallbackLoading) && !displayData ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="animate-pulse bg-gray-100 rounded-xl h-[260px]" />
+          ))}
         </div>
       ) : displayData && Array.isArray(displayData) && displayData.length > 0 ? (
-        <div className={`grid gap-3 sm:gap-4 ${
-          section.limit === 4 ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-4' :
-          section.limit === 6 ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3' :
-          section.limit === 8 ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-4' :
-          'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
-        }`}>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {displayData.map((item, index) => {
             // Handle both recommendation objects and deal objects
             const deal = item?.recommendation_type ? item?.metadata : item
             return (
-              <div key={item?.id || `fallback-${deal?.id || index}`} className="relative">
+              <div 
+                key={item?.id || `fallback-${deal?.id || index}`} 
+                className="group block bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all duration-300 overflow-hidden hover:-translate-y-0.5"
+              >
                 {/* Recommendation Badge */}
                 {item?.recommendation_type && (
-                  <div className="absolute top-2 left-2 z-10">
-                    <div className="flex items-center gap-1 px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                  <div className="absolute top-3 left-3 z-10">
+                    <div className="flex items-center gap-1 px-3 py-1 bg-blue-500 text-white text-xs rounded-full">
                       <Sparkles className="w-3 h-3" />
                       <span>Recommended</span>
                     </div>
                   </div>
                 )}
-                <DealCard deal={deal} index={index} />
+                
+                {/* Card Content with Image-first framing */}
+                <div className="relative overflow-hidden rounded-xl group-hover:[&_img]:scale-105 transition-transform duration-300">
+                  <DealCard deal={deal} index={index} />
+                </div>
               </div>
             )
           })}
@@ -390,73 +394,74 @@ export default function ModernHomepage() {
           </div>
         </Container>
       </div>
-      {/* Main Content - 70:30 Layout */}
-      <section className="container mx-auto px-3 sm:px-6 lg:px-8 py-6 lg:py-8">
-        {/* Success Message */}
-        {showSuccessMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+      {/* Main Content - CSS Grid Layout */}
+      <section className="py-10 lg:py-12">
+        <Container>
+          <div className="max-w-[1200px] mx-auto">
+            {/* Success Message */}
+            {showSuccessMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 shadow-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-green-800 font-medium">{successMessage}</p>
+                  </div>
+                  <button
+                    onClick={() => setShowSuccessMessage(false)}
+                    className="flex-shrink-0 text-green-600 hover:text-green-800 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+              {/* Content Column - Center */}
+              <div className="lg:col-span-9">
+                {/* Deal Sections */}
+                <div className="space-y-8 lg:space-y-12">
+                  {Array.isArray(dealSections) && dealSections.map((section, index) => (
+                    <React.Fragment key={section.id}>
+                      <DealSection section={section} />
+                      {/* Add Restaurant Section after "Just for You" */}
+                      {section.id === 'just-for-you' && (
+                        <div className="mt-8 lg:mt-12">
+                          <RestaurantSection />
+                        </div>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+
+                {/* View All Deals Button */}
+                <div className="text-center mt-8 lg:mt-12">
+                  <Link 
+                    to="/new" 
+                    className="inline-flex items-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-2.5 lg:py-3 px-5 lg:px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm lg:text-base"
+                  >
+                    View All Deals
+                    <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5" />
+                  </Link>
                 </div>
               </div>
-              <div className="flex-1">
-                <p className="text-green-800 font-medium">{successMessage}</p>
-              </div>
-              <button
-                onClick={() => setShowSuccessMessage(false)}
-                className="flex-shrink-0 text-green-600 hover:text-green-800 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </motion.div>
-        )}
 
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          {/* Left Side - Deals (70%) */}
-          <div className="lg:w-[70%] w-full lg:order-1 order-2">
-            {/* Deal Sections */}
-            <div className="space-y-8 lg:space-y-12">
-              {Array.isArray(dealSections) && dealSections.map((section, index) => (
-                <React.Fragment key={section.id}>
-                  <DealSection section={section} />
-                  {/* Add Restaurant Section after "Just for You" */}
-                  {section.id === 'just-for-you' && (
-                    <div className="mt-8 lg:mt-12">
-                      {console.log('🏠 Homepage: Rendering RestaurantSection after Just for You')}
-                      <RestaurantSection />
-                    </div>
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-
-            {/* View All Deals Button */}
-            <div className="text-center mt-8 lg:mt-12">
-              <Link 
-                to="/new" 
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-2.5 lg:py-3 px-5 lg:px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm lg:text-base"
-              >
-                View All Deals
-                <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Right Side - Coupons & Leaderboard (30%) */}
-          <div className="lg:w-[30%] w-full lg:order-2 order-1">
-            <div className="lg:sticky lg:top-8 space-y-6 lg:space-y-8">
+              {/* Right Rail - Coupons & Leaderboard */}
+              <div className="lg:col-span-3">
+                <div className="lg:sticky lg:top-8 space-y-6 lg:space-y-8">
               {/* Coupons Section */}
               <div>
                 <div className="flex items-center justify-between mb-3 lg:mb-4">
@@ -540,10 +545,12 @@ export default function ModernHomepage() {
                     <p className="text-sm text-gray-600">No leaderboard data</p>
                   </div>
                 )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+          </div>
+        </Container>
       </section>
     </div>
   )
