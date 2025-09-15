@@ -2029,4 +2029,103 @@ r.post('/upload-image', requireAdmin, upload.single('image'), async (req, res) =
   }
 });
 
+// Delete Company (Admin only)
+r.delete('/companies/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('🗑️ Deleting company:', id);
+
+    // Check if company exists
+    const { data: company, error: checkError } = await supaAdmin
+      .from('companies')
+      .select('id, name, logo_url')
+      .eq('id', id)
+      .single();
+
+    if (checkError || !company) {
+      console.log('❌ Company not found:', id);
+      return res.status(404).json({ error: 'Company not found' });
+    }
+
+    console.log('✅ Found company to delete:', company.name);
+
+    // Check for related data (deals and coupons)
+    const [dealsResult, couponsResult] = await Promise.all([
+      supaAdmin
+        .from('deals')
+        .select('id', { count: 'exact' })
+        .eq('company_id', id),
+      supaAdmin
+        .from('coupons')
+        .select('id', { count: 'exact' })
+        .eq('company_id', id)
+    ]);
+
+    const dealsCount = dealsResult.count || 0;
+    const couponsCount = couponsResult.count || 0;
+
+    console.log(`📊 Related data found - Deals: ${dealsCount}, Coupons: ${couponsCount}`);
+
+    // Delete related deals and coupons first (cascade delete)
+    if (dealsCount > 0) {
+      console.log('🗑️ Deleting related deals...');
+      await supaAdmin
+        .from('deals')
+        .delete()
+        .eq('company_id', id);
+    }
+
+    if (couponsCount > 0) {
+      console.log('🗑️ Deleting related coupons...');
+      await supaAdmin
+        .from('coupons')
+        .delete()
+        .eq('company_id', id);
+    }
+
+    // Delete company logo from storage if it exists
+    if (company.logo_url) {
+      try {
+        const fileName = company.logo_url.split('/').pop();
+        if (fileName) {
+          console.log('🗑️ Deleting company logo:', fileName);
+          await supaAdmin.storage
+            .from('images')
+            .remove([`companies/${fileName}`]);
+        }
+      } catch (logoError) {
+        console.log('⚠️ Could not delete logo:', logoError.message);
+        // Continue with company deletion even if logo deletion fails
+      }
+    }
+
+    // Delete the company
+    const { error: deleteError } = await supaAdmin
+      .from('companies')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) {
+      console.error('❌ Error deleting company:', deleteError);
+      return res.status(500).json({ error: 'Failed to delete company' });
+    }
+
+    console.log('✅ Company deleted successfully:', company.name);
+
+    res.json({ 
+      success: true, 
+      message: `Company "${company.name}" deleted successfully`,
+      deletedData: {
+        company: company.name,
+        deals: dealsCount,
+        coupons: couponsCount
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error deleting company:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default r;

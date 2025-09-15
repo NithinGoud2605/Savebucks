@@ -20,7 +20,8 @@ import {
   StarIcon,
   CalendarIcon,
   UserIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline'
 
 const CompanyManagement = () => {
@@ -31,6 +32,7 @@ const CompanyManagement = () => {
   const [showApprovalQueue, setShowApprovalQueue] = useState(false)
   const [selectedCompanyForReview, setSelectedCompanyForReview] = useState(null)
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(false)
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState({ show: false, company: null })
   const [reviewForm, setReviewForm] = useState({
     action: 'approve',
     notes: '',
@@ -104,6 +106,18 @@ const CompanyManagement = () => {
   const { data: companies, isLoading, error } = useQuery({
     queryKey: ['companies'],
     queryFn: () => api.getCompanies({ limit: 100 })
+  })
+
+  // Delete company mutation
+  const deleteCompanyMutation = useMutation({
+    mutationFn: (companyId) => api.deleteCompanyAdmin(companyId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['companies'])
+      setDeleteConfirmModal({ show: false, company: null })
+    },
+    onError: (error) => {
+      console.error('Error deleting company:', error)
+    }
   })
 
   // Create company mutation
@@ -296,6 +310,20 @@ const CompanyManagement = () => {
       }
     })
     setShowCreateModal(true)
+  }
+
+  const handleDeleteClick = (company) => {
+    setDeleteConfirmModal({ show: true, company })
+  }
+
+  const handleDeleteConfirm = () => {
+    if (deleteConfirmModal.company) {
+      deleteCompanyMutation.mutate(deleteConfirmModal.company.id)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmModal({ show: false, company: null })
   }
 
   const handleInputChange = (e) => {
@@ -800,6 +828,14 @@ const CompanyManagement = () => {
                         >
                           <PencilIcon className="w-4 h-4" />
                           <span>Edit</span>
+                        </button>
+                        
+                        <button
+                          onClick={() => handleDeleteClick(company)}
+                          className="flex items-center space-x-1 px-3 py-1 text-sm text-red-600 border border-red-300 rounded hover:bg-red-50 transition-colors"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                          <span>Delete</span>
                         </button>
                       </div>
                     </div>
@@ -1780,6 +1816,63 @@ const CompanyManagement = () => {
                     </div>
                   </form>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="flex-shrink-0">
+                  <ExclamationTriangleIcon className="w-8 h-8 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-secondary-900">
+                    Delete Company
+                  </h3>
+                  <p className="text-sm text-secondary-600">
+                    This action cannot be undone
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-secondary-700">
+                  Are you sure you want to delete <strong>{deleteConfirmModal.company?.name}</strong>?
+                </p>
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-800">
+                    <strong>Warning:</strong> This will permanently delete:
+                  </p>
+                  <ul className="text-sm text-red-700 mt-1 ml-4 list-disc">
+                    <li>The company and all its information</li>
+                    <li>All deals associated with this company</li>
+                    <li>All coupons associated with this company</li>
+                    <li>The company logo (if uploaded)</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={handleDeleteCancel}
+                  className="px-4 py-2 text-secondary-700 border border-secondary-300 rounded-lg hover:bg-secondary-50 transition-colors"
+                  disabled={deleteCompanyMutation.isPending}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={deleteCompanyMutation.isPending}
+                >
+                  {deleteCompanyMutation.isPending ? 'Deleting...' : 'Delete Company'}
+                </button>
               </div>
             </div>
           </div>

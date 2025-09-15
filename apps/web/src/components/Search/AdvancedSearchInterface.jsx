@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { 
@@ -17,17 +18,22 @@ import {
 } from 'lucide-react'
 import { api } from '../../lib/api'
 import { useDebounce } from '../../hooks/useDebounce'
+import { useLocation as useUserLocation } from '../../context/LocationContext'
 
 const AdvancedSearchInterface = ({ 
   onSearch, 
   placeholder = "Search deals, coupons, users, companies...",
   showFilters = true,
   showSuggestions = true,
-  className = ""
+  className = "",
+  compact = false,
+  showLocationSelector = true
 }) => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const searchInputRef = useRef(null)
+  const containerRef = useRef(null)
+  const [dropdownRect, setDropdownRect] = useState(null)
   
   // Search state
   const [query, setQuery] = useState(searchParams.get('q') || '')
@@ -47,6 +53,9 @@ const AdvancedSearchInterface = ({
     isVerified: false,
     isFeatured: false
   })
+
+  // Location state from context
+  const { location: userLocation, isLoading: isLocating, error: locationError, getCurrentLocation } = useUserLocation?.() || {}
 
   // Debounced query for suggestions
   const debouncedQuery = useDebounce(query, 300)
@@ -91,9 +100,16 @@ const AdvancedSearchInterface = ({
     if (searchFilters.hasCoupons) params.set('has_coupon', 'true')
     if (searchFilters.isFeatured) params.set('featured', 'true')
 
+    // Attach location if available
+    if (userLocation) {
+      if (userLocation.display) params.set('location', userLocation.display)
+      if (userLocation.latitude) params.set('lat', userLocation.latitude)
+      if (userLocation.longitude) params.set('lng', userLocation.longitude)
+    }
+
     // Navigate to search results or call callback
     if (onSearch) {
-      onSearch(searchQuery, searchFilters)
+      onSearch(searchQuery, { ...searchFilters, location: userLocation })
     } else {
       navigate(`/search?${params.toString()}`)
     }
@@ -188,6 +204,57 @@ const AdvancedSearchInterface = ({
     searchInputRef.current?.focus()
   }
 
+  // Compute dropdown position when open
+  useEffect(() => {
+    if (!showSuggestionsDropdown) {
+      setDropdownRect(null)
+      return
+    }
+    const updateRect = () => {
+      const el = containerRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      setDropdownRect({
+        left: rect.left,
+        top: rect.bottom + 12, // 12px gap (mt-3)
+        width: rect.width
+      })
+    }
+    updateRect()
+    window.addEventListener('resize', updateRect)
+    window.addEventListener('scroll', updateRect, true)
+    return () => {
+      window.removeEventListener('resize', updateRect)
+      window.removeEventListener('scroll', updateRect, true)
+    }
+  }, [showSuggestionsDropdown])
+
+  // Global keyboard shortcuts: '/' and Cmd/Ctrl+K to focus search
+  useEffect(() => {
+    const handleGlobalShortcut = (e) => {
+      const target = e.target
+      const isTypingContext = (
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        target?.isContentEditable
+      )
+      
+      // '/' focuses search when not typing
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey && !isTypingContext) {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+      }
+      
+      // Cmd/Ctrl + K focuses search anywhere
+      if ((e.key.toLowerCase() === 'k') && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+      }
+    }
+    
+    document.addEventListener('keydown', handleGlobalShortcut)
+    return () => document.removeEventListener('keydown', handleGlobalShortcut)
+  }, [])
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -202,18 +269,100 @@ const AdvancedSearchInterface = ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Professional UX sizing and styling
+  const styles = {
+    // Container styles
+    container: compact 
+      ? 'rounded-full shadow-sm hover:shadow-md border border-gray-200 bg-white/95 backdrop-blur-sm' 
+      : 'rounded-2xl shadow-lg hover:shadow-xl border-2 border-gray-200 bg-white backdrop-blur-sm',
+    
+    // Focus states
+    containerFocused: compact
+      ? 'border-primary-400 shadow-lg ring-4 ring-primary-100/50 bg-white'
+      : 'border-primary-500 shadow-2xl ring-4 ring-primary-100/60 bg-gradient-to-r from-white to-primary-50/20',
+    
+    // Location button
+    locationBtn: compact
+      ? 'ml-3 mr-2 px-3 py-1.5 text-xs bg-gray-50/80 hover:bg-gray-100 border border-gray-200/60 rounded-full transition-all duration-200 hover:shadow-sm'
+      : 'ml-4 mr-3 px-4 py-2 text-sm bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-full transition-all duration-200 hover:shadow-md',
+    
+    // Search icon
+    searchIcon: compact 
+      ? 'w-4 h-4 text-primary-500 ml-3' 
+      : 'w-5 h-5 text-primary-600 ml-5',
+    
+    // Input field
+    input: compact
+      ? 'flex-1 px-3 py-3 text-sm placeholder-gray-500 bg-transparent border-0 focus:outline-none focus:ring-0 font-medium'
+      : 'flex-1 px-4 py-4 text-base placeholder-gray-500 bg-transparent border-0 focus:outline-none focus:ring-0 font-medium',
+    
+    // Action buttons
+    clearBtn: compact
+      ? 'p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 rounded-full transition-all duration-200'
+      : 'p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-105',
+    
+    filterBtn: compact
+      ? 'p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-all duration-200'
+      : 'p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-all duration-200 hover:scale-105',
+    
+    searchBtn: compact
+      ? 'px-4 py-2 text-sm font-semibold bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white rounded-full shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95'
+      : 'px-6 py-3 text-base font-semibold bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95',
+    
+    // Dropdown (very high z-index to overlay everything)
+    dropdown: 'absolute top-full left-0 right-0 mt-3 bg-white/95 backdrop-blur-lg border border-gray-200/60 rounded-2xl shadow-2xl z-[9999] max-h-96 overflow-y-auto',
+    
+    // Suggestion items
+    suggestion: 'w-full text-left px-4 py-3 hover:bg-gray-50/80 transition-all duration-150 group border-l-2 border-transparent hover:border-gray-200',
+    suggestionActive: 'bg-primary-50/80 text-primary-800 border-l-2 border-primary-500'
+  }
+
   return (
     <div className={`relative ${className}`}>
+      
+
       {/* Main Search Bar */}
-      <div className="relative">
-        <div className={`
-          flex items-center bg-white border-2 rounded-2xl shadow-md transition-all duration-300 backdrop-blur-sm
-          ${showSuggestionsDropdown || isExpanded 
-            ? 'border-primary-500 shadow-xl ring-4 ring-primary-100 bg-gradient-to-r from-white to-primary-50/30' 
-            : 'border-gray-200 hover:border-gray-300 hover:shadow-lg'
-          }
-        `}>
-          <Search className="w-6 h-6 text-primary-500 ml-5 flex-shrink-0" />
+      <div className="relative" ref={containerRef}>
+        <div 
+          className={`
+            flex items-center transition-all duration-300 
+            ${styles.container}
+            ${(showSuggestionsDropdown || isExpanded) ? styles.containerFocused : ''}
+          `}
+          role="combobox"
+          aria-haspopup="listbox"
+          aria-expanded={showSuggestionsDropdown}
+          aria-label="Search interface"
+        >
+          {/* Location Selector */}
+          {showLocationSelector && (
+            <button
+              type="button"
+              onClick={() => getCurrentLocation && getCurrentLocation()}
+              className={`${styles.locationBtn} inline-flex items-center gap-1.5 text-gray-600 hover:text-gray-800 whitespace-nowrap group`}
+              title={`Current location: ${userLocation?.display || 'Not set'}`}
+              aria-label="Set search location"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={`${compact ? 'w-3 h-3' : 'w-4 h-4'} text-gray-500 group-hover:text-primary-600 transition-colors`}
+              >
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              <span className="font-medium truncate max-w-24">
+                {isLocating ? 'Locating…' : (userLocation?.display?.split(',')[0] || 'Anywhere')}
+              </span>
+            </button>
+          )}
+
+          <Search className={`${styles.searchIcon} flex-shrink-0`} />
           
           <input
             ref={searchInputRef}
@@ -227,27 +376,30 @@ const AdvancedSearchInterface = ({
             }}
             onBlur={() => setIsExpanded(false)}
             placeholder={placeholder}
-            className="flex-1 px-4 py-4 text-gray-900 placeholder-gray-400 border-0 rounded-2xl focus:outline-none focus:ring-0 text-lg font-medium placeholder:font-normal focus:placeholder-gray-300 transition-colors bg-transparent"
+            className={`${styles.input} placeholder:transition-colors focus:placeholder-gray-400`}
+            aria-autocomplete="list"
+            aria-label="Search for deals, coupons, users, companies"
           />
 
           {/* Search Actions */}
-          <div className="flex items-center space-x-2 px-4">
+          <div className="flex items-center space-x-1 px-3">
             {query && (
               <button
                 onClick={clearSearch}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-110"
-                title="Clear search"
+                className={styles.clearBtn}
+                title="Clear search (Esc)"
+                aria-label="Clear search"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
-            
 
             {showFilters && (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-all duration-200 hover:scale-110"
-                title="Advanced Filters"
+                className={styles.filterBtn}
+                title="Advanced filters"
+                aria-label="Toggle advanced filters"
               >
                 <Filter className="w-4 h-4" />
               </button>
@@ -255,68 +407,85 @@ const AdvancedSearchInterface = ({
 
             <button
               onClick={() => executeSearch()}
-              className="px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 font-semibold"
+              className={styles.searchBtn}
+              disabled={!query.trim()}
+              aria-label="Execute search"
             >
+              <Search className="w-4 h-4 mr-1.5" />
               Search
             </button>
           </div>
         </div>
 
-        {/* Search Suggestions Dropdown */}
-        {showSuggestionsDropdown && (
-          <div className="absolute top-full left-0 right-0 mt-3 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 max-h-96 overflow-y-auto backdrop-blur-sm bg-white/95">
+        {/* Search Suggestions Dropdown - Portal to body */}
+        {showSuggestionsDropdown && dropdownRect && createPortal(
+          <div
+            className="fixed bg-white/95 backdrop-blur-lg border border-gray-200/60 rounded-2xl shadow-2xl z-[9999] max-h-96 overflow-y-auto"
+            style={{ 
+              left: dropdownRect.left, 
+              top: dropdownRect.top, 
+              width: dropdownRect.width,
+              maxWidth: '90vw'
+            }}
+          >
             {suggestionsLoading ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-                <span className="ml-2 text-gray-500">Loading suggestions...</span>
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="w-5 h-5 animate-spin text-primary-500" />
+                <span className="ml-3 text-gray-600 font-medium">Finding suggestions...</span>
               </div>
             ) : suggestions.length > 0 ? (
               <div className="py-2">
-                <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100/60">
                   Suggestions
                 </div>
-                {suggestions.map((suggestion, index) => (
-                  <button
-                    key={index}
-                    onClick={() => selectSuggestion(suggestion)}
-                    className={`
-                      w-full text-left px-4 py-3 hover:bg-gray-50 transition-all duration-200 group
-                      ${index === selectedSuggestionIndex ? 'bg-primary-50 text-primary-700 border-l-2 border-primary-500' : 'text-gray-700 hover:border-l-2 hover:border-gray-200'}
-                    `}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Search className="w-4 h-4 text-gray-400 group-hover:text-primary-500 transition-colors" />
-                        <span className="font-medium">{suggestion.text}</span>
+                <div className="py-1">
+                  {suggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => selectSuggestion(suggestion)}
+                      className={`
+                        ${styles.suggestion}
+                        ${index === selectedSuggestionIndex ? styles.suggestionActive : ''}
+                      `}
+                      role="option"
+                      aria-selected={index === selectedSuggestionIndex}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <Search className="w-4 h-4 text-gray-400 group-hover:text-primary-500 transition-colors flex-shrink-0" />
+                          <span className="font-medium text-gray-900 group-hover:text-gray-800">{suggestion.text}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {suggestion.type === 'tag' && (
+                            <span className="px-2 py-1 bg-primary-100/80 text-primary-700 text-xs rounded-full font-medium">
+                              Tag
+                            </span>
+                          )}
+                          {suggestion.type === 'deal_title' && (
+                            <span className="px-2 py-1 bg-emerald-100/80 text-emerald-700 text-xs rounded-full font-medium">
+                              Deal
+                            </span>
+                          )}
+                          {suggestion.type === 'merchant' && (
+                            <span className="px-2 py-1 bg-blue-100/80 text-blue-700 text-xs rounded-full font-medium">
+                              Store
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        {suggestion.type === 'tag' && (
-                          <span className="px-2 py-1 bg-primary-100 text-primary-700 text-xs rounded-full font-medium">
-                            Tag
-                          </span>
-                        )}
-                        {suggestion.type === 'deal_title' && (
-                          <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                            Deal
-                          </span>
-                        )}
-                        {suggestion.type === 'merchant' && (
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
-                            Store
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : query.length >= 2 ? (
-              <div className="px-4 py-3 text-gray-500 text-center">
-                No suggestions found
+              <div className="px-4 py-6 text-center">
+                <Search className="w-6 h-6 text-gray-300 mx-auto mb-2" />
+                <p className="text-gray-500 font-medium">No suggestions found</p>
+                <p className="text-xs text-gray-400 mt-1">Try a different search term</p>
               </div>
             ) : null}
-
-          </div>
+          </div>,
+          document.body
         )}
       </div>
 

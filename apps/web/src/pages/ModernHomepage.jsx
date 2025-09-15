@@ -19,6 +19,8 @@ import {
   Store
 } from 'lucide-react'
 import { NewDealCard } from '../components/Deal/NewDealCard'
+import { Container } from '../components/Layout/Container'
+import AdvancedSearchInterface from '../components/Search/AdvancedSearchInterface'
 import RestaurantSection from '../components/Homepage/RestaurantSection'
 
 // Use the new NewDealCard component
@@ -374,6 +376,20 @@ export default function ModernHomepage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      {/* Professional search interface - centered with max width */}
+      <div className="bg-gradient-to-b from-white to-gray-50/30 py-8 border-b border-gray-100">
+        <Container>
+          <div className="max-w-2xl mx-auto">
+            <AdvancedSearchInterface
+              showFilters={false}
+              showSuggestions={true}
+              compact={true}
+              placeholder="Search deals, coupons, stores..."
+              className="drop-shadow-sm"
+            />
+          </div>
+        </Container>
+      </div>
       {/* Main Content - 70:30 Layout */}
       <section className="container mx-auto px-3 sm:px-6 lg:px-8 py-6 lg:py-8">
         {/* Success Message */}

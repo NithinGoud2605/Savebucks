@@ -14,7 +14,6 @@ import {
   ChevronDownIcon, 
   Bars3Icon, 
   XMarkIcon, 
-  MagnifyingGlassIcon,
   SparklesIcon,
   UserGroupIcon,
   Cog6ToothIcon,
@@ -46,7 +45,6 @@ import {
 } from '@heroicons/react/24/solid'
 import NotificationBell from '../User/NotificationBell'
 import UnifiedSearch from '../Search/UnifiedSearch.jsx'
-import LocationSearchBar from '../Search/LocationSearchBar'
 
 // Utility function for class variants
 const cn = (...classes) => classes.filter(Boolean).join(' ')
@@ -82,8 +80,6 @@ const Navbar = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const searchRef = useRef(null)
 
   // Get categories for dropdown
   const { data: categories } = useQuery({
@@ -201,13 +197,7 @@ const Navbar = () => {
     navigate('/')
   }
 
-  const handleSearch = (e) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-      setSearchQuery('')
-    }
-  }
+  // Search handler removed from navbar
 
   // Helper function to get icon component
   const getIconComponent = (iconName) => {
@@ -267,14 +257,8 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden lg:flex lg:items-center lg:flex-1 lg:space-x-6 overflow-visible">
             
-            {/* Search Bar - Full Width */}
-            <div className="relative flex-1 overflow-visible">
-              <LocationSearchBar
-                placeholder="Search for deals, coupons, stores..."
-                showLocationSelector={true}
-                className="w-full"
-              />
-            </div>
+            {/* Search moved to homepage; keep layout balanced */}
+            <div className="flex-1" />
 
             {/* Navigation Menu */}
             <NavigationMenu.Root className="relative z-10 flex max-w-max items-center justify-center flex-shrink-0">
@@ -732,19 +716,7 @@ const Navbar = () => {
         </div>
 
                   <div className="mt-6 space-y-4">
-                    {/* Mobile Search */}
-                    <form onSubmit={handleSearch}>
-                      <div className="relative">
-                        <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-500" />
-                        <input
-                          type="text"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="Search deals, coupons, stores..."
-                          className="h-12 w-full rounded-2xl border-2 border-gray-200 bg-white pl-12 pr-4 text-base font-medium placeholder:text-gray-400 placeholder:font-normal focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-100 focus:placeholder-gray-300 transition-all duration-300 shadow-sm focus:shadow-lg"
-                        />
-                      </div>
-                    </form>
+                    {/* Mobile search removed; use homepage search */}
 
                     {/* Mobile Navigation */}
                     <nav className="space-y-2">
