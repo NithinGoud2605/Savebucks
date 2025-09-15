@@ -23,7 +23,7 @@ export function CompactDealCard({ deal, className }) {
           <div className="mt-0.5 flex items-center gap-1 text-xs text-secondary-600 dark:text-secondary-400">
             {getCompanyName(deal) && <span className="truncate">{getCompanyName(deal)}</span>}
             {deal.price && (
-              <span className="font-semibold text-green-600 dark:text-green-400">{formatPrice(deal.price, deal.currency)}</span>
+              <span className="font-semibold text-teal-600 dark:text-teal-400">{formatPrice(deal.price, deal.currency)}</span>
             )}
           </div>
         </div>

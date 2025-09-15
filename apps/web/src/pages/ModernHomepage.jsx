@@ -41,7 +41,7 @@ const CouponCard = ({ coupon, index }) => {
     >
       <div className="flex items-start gap-3">
         {/* Coupon Icon */}
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-2 rounded-lg">
+        <div className="bg-gradient-to-r from-mint-500 to-emerald-600 p-2 rounded-lg shadow-sm">
           <Tag className="w-5 h-5 text-white" />
         </div>
         
@@ -91,12 +91,12 @@ const CompactCouponCard = ({ coupon, index }) => {
     <Link 
       to={`/company/${coupon.companies?.slug || coupon.merchant?.toLowerCase().replace(/\s+/g, '-')}?tab=coupons`}
       onClick={handleCouponClick}
-      className="block bg-white rounded-lg border border-gray-100 p-2 hover:shadow-md hover:border-primary-200 transition-all duration-200 group"
+      className="block bg-gradient-to-r from-white via-mint-50/40 to-emerald-50/30 rounded-lg border border-mint-200/60 p-2 hover:shadow-lg hover:border-emerald-300 transition-all duration-200 group hover:-translate-y-0.5"
     >
       <div className="flex items-center gap-2">
         {/* Company Logo */}
         <div className="flex-shrink-0">
-          <div className="w-6 h-6 bg-gray-50 rounded-lg flex items-center justify-center">
+          <div className="w-6 h-6 bg-gradient-to-br from-mint-100 to-emerald-100 rounded-lg flex items-center justify-center shadow-sm">
             {coupon.companies?.logo_url ? (
               <img 
                 src={coupon.companies.logo_url} 
@@ -104,7 +104,7 @@ const CompactCouponCard = ({ coupon, index }) => {
                 className="w-4 h-4 object-contain"
               />
             ) : (
-              <Store className="w-3 h-3 text-gray-400" />
+              <Store className="w-3 h-3 text-mint-500" />
             )}
           </div>
         </div>
@@ -115,10 +115,10 @@ const CompactCouponCard = ({ coupon, index }) => {
             {coupon.title}
           </h3>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500 truncate">
+            <span className="text-xs text-mint-600 truncate font-medium">
               {coupon.companies?.name || 'Store'}
             </span>
-            <span className="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-1.5 py-0.5 rounded text-xs font-bold">
+            <span className="bg-white text-black px-1.5 py-0.5 rounded text-xs font-bold shadow-sm border border-mint-200">
               {coupon.coupon_code}
             </span>
           </div>
@@ -131,15 +131,15 @@ const CompactCouponCard = ({ coupon, index }) => {
 // Leaderboard Card Component
 const LeaderboardCard = ({ user, rank }) => {
   return (
-    <div className="bg-white rounded-lg border border-gray-100 p-2.5 hover:shadow-sm transition-all duration-200">
+    <div className="bg-gradient-to-r from-white via-mint-50/30 to-emerald-50/20 rounded-lg border border-mint-200/60 p-2.5 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
       <div className="flex items-center gap-2.5">
         {/* Rank */}
         <div className="flex-shrink-0">
-          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
-            rank === 1 ? 'bg-yellow-100 text-yellow-800' :
-            rank === 2 ? 'bg-gray-100 text-gray-800' :
-            rank === 3 ? 'bg-orange-100 text-orange-800' :
-            'bg-gray-50 text-gray-600'
+          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${
+            rank === 1 ? 'bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800' :
+            rank === 2 ? 'bg-gradient-to-r from-mint-100 to-emerald-100 text-mint-800' :
+            rank === 3 ? 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-800' :
+            'bg-gradient-to-r from-emerald-50 to-mint-50 text-emerald-600'
           }`}>
             {rank}
           </div>
@@ -147,7 +147,7 @@ const LeaderboardCard = ({ user, rank }) => {
 
         {/* User Avatar */}
         <div className="flex-shrink-0">
-          <div className="w-6 h-6 bg-gray-50 rounded-full flex items-center justify-center">
+          <div className="w-6 h-6 bg-gradient-to-br from-mint-100 to-emerald-100 rounded-full flex items-center justify-center shadow-sm">
             {user.avatar_url ? (
               <img 
                 src={user.avatar_url} 
@@ -155,7 +155,7 @@ const LeaderboardCard = ({ user, rank }) => {
                 className="w-6 h-6 rounded-full object-cover"
               />
             ) : (
-              <span className="text-xs font-semibold text-gray-600">
+              <span className="text-xs font-semibold text-mint-600">
                 {user.handle?.charAt(0)?.toUpperCase() || 'U'}
               </span>
             )}
@@ -167,14 +167,14 @@ const LeaderboardCard = ({ user, rank }) => {
           <h3 className="font-semibold text-gray-900 text-xs leading-tight">
             {user.handle || 'Anonymous'}
           </h3>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-mint-600 font-medium">
             {user.xp || 0} XP • {user.deals_count || 0} deals
           </p>
         </div>
 
         {/* Score */}
         <div className="flex-shrink-0">
-          <div className="bg-primary-50 text-primary-600 px-2 py-0.5 rounded text-xs font-bold">
+          <div className="bg-gradient-to-r from-mint-100 to-emerald-100 text-mint-700 px-2 py-0.5 rounded text-xs font-bold shadow-sm">
             {user.score || 0}
           </div>
         </div>
@@ -266,12 +266,12 @@ const DealSection = ({ section }) => {
                return (
                  <div 
                    key={item?.id || `fallback-${deal?.id || index}`} 
-                   className="flex-shrink-0 w-64 group block bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all duration-300 overflow-hidden hover:-translate-y-0.5"
+                   className="flex-shrink-0 w-64 group block bg-gradient-to-br from-white via-mint-50/30 to-emerald-50/40 rounded-xl border border-mint-200/60 shadow-lg hover:shadow-xl hover:border-emerald-300 transition-all duration-300 overflow-hidden hover:-translate-y-1 hover:scale-[1.02]"
                  >
                    {/* Recommendation Badge */}
                    {item?.recommendation_type && (
                      <div className="absolute top-2 left-2 z-10">
-                       <div className="flex items-center gap-1 px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                       <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-mint-500 to-emerald-600 text-white text-xs rounded-full shadow-lg">
                          <Sparkles className="w-3 h-3" />
                          <span>Recommended</span>
                        </div>
@@ -289,19 +289,19 @@ const DealSection = ({ section }) => {
            
            {/* Scroll indicators */}
            <div className="flex items-center justify-end mt-2 gap-2">
-             <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
-               <ChevronLeft className="w-4 h-4" />
+             <button className="p-2 rounded-full bg-gradient-to-r from-mint-100 to-emerald-100 hover:from-mint-200 hover:to-emerald-200 transition-all duration-200 shadow-md hover:shadow-lg">
+               <ChevronLeft className="w-4 h-4 text-mint-700" />
              </button>
-             <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
-               <ChevronRight className="w-4 h-4" />
+             <button className="p-2 rounded-full bg-gradient-to-r from-mint-100 to-emerald-100 hover:from-mint-200 hover:to-emerald-200 transition-all duration-200 shadow-md hover:shadow-lg">
+               <ChevronRight className="w-4 h-4 text-mint-700" />
              </button>
            </div>
          </div>
       ) : (
         <div className="text-center py-12">
-          <ShoppingCart className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-600 text-sm">Loading deals for you...</p>
-          <p className="text-gray-500 text-xs mt-2">Please wait while we fetch the latest deals</p>
+          <ShoppingCart className="w-8 h-8 text-mint-400 mx-auto mb-2" />
+          <p className="text-mint-600 text-sm font-medium">Loading deals for you...</p>
+          <p className="text-emerald-500 text-xs mt-2">Please wait while we fetch the latest deals</p>
         </div>
       )}
     </div>
@@ -401,9 +401,9 @@ export default function ModernHomepage() {
   })
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-mint-50/40 via-emerald-50/30 to-green-100/50">
       {/* Professional search interface - centered with max width */}
-      <div className="bg-gradient-to-b from-white to-gray-50/30 py-6 lg:py-8 border-b border-gray-100">
+      <div className="bg-gradient-to-b from-white/95 via-mint-50/30 to-emerald-50/40 py-6 lg:py-8 border-b border-mint-200/70 backdrop-blur-sm shadow-sm">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mx-auto">
             <AdvancedSearchInterface
@@ -426,22 +426,22 @@ export default function ModernHomepage() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 shadow-sm"
+                className="mb-8 bg-gradient-to-r from-mint-50 to-emerald-50 border border-mint-200 rounded-xl p-4 shadow-lg"
               >
                 <div className="flex items-center gap-3">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-8 h-8 bg-gradient-to-r from-mint-100 to-emerald-100 rounded-full flex items-center justify-center shadow-sm">
+                      <svg className="w-5 h-5 text-mint-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
                   </div>
                   <div className="flex-1">
-                    <p className="text-green-800 font-medium">{successMessage}</p>
+                    <p className="text-mint-800 font-medium">{successMessage}</p>
                   </div>
                   <button
                     onClick={() => setShowSuccessMessage(false)}
-                    className="flex-shrink-0 text-green-600 hover:text-green-800 transition-colors"
+                    className="flex-shrink-0 text-mint-600 hover:text-mint-800 transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -473,7 +473,7 @@ export default function ModernHomepage() {
                 <div className="text-center mt-6 lg:mt-8">
                   <Link 
                     to="/new" 
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-2.5 lg:py-3 px-5 lg:px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm lg:text-base"
+                    className="inline-flex items-center gap-2 bg-gradient-to-r from-mint-600 via-emerald-600 to-green-600 hover:from-mint-700 hover:via-emerald-700 hover:to-green-700 text-white font-semibold py-2.5 lg:py-3 px-5 lg:px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm lg:text-base hover:-translate-y-0.5 hover:scale-105"
                   >
                     View All Deals
                     <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5" />
@@ -515,8 +515,8 @@ export default function ModernHomepage() {
                   </div>
                 ) : (
                   <div className="text-center py-6">
-                    <Tag className="w-6 h-6 text-gray-400 mx-auto mb-1" />
-                    <p className="text-xs text-gray-600">No coupons found</p>
+                    <Tag className="w-6 h-6 text-mint-400 mx-auto mb-1" />
+                    <p className="text-xs text-mint-600 font-medium">No coupons found</p>
                   </div>
                 )}
               </div>
@@ -535,15 +535,15 @@ export default function ModernHomepage() {
                 </div>
 
                 {/* Period Selector */}
-                <div className="flex space-x-1 mb-2 bg-gray-100 p-0.5 rounded-lg">
+                <div className="flex space-x-1 mb-2 bg-gradient-to-r from-mint-100 to-emerald-100 p-0.5 rounded-lg shadow-sm">
                   {['week', 'month', 'alltime'].map((period) => (
                     <button
                       key={period}
                       onClick={() => setLeaderboardPeriod(period)}
-                      className={`px-2 py-1 text-xs font-medium rounded-md transition-colors ${
+                      className={`px-2 py-1 text-xs font-medium rounded-md transition-all duration-200 ${
                         leaderboardPeriod === period
-                          ? 'bg-white text-primary-600 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
+                          ? 'bg-white text-mint-700 shadow-md font-semibold'
+                          : 'text-mint-600 hover:text-mint-800 hover:bg-white/50'
                       }`}
                     >
                       {period === 'week' ? 'Week' : period === 'month' ? 'Month' : 'All Time'}
@@ -554,7 +554,7 @@ export default function ModernHomepage() {
                 {/* Leaderboard List */}
                 {leaderboardLoading ? (
                   <div className="flex items-center justify-center py-6">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary-600" />
+                    <Loader2 className="w-4 h-4 animate-spin text-mint-600" />
                   </div>
                 ) : leaderboardData && Array.isArray(leaderboardData) && leaderboardData.length > 0 ? (
                   <div className="space-y-1.5">
@@ -564,7 +564,7 @@ export default function ModernHomepage() {
                   </div>
                 ) : (
                   <div className="text-center py-6">
-                    <p className="text-xs text-gray-600">No leaderboard data</p>
+                    <p className="text-xs text-mint-600 font-medium">No leaderboard data</p>
                   </div>
                 )}
                 </div>

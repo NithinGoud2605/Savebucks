@@ -28,7 +28,7 @@ const filterConfig = {
     title: 'Under $20',
     description: 'Amazing deals under $20 - perfect for budget shopping',
     icon: StarIcon,
-    color: 'green',
+    color: 'teal',
     apiMethod: 'getUnder20Deals'
   },
   '50-off': {

@@ -40,7 +40,7 @@ export function CommunityDealCard({ deal, className, compact = false }) {
   }
 
   const getDealTypeInfo = () => {
-    if (deal.price === 0) return { label: 'FREE', color: 'from-green-500 to-emerald-500', icon: '🎁' }
+    if (deal.price === 0) return { label: 'FREE', color: 'from-teal-500 to-cyan-500', icon: '🎁' }
     if (deal.coupon_code) return { label: 'COUPON', color: 'from-purple-500 to-pink-500', icon: '🎫' }
     if (deal.discount_percentage >= 50) return { label: 'HOT DEAL', color: 'from-red-500 to-orange-500', icon: '🔥' }
     if (deal.discount_percentage >= 30) return { label: 'GOOD DEAL', color: 'from-orange-500 to-yellow-500', icon: '💰' }
@@ -219,10 +219,10 @@ export function CommunityDealCard({ deal, className, compact = false }) {
 
           {/* Price section */}
           {deal.price !== undefined && (
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
+            <div className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl p-4 border border-teal-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-baseline space-x-3">
-                  <span className="text-3xl font-black text-green-600">
+                  <span className="text-3xl font-black text-teal-600">
                     {deal.price === 0 ? 'FREE' : formatPrice(deal.price, deal.currency)}
                   </span>
                   
@@ -289,7 +289,7 @@ export function CommunityDealCard({ deal, className, compact = false }) {
                   to={`/deal/${deal.id}#comments`}
                   className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
                 >
-                  <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-3 h-3 text-teal-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
                   </svg>
                   <span>{commentCount}</span>

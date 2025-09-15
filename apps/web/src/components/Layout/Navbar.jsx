@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api, apiRequest } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
+import { useLocation as useUserLocation } from '../../context/LocationContext'
 import * as NavigationMenu from '@radix-ui/react-navigation-menu'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Dialog from '@radix-ui/react-dialog'
@@ -80,6 +81,7 @@ const Navbar = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { location: userLocation } = useUserLocation?.() || {}
 
   // Get categories for dropdown
   const { data: categories } = useQuery({
@@ -147,7 +149,7 @@ const Navbar = () => {
       icon: 'star',
       path: '/under-20',
       active: currentPath === '/under-20',
-      color: 'green'
+      color: 'teal'
     },
     {
       id: '50-percent-off',
@@ -226,7 +228,7 @@ const Navbar = () => {
       orange: 'bg-white border-orange-200 text-orange-700 hover:bg-orange-50',
       blue: 'bg-white border-blue-200 text-blue-700 hover:bg-blue-50',
       red: 'bg-white border-red-200 text-red-700 hover:bg-red-50',
-      green: 'bg-white border-green-200 text-green-700 hover:bg-green-50',
+      teal: 'bg-white border-teal-200 text-teal-700 hover:bg-teal-50',
       yellow: 'bg-white border-yellow-200 text-yellow-700 hover:bg-yellow-50',
       pink: 'bg-white border-pink-200 text-pink-700 hover:bg-pink-50',
       purple: 'bg-white border-purple-200 text-purple-700 hover:bg-purple-50'
@@ -237,7 +239,7 @@ const Navbar = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-gray-200/60 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 shadow-sm">
+      <header className="sticky top-0 z-50 w-full border-b border-primary-200/60 bg-gradient-to-r from-primary-50/95 to-primary-100/95 backdrop-blur-md supports-[backdrop-filter]:bg-gradient-to-r supports-[backdrop-filter]:from-primary-50/80 supports-[backdrop-filter]:to-primary-100/80 shadow-lg">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between gap-4">
           
@@ -585,10 +587,20 @@ const Navbar = () => {
 
             {/* Right Side Actions */}
             <div className="flex items-center space-x-2 flex-shrink-0">
+              {/* Location Display */}
+              {userLocation?.address?.display && (
+                <div className="hidden lg:flex items-center space-x-1.5 px-2 py-1 bg-emerald-50 border border-emerald-200 rounded-lg text-xs">
+                  <MapPinIcon className="w-3 h-3 text-emerald-600" />
+                  <span className="text-emerald-700 font-medium truncate max-w-24">
+                    {userLocation.address.display}
+                  </span>
+                </div>
+              )}
+              
               {/* Post Deal Button */}
               <Link
                 to="/post"
-                className="hidden lg:inline-flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-3 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-sm"
+                className="hidden lg:inline-flex items-center space-x-2 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white px-3 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-sm"
               >
                 <PlusIcon className="h-4 w-4" />
                 <span className="hidden xl:inline">Post Deal/Coupon</span>
@@ -762,7 +774,7 @@ const Navbar = () => {
                      <Link
                        to="/post"
                        onClick={() => setIsMenuOpen(false)}
-                       className="w-full inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-5 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
+                       className="w-full inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white px-5 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
                      >
                        <PlusIcon className="h-5 w-5" />
                        <span>Post Deal/Coupon</span>
@@ -849,7 +861,7 @@ const Navbar = () => {
     </header>
 
     {/* Secondary Navbar - Filter Tags & Today's Stats */}
-    <div className="bg-secondary-50 border-b border-secondary-200">
+    <div className="bg-gradient-to-r from-primary-100/80 to-primary-200/80 border-b border-primary-300/60 backdrop-blur-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-12 gap-4">
           {/* Filter Tags */}
