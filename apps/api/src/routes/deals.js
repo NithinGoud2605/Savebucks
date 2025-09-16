@@ -403,8 +403,10 @@ r.get('/', async (req, res) => {
       out = enrichedItems.filter(d => set.has(d.id));
     }
     const limit = req.query.limit ? parseInt(req.query.limit) : null;
-    const finalResult = limit ? out.slice(0, Math.max(0, limit)) : out;
+    let finalResult = limit ? out.slice(0, Math.max(0, limit)) : out;
     
+    // Return only real deals, no duplication
+    console.log(`🔍 Deals API Debug: limit=${limit}, finalResult.length=${finalResult.length}`);
     
     res.json(finalResult);
   } catch (e) {

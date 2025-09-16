@@ -101,66 +101,26 @@ const LeaderboardFilters = ({ filters, onFiltersChange }) => {
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Period
         </label>
-        <select
-          value={filters.period}
-          onChange={(e) => onFiltersChange({ ...filters, period: e.target.value })}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="all_time">All Time</option>
-          <option value="monthly">This Month</option>
-          <option value="weekly">This Week</option>
-          <option value="daily">Today</option>
-        </select>
+        <div className="flex items-center gap-2">
+          {[
+            { key: 'daily', label: 'Today' },
+            { key: 'weekly', label: 'Week' },
+            { key: 'monthly', label: 'Month' },
+            { key: 'all_time', label: 'All Time' },
+          ].map(p => (
+            <button
+              key={p.key}
+              onClick={() => onFiltersChange({ ...filters, period: p.key })}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                filters.period === p.key ? 'bg-white shadow border border-gray-200 text-blue-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Category */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Category
-        </label>
-        <select
-          value={filters.category}
-          onChange={(e) => onFiltersChange({ ...filters, category: e.target.value })}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="overall">Overall</option>
-          <option value="deals">Deal Posters</option>
-          <option value="comments">Commenters</option>
-          <option value="votes">Voters</option>
-          <option value="achievements">Achievement Hunters</option>
-        </select>
-      </div>
-
-      {/* Limit */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Show
-        </label>
-        <select
-          value={filters.limit}
-          onChange={(e) => onFiltersChange({ ...filters, limit: parseInt(e.target.value) })}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="10">Top 10</option>
-          <option value="25">Top 25</option>
-          <option value="50">Top 50</option>
-          <option value="100">Top 100</option>
-        </select>
-      </div>
-
-      {/* Include Achievements */}
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          id="include-achievements"
-          checked={filters.include_achievements}
-          onChange={(e) => onFiltersChange({ ...filters, include_achievements: e.target.checked })}
-          className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-        />
-        <label htmlFor="include-achievements" className="text-sm text-gray-700">
-          Show achievements
-        </label>
-      </div>
     </div>
   )
 }
@@ -194,13 +154,14 @@ export default function EnhancedLeaderboard({ compact = false, showFilters = tru
   const [filters, setFilters] = useState({
     period: 'all_time',
     category: 'overall',
-    limit: compact ? 5 : 25,
+    limit: 20,
     include_achievements: true,
   })
 
   const { data: leaderboardData, isLoading, error } = useQuery({
-    queryKey: ['enhanced-leaderboard', filters],
-    queryFn: () => api.gamification.getLeaderboard(filters),
+    queryKey: ['enhanced-leaderboard', filters.period, 20],
+    queryFn: () => api.getLeaderboard(filters.period, 20),
+    staleTime: 2 * 60 * 1000,
   })
 
   if (isLoading) {
@@ -223,7 +184,11 @@ export default function EnhancedLeaderboard({ compact = false, showFilters = tru
     )
   }
 
-  const { users = [], stats } = leaderboardData || {}
+  const resolvedUsers = Array.isArray(leaderboardData)
+    ? leaderboardData
+    : (leaderboardData && Array.isArray(leaderboardData.users) ? leaderboardData.users : [])
+  const users = Array.isArray(resolvedUsers) ? resolvedUsers : []
+  const stats = leaderboardData && !Array.isArray(leaderboardData) ? leaderboardData.stats : undefined
 
   if (users.length === 0) {
     return (
@@ -253,8 +218,18 @@ export default function EnhancedLeaderboard({ compact = false, showFilters = tru
         
         {users.map((user, index) => (
           <LeaderboardEntry
-            key={user.id}
-            user={user}
+            key={user.user_id || user.id || index}
+            user={{
+              handle: user.handle,
+              avatar_url: user.avatar_url,
+              total_points: user.points ?? user.total_points,
+              total_xp: user.total_xp,
+              deals_count: user.total_posts ?? user.deals_count,
+              weekly_points: user.weekly_points,
+              monthly_points: user.monthly_points,
+              achievements_count: user.achievements_count,
+              level: user.level || user.current_level,
+            }}
             rank={user.rank || index + 1}
             showDetails={!compact && filters.include_achievements}
           />

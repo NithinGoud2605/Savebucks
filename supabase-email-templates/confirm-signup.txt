@@ -1,0 +1,31 @@
+💰 SAVEBUCKS - Your Ultimate Deals Community
+==============================================
+
+Welcome to Savebucks!
+
+Thank you for joining our community of deal hunters! We're excited to have you on board. 
+To complete your registration and start discovering amazing deals, please confirm your email address.
+
+CONFIRM YOUR ACCOUNT:
+{{ .ConfirmationURL }}
+
+What you'll get with Savebucks:
+🔥 Hot deals from top retailers
+👥 Community-driven recommendations  
+📱 Real-time deal alerts
+🏆 Earn points and climb leaderboards
+💬 Share and discuss deals
+🎯 Personalized recommendations
+
+🔒 SECURITY NOTE:
+This confirmation link will expire in 24 hours for security reasons.
+
+If you didn't create an account with Savebucks, you can safely ignore this email. 
+The account will not be activated without confirmation.
+
+Happy deal hunting!
+The Savebucks Team
+
+---
+You received this email because you signed up for Savebucks. 
+If you have any questions, please contact our support team.

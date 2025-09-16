@@ -269,6 +269,96 @@ r.get('/me', async (req, res) => {
 });
 
 /**
+ * Request password reset
+ * POST /api/auth/reset-password
+ * Body: { email }
+ */
+r.post('/reset-password', async (req, res) => {
+  try {
+    const { email } = req.body || {};
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    
+    // Send password reset email using Supabase Auth
+    const { error } = await supaAdmin.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.SITE_URL || 'http://localhost:5173'}/reset-password`,
+    });
+    
+    if (error) {
+      log('Password reset error:', error);
+      // Don't reveal if email exists or not for security
+      return res.status(400).json({ error: 'Failed to send reset email' });
+    }
+    
+    res.json({ 
+      message: 'Password reset email sent. Please check your inbox.' 
+    });
+    
+  } catch (error) {
+    log('Password reset error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Update password (after reset)
+ * PUT /api/auth/update-password
+ * Headers: Authorization: Bearer <token>
+ * Body: { password }
+ */
+r.put('/update-password', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Authorization token required' });
+    }
+    
+    const { password } = req.body || {};
+    
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+    
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    
+    // Verify token and get user
+    const { data: userData, error: userError } = await supaAdmin.auth.getUser(token);
+    
+    if (userError || !userData.user) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+    
+    // Update password using Supabase Auth Admin API
+    const { error: updateError } = await supaAdmin.auth.admin.updateUserById(
+      userData.user.id,
+      { password }
+    );
+    
+    if (updateError) {
+      log('Password update error:', updateError);
+      return res.status(400).json({ error: 'Failed to update password' });
+    }
+    
+    res.json({ message: 'Password updated successfully' });
+    
+  } catch (error) {
+    log('Password update error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * Update user profile
  * PUT /api/auth/profile
  * Headers: Authorization: Bearer <token>

@@ -222,6 +222,17 @@ export const api = {
     body: profileData,
   }),
 
+  // Password Reset
+  requestPasswordReset: (email) => apiRequest('/api/auth/reset-password', {
+    method: 'POST',
+    body: { email },
+  }),
+
+  updatePassword: (password) => apiRequest('/api/auth/update-password', {
+    method: 'PUT',
+    body: { password },
+  }),
+
   // Deals
   getDeals: (params = {}) => {
     const searchParams = new URLSearchParams()
@@ -287,6 +298,7 @@ export const api = {
     if (options.limit) params.append('limit', options.limit)
     return apiRequest(`/api/personalization/recommendations?${params}`)
   },
+
   generateRecommendations: () => apiRequest('/api/personalization/recommendations/generate', {
     method: 'POST',
   }),
@@ -427,10 +439,45 @@ export const api = {
     return apiRequest(`/api/users/${handle}/activity?${params}`)
   },
 
-  // Leaderboard
-  getLeaderboard: (period = 'all_time', limit = 50) => {
-    const params = new URLSearchParams({ limit: limit.toString() })
-    return apiRequest(`/api/users/leaderboard/${period}?${params}`)
+  // Leaderboard (normalized to gamification endpoint with legacy fallback)
+  getLeaderboard: async (period = 'all_time', limit = 50) => {
+    const normalized = (() => {
+      if (period === 'today' || period === 'daily' || period === 'day') return 'daily'
+      if (period === 'week' || period === 'weekly') return 'weekly'
+      if (period === 'month' || period === 'monthly') return 'monthly'
+      if (period === 'alltime' || period === 'all_time' || period === 'all-time') return 'all_time'
+      return 'all_time'
+    })()
+
+    try {
+      const params = new URLSearchParams({ period: normalized, limit: String(limit) })
+      const primary = await apiRequest(`/api/gamification/leaderboard?${params}`)
+      if (Array.isArray(primary) && primary.length > 0) return primary
+    } catch (e) {
+      // Fall through to legacy
+    }
+
+    // If daily (today), do not fallback to legacy which would misrepresent as all_time
+    if (normalized === 'daily') {
+      return []
+    }
+
+    // Legacy fallback: /api/users/leaderboard/:period (week|month|year|all_time)
+    const legacyPeriod = normalized === 'weekly' ? 'week' : normalized === 'monthly' ? 'month' : 'all_time'
+    const legacyParams = new URLSearchParams({ limit: String(limit) })
+    const legacy = await apiRequest(`/api/users/leaderboard/${legacyPeriod}?${legacyParams}`)
+    if (legacy && Array.isArray(legacy.leaderboard)) {
+      return legacy.leaderboard.map((u, idx) => ({
+        user_id: u.id,
+        handle: u.handle,
+        avatar_url: u.avatar_url,
+        points: u.karma ?? 0,
+        total_posts: u.total_posts ?? 0,
+        karma: u.karma ?? 0,
+        rank: idx + 1,
+      }))
+    }
+    return []
   },
 
   // Deal Images

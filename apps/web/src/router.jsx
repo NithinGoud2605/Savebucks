@@ -32,6 +32,8 @@ const Contact = React.lazy(() => import('./pages/Contact'))
 const NotFound = React.lazy(() => import('./pages/NotFound'))
 const SignIn = React.lazy(() => import('./pages/SignIn'))
 const SignUp = React.lazy(() => import('./pages/SignUp'))
+const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = React.lazy(() => import('./pages/ResetPassword'))
 const AuthCallback = React.lazy(() => import('./pages/AuthCallback'))
 const SavedSearches = React.lazy(() => import('./pages/SavedSearches'))
 const SavedItems = React.lazy(() => import('./pages/SavedItems'))
@@ -362,6 +364,22 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={<PageLoader />}>
         <SignUp />
+      </Suspense>
+    ),
+  },
+  {
+    path: 'forgot-password',
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <ForgotPassword />
+      </Suspense>
+    ),
+  },
+  {
+    path: 'reset-password',
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <ResetPassword />
       </Suspense>
     ),
   },

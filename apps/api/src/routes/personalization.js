@@ -120,7 +120,7 @@ router.post('/activity', requireAuth, async (req, res) => {
 // Get user recommendations
 router.get('/recommendations', requireAuth, async (req, res) => {
   try {
-    const { type, limit = 10 } = req.query
+    const { type, limit = 12 } = req.query
 
     const { data: recommendations, error } = await supaAdmin
       .rpc('get_user_recommendations', {
@@ -135,11 +135,18 @@ router.get('/recommendations', requireAuth, async (req, res) => {
       return res.json([])
     }
 
-    // If no recommendations exist, generate some
-    if (!recommendations || recommendations.length === 0) {
-      await supaAdmin.rpc('generate_user_recommendations', {
-        user_id_param: req.user.id
-      })
+    // If no recommendations exist or we have fewer than requested, generate more
+    if (!recommendations || recommendations.length < parseInt(limit)) {
+      console.log(`Generating recommendations for user ${req.user.id}, current count: ${recommendations?.length || 0}, requested: ${limit}`)
+      
+      try {
+        await supaAdmin.rpc('generate_user_recommendations', {
+          user_id_param: req.user.id
+        })
+      } catch (genError) {
+        console.error('Error generating recommendations:', genError)
+        // Continue anyway, maybe we can get some existing recommendations
+      }
 
       // Fetch again after generation
       const { data: newRecommendations } = await supaAdmin
@@ -149,6 +156,7 @@ router.get('/recommendations', requireAuth, async (req, res) => {
           recommendation_type_param: type || null
         })
 
+      console.log(`After generation: ${newRecommendations?.length || 0} recommendations found`)
       return res.json(newRecommendations || [])
     }
 
@@ -176,6 +184,46 @@ router.post('/recommendations/generate', requireAuth, async (req, res) => {
     res.json({ success: true, message: 'Recommendations generated successfully' })
   } catch (error) {
     console.error('Error generating recommendations:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Debug endpoint to check recommendation status
+router.get('/recommendations/debug', requireAuth, async (req, res) => {
+  try {
+    const { data: recommendations } = await supaAdmin
+      .rpc('get_user_recommendations', {
+        user_id_param: req.user.id,
+        limit_param: 50,
+        recommendation_type_param: null
+      })
+
+    const { data: preferences } = await supaAdmin
+      .from('user_preferences')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .single()
+
+    const { data: activities } = await supaAdmin
+      .from('user_activities')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .limit(10)
+
+    res.json({
+      user_id: req.user.id,
+      recommendations_count: recommendations?.length || 0,
+      recommendations: recommendations || [],
+      preferences: preferences || {},
+      recent_activities: activities || [],
+      debug_info: {
+        has_preferences: !!preferences,
+        has_activities: (activities?.length || 0) > 0,
+        recommendation_types: recommendations?.map(r => r.recommendation_type) || []
+      }
+    })
+  } catch (error) {
+    console.error('Error in debug endpoint:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 })

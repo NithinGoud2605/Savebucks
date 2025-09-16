@@ -534,6 +534,49 @@ export default function Profile() {
             {/* Quick Stats Card */}
             <UserStats userId={profile.handle} variant="compact" />
 
+            {/* Profile Details */}
+            <div className="card p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Profile Details</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Username</span>
+                  <span className="font-medium">@{profile.handle}</span>
+                </div>
+                {profile.display_name && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Display Name</span>
+                    <span className="font-medium">{profile.display_name}</span>
+                  </div>
+                )}
+                {profile.first_name && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">First Name</span>
+                    <span className="font-medium">{profile.first_name}</span>
+                  </div>
+                )}
+                {profile.last_name && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Last Name</span>
+                    <span className="font-medium">{profile.last_name}</span>
+                  </div>
+                )}
+                {profile.location && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Location</span>
+                    <span className="font-medium">{profile.location}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Member Since</span>
+                  <span className="font-medium">{dateAgo(profile.created_at)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Karma</span>
+                  <span className="font-medium">{formatCompactNumber(profile.karma || 0)}</span>
+                </div>
+              </div>
+            </div>
+
             {/* Top Badges */}
             <ReputationBadges userId={profile.handle} variant="compact" limit={3} />
 

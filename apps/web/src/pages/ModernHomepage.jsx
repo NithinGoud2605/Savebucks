@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Link, useLocation } from 'react-router-dom'
 import { setPageMeta } from '../lib/head.js'
@@ -165,17 +165,17 @@ const LeaderboardCard = ({ user, rank }) => {
         {/* User Info */}
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900 text-xs leading-tight">
-            {user.handle || 'Anonymous'}
+            {user.handle || user.username || 'Anonymous'}
           </h3>
           <p className="text-xs text-mint-600 font-medium">
-            {user.xp || 0} XP • {user.deals_count || 0} deals
+            {Number(user.points ?? 0).toLocaleString()} pts • {user.total_posts ?? user.deals_count ?? 0} deals
           </p>
         </div>
 
         {/* Score */}
         <div className="flex-shrink-0">
           <div className="bg-gradient-to-r from-mint-100 to-emerald-100 text-mint-700 px-2 py-0.5 rounded text-xs font-bold shadow-sm">
-            {user.score || 0}
+            {Number(user.points ?? 0).toLocaleString()} pts
           </div>
         </div>
       </div>
@@ -186,6 +186,7 @@ const LeaderboardCard = ({ user, rank }) => {
 // Deal Section Component
 const DealSection = ({ section }) => {
   const { user } = useAuth()
+  const queryClient = useQueryClient()
   
   const { data: deals, isLoading, error } = useQuery({
     queryKey: section.queryKey,
@@ -196,47 +197,118 @@ const DealSection = ({ section }) => {
 
   // For personalized sections, always fetch fallback deals
   const { data: fallbackDeals, isLoading: fallbackLoading, error: fallbackError } = useQuery({
-    queryKey: ['fallback-deals', section.limit],
-    queryFn: () => api.getDeals({ limit: section.limit, sort_by: 'trending' }),
+    queryKey: ['fallback-deals', section.limit, section.id],
+    queryFn: () => api.getDeals({ limit: Math.max(section.limit, 12), sort_by: 'trending' }),
     enabled: Boolean(section.isPersonalized),
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0, // Always fetch fresh data
     retry: 3,
     retryDelay: 1000,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    cacheTime: 0 // Don't cache fallback data
   })
 
   // Ultimate fallback - get any deals if both personalized and trending fail
   const { data: ultimateFallback } = useQuery({
-    queryKey: ['ultimate-fallback', section.limit],
-    queryFn: () => api.getDeals({ limit: section.limit }),
+    queryKey: ['ultimate-fallback', section.limit, section.id],
+    queryFn: () => api.getDeals({ limit: Math.max(section.limit, 12) }),
     enabled: Boolean(section.isPersonalized && (!fallbackDeals || fallbackDeals.length === 0)),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Always fetch fresh data
     retry: 3,
-    retryDelay: 1000
+    retryDelay: 1000,
+    cacheTime: 0 // Don't cache ultimate fallback data
   })
 
   // No static fallback - only use real deals from API
 
-  // Determine what to display - prioritize personalized, fallback to trending, ultimate fallback to any deals
-  const displayData = (deals && Array.isArray(deals) && deals.length > 0) ? deals : 
-                     (fallbackDeals && Array.isArray(fallbackDeals) && fallbackDeals.length > 0) ? fallbackDeals : 
-                     (ultimateFallback && Array.isArray(ultimateFallback) && ultimateFallback.length > 0) ? ultimateFallback : []
-  const isFallback = section.isPersonalized && (!deals || !Array.isArray(deals) || deals.length === 0)
+  // For personalized sections, if we have fewer than 6 deals, use fallback data
+  let displayData, isFallback
+  if (section.isPersonalized) {
+    if (deals && Array.isArray(deals) && deals.length >= 6) {
+      // We have enough personalized deals
+      displayData = deals
+      isFallback = false
+    } else {
+      // Always use fallback when personalized deals are insufficient
+      if (fallbackDeals && Array.isArray(fallbackDeals) && fallbackDeals.length > 0) {
+        displayData = fallbackDeals
+        isFallback = true
+      } else if (ultimateFallback && Array.isArray(ultimateFallback) && ultimateFallback.length > 0) {
+        displayData = ultimateFallback
+        isFallback = true
+      } else {
+        // Last resort - use whatever personalized deals we have
+        displayData = deals || []
+        isFallback = false
+      }
+    }
+  } else {
+    // Non-personalized sections work as before
+    displayData = (deals && Array.isArray(deals) && deals.length > 0) ? deals : []
+    isFallback = false
+  }
+  
+  const finalDisplayData = displayData
+
+  // Debug logging for Just For You section
+  if (section.id === 'just-for-you') {
+    console.log('🔍 Just For You Debug:', {
+      sectionId: section.id,
+      dealsLength: deals?.length || 0,
+      fallbackDealsLength: fallbackDeals?.length || 0,
+      ultimateFallbackLength: ultimateFallback?.length || 0,
+      displayDataLength: displayData?.length || 0,
+      finalDisplayDataLength: finalDisplayData?.length || 0,
+      isFallback,
+      isLoading,
+      fallbackLoading,
+      deals: deals?.slice(0, 2), // First 2 deals for debugging
+      fallbackDeals: fallbackDeals?.slice(0, 2), // First 2 fallback deals
+      displayData: displayData?.slice(0, 2), // First 2 display data
+      finalDisplayData: finalDisplayData?.slice(0, 2) // First 2 final display data
+    })
+  }
 
   return (
     <div className="deal-section">
         {/* Section Header */}
         <div className="mb-4 lg:mb-6">
-          <div className="flex items-center justify-between mb-2">
+           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xl lg:text-2xl font-bold text-gray-900 flex items-center gap-2">
               {section.isPersonalized && <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 text-blue-500" />}
               {isFallback ? 'Just for You' : section.title}
+              {section.id === 'just-for-you' && (
+                <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                  {finalDisplayData?.length || 0} deals
+                </span>
+              )}
             </h2>
+            
             {section.isPersonalized && (
-              <button className="text-sm text-gray-500 hover:text-primary-600 transition-colors flex items-center gap-1">
-                <span>About these deals</span>
-                <Eye className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  className="text-sm text-gray-500 hover:text-primary-600 transition-colors flex items-center gap-1"
+                  onClick={async () => {
+                    try {
+                      // First try to generate new recommendations
+                      await api.generateRecommendations()
+                      // Then refresh all queries for this section
+                      queryClient.invalidateQueries(['user-recommendations'])
+                      queryClient.invalidateQueries(['fallback-deals'])
+                      queryClient.invalidateQueries(['ultimate-fallback'])
+                    } catch (error) {
+                      console.error('Error generating recommendations:', error)
+                      // Still refresh queries even if generation fails
+                      queryClient.invalidateQueries(['user-recommendations'])
+                      queryClient.invalidateQueries(['fallback-deals'])
+                      queryClient.invalidateQueries(['ultimate-fallback'])
+                    }
+                  }}
+                >
+                  <span>Refresh Recommendations</span>
+                  <Eye className="w-4 h-4" />
+                </button>
+              </div>
             )}
             {section.id === 'top-deals-week' && (
               <button className="text-sm text-primary-600 hover:text-primary-700 transition-colors font-medium">
@@ -256,17 +328,18 @@ const DealSection = ({ section }) => {
              <div key={index} className="flex-shrink-0 w-64 h-[280px] animate-pulse bg-gray-100 rounded-xl" />
            ))}
          </div>
-       ) : displayData && Array.isArray(displayData) && displayData.length > 0 ? (
+       ) : finalDisplayData && Array.isArray(finalDisplayData) && finalDisplayData.length > 0 ? (
          <div className="relative">
            {/* Scroll container */}
-           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-             {displayData.map((item, index) => {
+           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2" style={{ minWidth: '100%' }}>
+             {finalDisplayData.map((item, index) => {
                // Handle both recommendation objects and deal objects
                const deal = item?.recommendation_type ? item?.metadata : item
                return (
                  <div 
                    key={item?.id || `fallback-${deal?.id || index}`} 
                    className="flex-shrink-0 w-64 group block bg-gradient-to-br from-white via-mint-50/30 to-emerald-50/40 rounded-xl border border-mint-200/60 shadow-lg hover:shadow-xl hover:border-emerald-300 transition-all duration-300 overflow-hidden hover:-translate-y-1 hover:scale-[1.02]"
+                   style={{ minWidth: '256px', maxWidth: '256px' }}
                  >
                    {/* Recommendation Badge */}
                    {item?.recommendation_type && (
@@ -346,9 +419,9 @@ export default function ModernHomepage() {
       id: 'just-for-you', 
       title: 'Just for You', 
       subtitle: 'Personalized recommendations',
-      limit: 4,
-      queryKey: ['user-recommendations', 4],
-      queryFn: () => api.getUserRecommendations({ type: 'deal', limit: 4 }),
+      limit: 12,
+      queryKey: ['user-recommendations', 12],
+      queryFn: () => api.getUserRecommendations({ type: 'deal', limit: 12 }),
       isPersonalized: true
     },
     { 
@@ -393,10 +466,10 @@ export default function ModernHomepage() {
   })
 
   // Fetch leaderboard data
-  const [leaderboardPeriod, setLeaderboardPeriod] = useState('week')
+  const [leaderboardPeriod] = useState('weekly')
   const { data: leaderboardData, isLoading: leaderboardLoading } = useQuery({
     queryKey: ['leaderboard', leaderboardPeriod],
-    queryFn: () => api.getLeaderboard(leaderboardPeriod, 10),
+    queryFn: () => api.getLeaderboard(leaderboardPeriod, 5),
     staleTime: 5 * 60 * 1000
   })
 
@@ -534,22 +607,7 @@ export default function ModernHomepage() {
                   </Link>
                 </div>
 
-                {/* Period Selector */}
-                <div className="flex space-x-1 mb-2 bg-gradient-to-r from-mint-100 to-emerald-100 p-0.5 rounded-lg shadow-sm">
-                  {['week', 'month', 'alltime'].map((period) => (
-                    <button
-                      key={period}
-                      onClick={() => setLeaderboardPeriod(period)}
-                      className={`px-2 py-1 text-xs font-medium rounded-md transition-all duration-200 ${
-                        leaderboardPeriod === period
-                          ? 'bg-white text-mint-700 shadow-md font-semibold'
-                          : 'text-mint-600 hover:text-mint-800 hover:bg-white/50'
-                      }`}
-                    >
-                      {period === 'week' ? 'Week' : period === 'month' ? 'Month' : 'All Time'}
-                    </button>
-                  ))}
-                </div>
+                {/* Showing this week's top 5 contributors */}
 
                 {/* Leaderboard List */}
                 {leaderboardLoading ? (
