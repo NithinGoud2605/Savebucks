@@ -288,8 +288,9 @@ r.post('/reset-password', async (req, res) => {
     }
     
     // Send password reset email using Supabase Auth
+    const siteUrl = process.env.SITE_URL || 'http://localhost:5173'
     const { error } = await supaAdmin.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.SITE_URL || 'http://localhost:5173'}/reset-password`,
+      redirectTo: `${siteUrl}/reset-password`,
     });
     
     if (error) {

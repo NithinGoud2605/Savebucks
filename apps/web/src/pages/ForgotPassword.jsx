@@ -7,20 +7,20 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const { showToast } = useToast()
+  const toast = useToast()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     
     if (!email) {
-      showToast('Please enter your email address', 'error')
+      toast.error('Please enter your email address')
       return
     }
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      showToast('Please enter a valid email address', 'error')
+      toast.error('Please enter a valid email address')
       return
     }
 
@@ -29,10 +29,10 @@ export default function ForgotPassword() {
     try {
       await api.requestPasswordReset(email)
       setIsSubmitted(true)
-      showToast('Password reset email sent! Check your inbox.', 'success')
+      toast.success('Password reset email sent! Check your inbox.')
     } catch (error) {
       console.error('Password reset error:', error)
-      showToast(error.message || 'Failed to send reset email. Please try again.', 'error')
+      toast.error(error.message || 'Failed to send reset email. Please try again.')
     } finally {
       setIsLoading(false)
     }

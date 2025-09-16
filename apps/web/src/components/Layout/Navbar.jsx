@@ -246,13 +246,11 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex items-center flex-shrink-0">
             <Link to="/" className="flex items-center group">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 p-1.5 group-hover:from-primary-600 group-hover:to-primary-700 transition-all duration-200">
-                <img 
-                  src="/logo.png" 
-                  alt="SaveBucks Logo" 
-                  className="h-7 w-7 object-contain filter brightness-0 invert"
-                />
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="SaveBucks Logo" 
+                className="h-20 w-20 object-contain group-hover:scale-105 transition-transform duration-200"
+              />
             </Link>
           </div>
 

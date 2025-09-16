@@ -10,7 +10,7 @@ export default function ResetPassword() {
   const [isValidToken, setIsValidToken] = useState(null) // null = checking, true = valid, false = invalid
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const { showToast } = useToast()
+  const toast = useToast()
 
   useEffect(() => {
     // Check if we have the required URL parameters from Supabase
@@ -32,17 +32,17 @@ export default function ResetPassword() {
     e.preventDefault()
     
     if (!password) {
-      showToast('Please enter a new password', 'error')
+      toast.error('Please enter a new password')
       return
     }
 
     if (password.length < 6) {
-      showToast('Password must be at least 6 characters long', 'error')
+      toast.error('Password must be at least 6 characters long')
       return
     }
 
     if (password !== confirmPassword) {
-      showToast('Passwords do not match', 'error')
+      toast.error('Passwords do not match')
       return
     }
 
@@ -50,7 +50,7 @@ export default function ResetPassword() {
     
     try {
       await api.updatePassword(password)
-      showToast('Password updated successfully! You can now sign in with your new password.', 'success')
+      toast.success('Password updated successfully! You can now sign in with your new password.')
       
       // Clear the tokens and redirect to sign in
       localStorage.removeItem('access_token')
@@ -58,7 +58,7 @@ export default function ResetPassword() {
       navigate('/signin')
     } catch (error) {
       console.error('Password update error:', error)
-      showToast(error.message || 'Failed to update password. Please try again.', 'error')
+      toast.error(error.message || 'Failed to update password. Please try again.')
     } finally {
       setIsLoading(false)
     }

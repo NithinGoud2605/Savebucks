@@ -248,6 +248,7 @@ router.get('/leaderboard', async (req, res) => {
       })
 
     if (error) {
+      console.error('Leaderboard RPC error:', error)
       return res.status(400).json({ error: error.message })
     }
 
