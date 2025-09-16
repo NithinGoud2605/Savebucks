@@ -13,10 +13,10 @@ export default function ResetPassword() {
   const toast = useToast()
 
   useEffect(() => {
-    // Check if we have the required URL parameters from Supabase
-    const accessToken = searchParams.get('access_token')
-    const refreshToken = searchParams.get('refresh_token')
-    const type = searchParams.get('type')
+    // Check if we have the required URL parameters from Supabase (both query params and hash)
+    const accessToken = searchParams.get('access_token') || new URLSearchParams(window.location.hash.substring(1)).get('access_token')
+    const refreshToken = searchParams.get('refresh_token') || new URLSearchParams(window.location.hash.substring(1)).get('refresh_token')
+    const type = searchParams.get('type') || new URLSearchParams(window.location.hash.substring(1)).get('type')
 
     if (type === 'recovery' && accessToken && refreshToken) {
       // Store the tokens for the password update
