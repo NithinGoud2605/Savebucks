@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { setPageMeta } from '../lib/head.js'
 import { api } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
@@ -383,6 +383,21 @@ const DealSection = ({ section }) => {
 
 export default function ModernHomepage() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  
+  // Handle password reset tokens if user lands on homepage with them
+  useEffect(() => {
+    const accessToken = searchParams.get('access_token')
+    const refreshToken = searchParams.get('refresh_token')
+    const type = searchParams.get('type')
+    
+    if (type === 'recovery' && accessToken && refreshToken) {
+      // Redirect to reset password page with tokens
+      navigate(`/reset-password?access_token=${accessToken}&refresh_token=${refreshToken}&type=${type}`)
+      return
+    }
+  }, [searchParams, navigate])
   
   useEffect(() => {
     setPageMeta({
