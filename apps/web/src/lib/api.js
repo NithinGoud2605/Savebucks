@@ -1235,9 +1235,9 @@ export const api = {
   },
 
   notifications: {
-    getPreferences: () => apiRequest('/api/notification-preferences'),
+    getPreferences: () => apiRequest('/api/notifications/preferences'),
     
-    updatePreferences: (preferences) => apiRequest('/api/notification-preferences', {
+    updatePreferences: (preferences) => apiRequest('/api/notifications/preferences', {
       method: 'PUT',
       body: preferences,
     }),
