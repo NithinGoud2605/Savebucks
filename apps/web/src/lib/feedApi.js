@@ -85,6 +85,20 @@ export const feedApi = {
       sampleItem: normalizedItems[0], // Debug first item
     });
 
+    // Debug engagement data specifically
+    if (normalizedItems.length > 0) {
+      const sample = normalizedItems[0];
+      console.log('[FeedAPI] Sample engagement data:', {
+        id: sample.id,
+        title: sample.title,
+        ups: sample.ups,
+        downs: sample.downs,
+        comments_count: sample.comments_count,
+        views_count: sample.views_count,
+        engagement: sample.engagement
+      });
+    }
+
     return {
       items: normalizedItems,
       nextCursor,
@@ -132,7 +146,14 @@ export const feedApi = {
       images: this.normalizeMedia(item),
       image_url: item.image_url || item.imageUrl || item.featured_image || null,
       
-      // Engagement metrics
+      // Engagement metrics (flattened for component compatibility)
+      ups: item.ups || item.upvotes || 0,
+      downs: item.downs || item.downvotes || 0,
+      comments_count: item.comments_count || item.commentsCount || 0,
+      views_count: item.views_count || item.viewsCount || 0,
+      saves_count: item.saves_count || item.savesCount || 0,
+      
+      // Also keep in engagement object for reference
       engagement: {
         ups: item.ups || item.upvotes || 0,
         downs: item.downs || item.downvotes || 0,

@@ -19,6 +19,7 @@ export function RightSidebar() {
   return (
     <aside className="space-y-3">
       <TrendingTagsWidget />
+      <TopCompaniesWidget />
       <LeaderboardWidget />
     </aside>
   );
@@ -121,7 +122,7 @@ function StatItem({ label, value, icon: Icon, color }) {
 }
 
 /**
- * Leaderboard Widget
+ * Leaderboard Widget - Enhanced Graphical Design
  */
 function LeaderboardWidget() {
   const { data: leaderboard, isLoading } = useQuery({
@@ -131,10 +132,11 @@ function LeaderboardWidget() {
   });
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-2 shadow-sm">
-      <div className="flex items-center justify-between mb-1.5">
-        <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide">
-          Leaderboard
+    <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide flex items-center gap-1.5">
+          <Trophy className="w-3 h-3 text-yellow-500" />
+          Top Savers
         </h3>
         <Link
           to="/leaderboard"
@@ -146,17 +148,18 @@ function LeaderboardWidget() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-3">
+        <div className="flex items-center justify-center py-4">
           <Loader2 className="w-4 h-4 animate-spin text-mint-600" />
         </div>
       ) : leaderboard && leaderboard.length > 0 ? (
-        <div className="space-y-1">
+        <div className="space-y-2">
           {leaderboard.slice(0, 5).map((user, index) => (
             <LeaderboardItem key={user.id} user={user} rank={index + 1} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-3 text-xs text-gray-500">
+        <div className="text-center py-4 text-xs text-gray-500">
+          <Trophy className="w-6 h-6 mx-auto mb-2 text-gray-300" />
           No data yet
         </div>
       )}
@@ -171,21 +174,43 @@ function LeaderboardItem({ user, rank }) {
     3: '🥉',
   };
 
+  const getRankColor = (rank) => {
+    switch (rank) {
+      case 1: return 'from-yellow-400 to-yellow-600';
+      case 2: return 'from-gray-300 to-gray-500';
+      case 3: return 'from-amber-600 to-amber-800';
+      default: return 'from-mint-500 to-emerald-600';
+    }
+  };
+
   return (
     <Link
       to={`/u/${user.handle}`}
-      className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-50 transition-colors"
+      className="group relative bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-2 hover:from-mint-50 hover:to-emerald-50 transition-all duration-200 border border-gray-200 hover:border-mint-300 hover:shadow-sm"
     >
-      <div className="flex-shrink-0 text-xs">
-        {rankIcons[rank] || `${rank}️⃣`}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-xs font-semibold text-gray-900 truncate">
-          {user.handle || `User ${user.id}`}
+      <div className="flex items-center gap-2">
+        {/* Rank Badge */}
+        <div className={`flex-shrink-0 w-6 h-6 bg-gradient-to-r ${getRankColor(rank)} text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm`}>
+          {rankIcons[rank] || `${rank}`}
         </div>
-      </div>
-      <div className="flex-shrink-0 bg-mint-100 text-mint-700 px-1 py-0.5 rounded text-xs font-bold">
-        {user.points || user.karma || 0}
+        
+        {/* User Info */}
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-semibold text-gray-900 truncate group-hover:text-mint-700 transition-colors">
+            {user.handle || `User ${user.id}`}
+          </div>
+          <div className="flex items-center gap-1 text-xs text-gray-600">
+            <span className="font-medium text-green-600">
+              {user.points || user.karma || 0}
+            </span>
+            <span className="text-gray-400">points</span>
+          </div>
+        </div>
+        
+        {/* Trophy for top 3 */}
+        {rank <= 3 && (
+          <Trophy className="w-3 h-3 text-yellow-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+        )}
       </div>
     </Link>
   );
@@ -213,21 +238,16 @@ function TopCompaniesWidget() {
           <Loader2 className="w-4 h-4 animate-spin text-mint-600" />
         </div>
       ) : companies && companies.length > 0 ? (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-4 gap-1">
           {companies.slice(0, 8).map((company, index) => (
             <Link
               key={company.id}
               to={`/company/${company.slug}`}
-              className="group relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2 hover:from-mint-50 hover:to-emerald-50 transition-all duration-200 border border-gray-200 hover:border-mint-300 hover:shadow-md"
+              className="group relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-1.5 hover:from-mint-50 hover:to-emerald-50 transition-all duration-200 border border-gray-200 hover:border-mint-300 hover:shadow-sm"
               title={company.name}
             >
-              {/* Rank Badge */}
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-mint-500 to-emerald-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
-                {index + 1}
-              </div>
-              
-              {/* Company Logo/Icon */}
-              <div className="flex items-center justify-center h-8 mb-1">
+              {/* Company Logo Only */}
+              <div className="flex items-center justify-center h-6">
                 {company.logo_url ? (
                   <img
                     src={company.logo_url}
@@ -235,13 +255,8 @@ function TopCompaniesWidget() {
                     className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform"
                   />
                 ) : (
-                  <Store className="w-6 h-6 text-gray-400 group-hover:text-mint-600 transition-colors" />
+                  <Store className="w-4 h-4 text-gray-400 group-hover:text-mint-600 transition-colors" />
                 )}
-              </div>
-              
-              {/* Company Name */}
-              <div className="text-xs font-medium text-gray-900 text-center truncate group-hover:text-mint-700 transition-colors">
-                {company.name}
               </div>
             </Link>
           ))}

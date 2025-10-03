@@ -26,6 +26,15 @@ export function SocialDealCard({ deal, index = 0 }) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [imageError, setImageError] = useState(false);
 
+  // Handle keyboard navigation for images
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowLeft' && selectedImageIndex > 0) {
+      setSelectedImageIndex(selectedImageIndex - 1);
+    } else if (e.key === 'ArrowRight' && selectedImageIndex < images.length - 1) {
+      setSelectedImageIndex(selectedImageIndex + 1);
+    }
+  };
+
   // Safety check
   if (!deal || typeof deal !== 'object') {
     console.warn('SocialDealCard: Invalid deal object', deal);
@@ -80,10 +89,28 @@ export function SocialDealCard({ deal, index = 0 }) {
       ? Math.round(((deal.original_price - deal.price) / deal.original_price) * 100)
       : 0);
 
-  // Social metrics
+  // Social metrics with fallbacks
   const votes = (deal.ups || 0) - (deal.downs || 0);
   const comments = deal.comments_count || 0;
   const views = deal.views_count || 0;
+  
+  // Debug logging for engagement data
+  if (typeof window !== 'undefined' && !window._engagementDebugLogged) {
+    console.log('[SocialDealCard] Engagement data:', {
+      dealId: deal.id,
+      dealTitle: deal.title,
+      rawDealData: {
+        ups: deal.ups,
+        downs: deal.downs,
+        comments_count: deal.comments_count,
+        views_count: deal.views_count,
+        saves_count: deal.saves_count
+      },
+      finalValues: { votes, comments, views },
+      fullDeal: deal
+    });
+    window._engagementDebugLogged = true;
+  }
 
   // Animation
   const cardVariants = {
@@ -103,69 +130,61 @@ export function SocialDealCard({ deal, index = 0 }) {
       className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 group hover:border-mint-300"
     >
       {/* Compact Header - Company & Time */}
-      <div className="px-4 pt-3 pb-2">
+      <div className="px-3 pt-3 pb-2">
         <div className="flex items-center justify-between">
           {/* Company Info */}
-          <Link 
-            to={`/company/${company.slug}`}
-            className="flex items-center gap-2 flex-1 min-w-0 hover:opacity-80 transition-opacity"
-          >
+          <div className="flex items-center gap-2">
             {company.logo_url ? (
               <img
                 src={company.logo_url}
                 alt={company.name}
-                className="w-8 h-8 rounded-lg object-contain bg-gray-50 p-1 border border-gray-200 flex-shrink-0"
+                className="w-6 h-6 rounded object-contain bg-gray-50 p-0.5 border border-gray-200 flex-shrink-0"
               />
             ) : (
-              <div className="w-8 h-8 bg-gradient-to-br from-mint-100 to-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-mint-700">
+              <div className="w-6 h-6 bg-gradient-to-br from-mint-100 to-emerald-100 rounded flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-bold text-mint-700">
                   {company.name?.charAt(0) || 'S'}
                 </span>
               </div>
             )}
             
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h3 className="font-bold text-sm text-gray-900 truncate">
-                  {company.name}
-                </h3>
-                {company.is_verified && (
-                  <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                )}
-              </div>
+            <div>
+              <h3 className="font-semibold text-sm text-gray-900">
+                {company.name}
+              </h3>
+              <span className="text-xs text-gray-500">{dateAgo(deal.created_at)}</span>
             </div>
-          </Link>
-
-          {/* Time and Hot Badge */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-xs text-gray-500">{dateAgo(deal.created_at)}</span>
-            {votes > 20 && (
-              <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-1.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1">
-                <Flame className="w-3 h-3" />
-                HOT
-              </div>
-            )}
           </div>
+
+          {/* Hot Badge */}
+          {votes > 20 && (
+            <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-2 py-0.5 rounded-full text-xs font-bold flex items-center gap-0.5">
+              <Flame className="w-3 h-3" />
+              HOT
+            </div>
+          )}
         </div>
       </div>
 
       {/* Deal Content */}
       <Link to={`/deal/${deal.id}`} className="block">
-        {/* Image - Always show (with placeholder if needed) */}
-        <div className="relative bg-gradient-to-br from-gray-100 to-gray-200 aspect-[16/9]">
+        {/* Image - Fit to window with all available images */}
+        <div 
+          className="relative bg-gradient-to-br from-gray-100 to-gray-200 aspect-[16/9] overflow-hidden focus:outline-none"
+          tabIndex={images.length > 1 ? 0 : -1}
+          onKeyDown={handleKeyDown}
+        >
           {currentImage && !imageError ? (
             <img
               src={currentImage}
               alt={deal.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain bg-white"
               loading="lazy"
               onError={() => setImageError(true)}
             />
           ) : (
             // Placeholder when no image
-            <div className="w-full h-full flex items-center justify-center">
+            <div className="w-full h-full flex items-center justify-center bg-white">
               <div className="text-center">
                 <div className="text-6xl mb-2">🎁</div>
                 <div className="text-sm font-medium text-gray-500">
@@ -175,66 +194,53 @@ export function SocialDealCard({ deal, index = 0 }) {
             </div>
           )}
 
-            {/* Discount Badge */}
-            {discount > 0 && (
-              <div className="absolute top-3 left-3">
-                <div className={clsx(
-                  'px-3 py-1.5 rounded-lg font-bold text-white shadow-lg text-sm',
-                  discount >= 50 
-                    ? 'bg-gradient-to-r from-red-500 to-pink-600'
-                    : discount >= 30
-                    ? 'bg-gradient-to-r from-orange-500 to-red-500'
-                    : 'bg-gradient-to-r from-blue-500 to-purple-500'
-                )}>
-                  {discount}% OFF
-                </div>
-              </div>
-            )}
 
-            {/* Save Badge if available */}
-            {deal.original_price && deal.price !== undefined && deal.original_price > deal.price && (
-              <div className="absolute top-3 right-3">
-                <div className="bg-green-600 text-white px-3 py-1.5 rounded-lg font-bold shadow-lg text-sm">
-                  Save ${(deal.original_price - deal.price).toFixed(2)}
-                </div>
-              </div>
-            )}
-
-            {/* Image Navigation */}
+            {/* Image Navigation - Enhanced for multiple images */}
             {images.length > 1 && (
               <>
+                {/* Previous Image Button */}
                 <button
                   onClick={(e) => {
                     e.preventDefault();
                     setSelectedImageIndex(Math.max(0, selectedImageIndex - 1));
                   }}
                   disabled={selectedImageIndex === 0}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-white bg-opacity-90 rounded-full shadow-lg disabled:opacity-50 hover:bg-opacity-100 transition-all"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-white bg-opacity-95 rounded-full shadow-lg disabled:opacity-50 hover:bg-opacity-100 transition-all hover:scale-110"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="w-5 h-5 text-gray-700" />
                 </button>
                 
+                {/* Next Image Button */}
                 <button
                   onClick={(e) => {
                     e.preventDefault();
                     setSelectedImageIndex(Math.min(images.length - 1, selectedImageIndex + 1));
                   }}
                   disabled={selectedImageIndex === images.length - 1}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white bg-opacity-90 rounded-full shadow-lg disabled:opacity-50 hover:bg-opacity-100 transition-all"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-white bg-opacity-95 rounded-full shadow-lg disabled:opacity-50 hover:bg-opacity-100 transition-all hover:scale-110"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-5 h-5 text-gray-700" />
                 </button>
 
-                {/* Image indicator */}
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
+                {/* Image Counter */}
+                <div className="absolute top-3 right-3 bg-black bg-opacity-70 text-white px-2 py-1 rounded-full text-xs font-medium">
+                  {selectedImageIndex + 1} / {images.length}
+                </div>
+
+                {/* Image Dots Indicator */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                   {images.map((_, idx) => (
-                    <div
+                    <button
                       key={idx}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSelectedImageIndex(idx);
+                      }}
                       className={clsx(
-                        'w-1.5 h-1.5 rounded-full transition-all',
+                        'w-2 h-2 rounded-full transition-all duration-200',
                         idx === selectedImageIndex
-                          ? 'bg-white w-4'
-                          : 'bg-white bg-opacity-50'
+                          ? 'bg-white w-6'
+                          : 'bg-white bg-opacity-50 hover:bg-opacity-75'
                       )}
                     />
                   ))}
@@ -246,19 +252,17 @@ export function SocialDealCard({ deal, index = 0 }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
 
-        {/* Title After Image */}
-        <div className="px-4 pt-3 pb-2">
-          <h2 className="text-base font-bold text-gray-900 leading-snug line-clamp-2 group-hover:text-mint-700 transition-colors">
+        {/* Title and Price - Compact Layout */}
+        <div className="px-3 pt-2 pb-3">
+          <h2 className="text-sm font-semibold text-gray-900 leading-tight mb-2 group-hover:text-mint-700 transition-colors line-clamp-2">
             {deal.title}
           </h2>
-        </div>
-
-        {/* Price Section */}
-        {deal.price !== undefined && (
-          <div className="px-4 py-3 bg-gradient-to-r from-mint-50 to-emerald-50 border-y border-mint-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-mint-700">
+          
+          {/* Price and Discount */}
+          {deal.price !== undefined && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-baseline gap-1">
+                <span className="text-lg font-bold text-mint-700">
                   {deal.price === 0 ? 'FREE' : formatPrice(deal.price)}
                 </span>
                 {deal.original_price && deal.original_price > deal.price && (
@@ -267,99 +271,79 @@ export function SocialDealCard({ deal, index = 0 }) {
                   </span>
                 )}
               </div>
-
-              {/* Expiry Timer */}
-              {deal.expires_at && (
-                <div className="flex items-center gap-1 text-xs text-orange-700 bg-orange-100 px-2 py-1 rounded-full">
-                  <Clock className="w-3 h-3" />
-                  <span className="font-medium">
-                    Ends {new Date(deal.expires_at).toLocaleDateString()}
-                  </span>
+              
+              {/* Discount Badge */}
+              {discount > 0 && (
+                <div className={clsx(
+                  'px-2 py-0.5 rounded font-bold text-white text-xs',
+                  discount >= 50 
+                    ? 'bg-gradient-to-r from-red-500 to-pink-600'
+                    : discount >= 30
+                    ? 'bg-gradient-to-r from-orange-500 to-red-500'
+                    : 'bg-gradient-to-r from-blue-500 to-purple-500'
+                )}>
+                  {discount}% OFF
                 </div>
               )}
             </div>
-          </div>
-        )}
-
-        {/* Description (if exists) */}
-        {deal.description && (
-          <div className="px-4 pb-3">
-            <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
-              {deal.description}
-            </p>
-          </div>
-        )}
-      </Link>
-
-      {/* Compact Footer */}
-      <div className="px-4 py-3 border-t border-gray-100">
-        <div className="flex items-center justify-between mb-2.5">
-          {/* Left - Social Engagement */}
-          <div className="flex items-center gap-3">
-            {/* Upvote */}
-            <button className="flex items-center gap-1 text-gray-600 hover:text-mint-600 transition-colors">
-              <ArrowUp className="w-4 h-4" />
-              <span className="text-sm font-medium">{votes >= 0 ? votes : 0}</span>
-            </button>
-
-            {/* Comments */}
-            <Link 
-              to={`/deal/${deal.id}#comments`}
-              className="flex items-center gap-1 text-gray-600 hover:text-blue-600 transition-colors"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span className="text-sm font-medium">{comments}</span>
-            </Link>
-
-            {/* Views */}
-            <div className="flex items-center gap-1 text-gray-500">
-              <Eye className="w-4 h-4" />
-              <span className="text-sm font-medium">{views > 0 ? views.toLocaleString() : 0}</span>
-            </div>
-          </div>
-
-          {/* Right - Actions */}
-          <div className="flex items-center gap-2">
-            {/* Bookmark */}
-            <button className="p-1.5 rounded-lg text-gray-600 hover:text-amber-600 hover:bg-amber-50 transition-colors">
-              <Bookmark className="w-4 h-4" />
-            </button>
-
-            {/* Get Deal CTA */}
-            <Link
-              to={`/deal/${deal.id}`}
-              className="bg-gradient-to-r from-mint-500 to-emerald-600 hover:from-mint-600 hover:to-emerald-700 text-white px-4 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 shadow-sm hover:shadow-md transition-all"
-            >
-              <span>Get Deal</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+          )}
         </div>
 
-        {/* Submitter info - Compact */}
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+      </Link>
+
+      {/* Compact Footer - User Details & Actions */}
+      <div className="px-3 py-3 border-t border-gray-100">
+        {/* User Upload Details */}
+        <div className="flex items-center gap-2 mb-2">
           <Link 
             to={`/u/${submitter.handle}`}
-            className="flex items-center gap-1.5 hover:text-gray-900 transition-colors"
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
           >
             {submitter.avatar_url ? (
               <img 
                 src={submitter.avatar_url} 
                 alt={submitter.handle}
-                className="w-4 h-4 rounded-full border border-gray-200"
+                className="w-5 h-5 rounded-full border border-gray-200"
               />
             ) : (
-              <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white text-[9px] font-bold">
+              <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
                 {submitter.handle?.charAt(0).toUpperCase() || 'U'}
               </div>
             )}
-            <span>@{submitter.handle || 'user'}</span>
+            <span className="text-xs font-medium text-gray-900">@{submitter.handle || 'user'}</span>
+            {submitter.karma > 50 && (
+              <span className="bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded text-xs font-semibold">
+                ⭐ {submitter.karma}
+              </span>
+            )}
           </Link>
-          {submitter.karma > 50 && (
-            <span className="bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded text-[10px] font-semibold flex items-center gap-0.5">
-              ⭐ {submitter.karma}
-            </span>
-          )}
+        </div>
+
+        <div className="flex items-center justify-between">
+          {/* Social Stats */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 text-gray-600">
+              <ArrowUp className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium">{votes >= 0 ? votes : 0}</span>
+            </div>
+            <div className="flex items-center gap-1 text-gray-600">
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium">{comments}</span>
+            </div>
+            <div className="flex items-center gap-1 text-gray-500">
+              <Eye className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium">{views > 0 ? views.toLocaleString() : 0}</span>
+            </div>
+          </div>
+
+          {/* Get Deal Button */}
+          <Link
+            to={`/deal/${deal.id}`}
+            className="bg-gradient-to-r from-mint-500 to-emerald-600 hover:from-mint-600 hover:to-emerald-700 text-white px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm hover:shadow-md transition-all"
+          >
+            <span>Get Deal</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </Link>
         </div>
       </div>
     </motion.div>
