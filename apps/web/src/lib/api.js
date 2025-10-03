@@ -1418,6 +1418,24 @@ export const api = {
     }),
   },
 
+  // Unified Feed API
+  getFeed: (params = {}) => {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        if (typeof value === 'object') {
+          searchParams.append(key, JSON.stringify(value))
+        } else {
+          searchParams.append(key, value.toString())
+        }
+      }
+    })
+    return apiRequest(`/api/feed?${searchParams}`)
+  },
+
+  // Quick Stats
+  getQuickStats: () => apiRequest('/api/stats/quick'),
+
   // Generic HTTP methods for enterprise search
   get: (url, options = {}) => apiRequest(url, { method: 'GET', ...options }),
   post: (url, data, options = {}) => apiRequest(url, { 

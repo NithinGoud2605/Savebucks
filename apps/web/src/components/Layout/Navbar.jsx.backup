@@ -135,7 +135,7 @@ const Navbar = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-primary-200/60 bg-gradient-to-r from-primary-50/95 to-primary-100/95 backdrop-blur-md supports-[backdrop-filter]:bg-gradient-to-r supports-[backdrop-filter]:from-primary-50/80 supports-[backdrop-filter]:to-primary-100/80 shadow-lg">
+      <header className="sticky top-0 z-50 w-full border-b border-primary-200/60 bg-gradient-to-r from-primary-50/95 to-primary-100/95 backdrop-blur-md supports-[backdrop-filter]:bg-gradient-to-r supports-[backdrop-filter]:from-primary-50/80 supports-[backdrop-filter]:to-primary-100/80 shadow-lg">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between gap-4">
           
@@ -150,10 +150,37 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation - Empty center space */}
-          <div className="hidden lg:flex lg:items-center lg:flex-1 lg:justify-center">
-            {/* Empty space for balance */}
-          </div>
+           {/* Desktop Navigation - Simplified */}
+           <div className="hidden lg:flex lg:items-center lg:flex-1 lg:justify-center">
+             <nav className="flex items-center space-x-1">
+               {/* Home Link */}
+               <Link
+                 to="/"
+                 className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600"
+               >
+                 <HomeIcon className="h-4 w-4" />
+                 <span>Home</span>
+               </Link>
+
+               {/* Community Link */}
+               <Link
+                 to="/forums"
+                 className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600"
+               >
+                 <UserGroupIcon className="h-4 w-4" />
+                 <span>Community</span>
+               </Link>
+
+               {/* Saved Items Link */}
+               <Link
+                 to="/saved-items"
+                 className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600"
+               >
+                 <BookmarkIcon className="h-4 w-4" />
+                 <span>Saved</span>
+               </Link>
+             </nav>
+           </div>
 
             {/* Right Side Actions */}
             <div className="flex items-center space-x-2 flex-shrink-0">
@@ -166,24 +193,6 @@ const Navbar = () => {
                   </span>
                 </div>
               )}
-
-              {/* Community Link */}
-              <Link
-                to="/forums"
-                className="hidden lg:flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600"
-              >
-                <UserGroupIcon className="h-4 w-4" />
-                <span>Community</span>
-              </Link>
-
-              {/* Saved Items Link */}
-              <Link
-                to="/saved-items"
-                className="hidden lg:flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600"
-              >
-                <BookmarkIcon className="h-4 w-4" />
-                <span>Saved</span>
-              </Link>
               
               {/* Post Deal Button */}
               <Link
@@ -326,16 +335,25 @@ const Navbar = () => {
                   <div className="mt-6 space-y-4">
                     {/* Mobile search removed; use homepage search */}
 
-                    {/* Mobile Navigation */}
-                    <nav className="space-y-2">
-                <Link
-                        to="/forums"
-                        onClick={() => setIsMenuOpen(false)}
-                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900"
-                      >
-                        <UserGroupIcon className="h-5 w-5" />
-                        <span>Community</span>
-                      </Link>
+                     {/* Mobile Navigation */}
+                     <nav className="space-y-2">
+                       <Link
+                         to="/"
+                         onClick={() => setIsMenuOpen(false)}
+                         className="flex items-center space-x-2 rounded-lg px-3 py-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900"
+                       >
+                         <HomeIcon className="h-5 w-5" />
+                         <span>Home</span>
+                       </Link>
+
+                       <Link
+                         to="/forums"
+                         onClick={() => setIsMenuOpen(false)}
+                         className="flex items-center space-x-2 rounded-lg px-3 py-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900"
+                       >
+                         <UserGroupIcon className="h-5 w-5" />
+                         <span>Community</span>
+                       </Link>
 
                        <Link
                          to="/saved-items"
@@ -345,7 +363,7 @@ const Navbar = () => {
                          <BookmarkIcon className="h-5 w-5" />
                          <span>Saved Items</span>
                        </Link>
-                    </nav>
+                     </nav>
 
                                          {/* Mobile Post Deal Button */}
                      <Link
@@ -432,9 +450,50 @@ const Navbar = () => {
                 </Dialog.Content>
               </Dialog.Portal>
             </Dialog.Root>
+          </div>
         </div>
       </div>
     </header>
+
+    {/* Secondary Navbar - Search Bar & Stats */}
+    <div className="bg-gradient-to-r from-primary-100/80 to-primary-200/80 border-b border-primary-300/60 backdrop-blur-sm">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-6 py-3">
+          {/* Search Bar */}
+          <div className="flex-1 max-w-2xl">
+            <AdvancedSearchInterface
+              showFilters={false}
+              showSuggestions={true}
+              compact={true}
+              placeholder="Search deals, coupons, stores..."
+              className="drop-shadow-sm"
+            />
+          </div>
+
+          {/* Stats - Right of Search */}
+          <div className="hidden lg:flex items-center space-x-4 text-xs text-secondary-600 flex-shrink-0">
+            <div className="flex items-center space-x-2 px-3 py-2 bg-white/60 rounded-lg border border-white/40 backdrop-blur-sm">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+              <UserIcon className="w-4 h-4 text-blue-600" />
+              <span className="font-semibold text-gray-900">{navbarStats?.stats?.usersOnline?.toLocaleString() || '...'}</span>
+              <span className="text-gray-600">online</span>
+            </div>
+            
+            <div className="flex items-center space-x-2 px-3 py-2 bg-white/60 rounded-lg border border-white/40 backdrop-blur-sm">
+              <FireIcon className="w-4 h-4 text-orange-500" />
+              <span className="font-semibold text-gray-900">{navbarStats?.stats?.dealsToday?.toLocaleString() || '...'}</span>
+              <span className="text-gray-600">deals</span>
+            </div>
+            
+            <div className="flex items-center space-x-2 px-3 py-2 bg-white/60 rounded-lg border border-white/40 backdrop-blur-sm">
+              <TagIcon className="w-4 h-4 text-emerald-600" />
+              <span className="font-semibold text-gray-900">{navbarStats?.stats?.couponsToday?.toLocaleString() || '...'}</span>
+              <span className="text-gray-600">coupons</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     </>
   )
 }

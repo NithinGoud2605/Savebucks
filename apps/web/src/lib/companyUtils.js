@@ -82,3 +82,4 @@ export function getCompanyLink(deal) {
 
 
 
+

@@ -7,7 +7,7 @@ import { Skeleton } from './components/Loader/Skeleton'
 const ListPage = React.lazy(() => import('./pages/ListPage'))
 const SearchResults = React.lazy(() => import('./pages/SearchResults'))
 const UnifiedSearchResults = React.lazy(() => import('./pages/UnifiedSearchResults'))
-const ModernHomepage = React.lazy(() => import('./pages/ModernHomepage'))
+const SocialHomepage = React.lazy(() => import('./pages/SocialHomepage'))
 const ProfessionalDealPage = React.lazy(() => import('./pages/ProfessionalDealPage'))
 const PostItem = React.lazy(() => import('./pages/PostItem'))
 const AdminPage = React.lazy(() => import('./pages/Admin/AdminPage'))
@@ -63,7 +63,7 @@ export const router = createBrowserRouter([
         path: '',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ModernHomepage />
+            <SocialHomepage />
           </Suspense>
         ),
       },

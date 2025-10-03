@@ -241,18 +241,41 @@ router.get('/leaderboard', async (req, res) => {
   try {
     const { period = 'all_time', limit = 50 } = req.query
 
-    const { data: leaderboard, error } = await supabase
-      .rpc('get_leaderboard', {
-        period_type: period,
-        limit_count: parseInt(limit)
-      })
+    // Try RPC function first
+    try {
+      const { data: leaderboard, error } = await supabase
+        .rpc('get_leaderboard', {
+          period_type: period,
+          limit_count: parseInt(limit)
+        })
+
+      if (!error && leaderboard) {
+        return res.json(leaderboard)
+      }
+    } catch (rpcError) {
+      console.warn('Leaderboard RPC not available, using fallback:', rpcError.message)
+    }
+
+    // Fallback: Simple query based on karma
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select('id, handle, avatar_url, karma')
+      .order('karma', { ascending: false })
+      .limit(parseInt(limit))
 
     if (error) {
-      console.error('Leaderboard RPC error:', error)
+      console.error('Leaderboard query error:', error)
       return res.status(400).json({ error: error.message })
     }
 
-    res.json(leaderboard || [])
+    // Format to match expected structure
+    const leaderboard = (profiles || []).map(profile => ({
+      ...profile,
+      points: profile.karma,
+      rank: 0 // Will be set by frontend
+    }))
+
+    res.json(leaderboard)
   } catch (error) {
     console.error('Error fetching leaderboard:', error)
     res.status(500).json({ error: 'Internal server error' })

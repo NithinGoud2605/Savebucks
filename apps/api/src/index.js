@@ -32,6 +32,7 @@ import restaurantsRoutes from './routes/restaurants.js';
 import goRoutes from './routes/go.js';
 import tempDataRoutes from './routes/temp-data.js';
 import debugRoutes from './routes/debug.js';
+import feedRoutes from './routes/feed.js';
 import { log } from './lib/logger.js';
 
 const app = express();
@@ -67,6 +68,7 @@ app.use('/api/filters', filtersRoutes);
 app.use('/api/restaurants', restaurantsRoutes);
 app.use('/api/deals', makeAuth(), deals);
 app.use('/api/admin', adminRoutes);
+app.use('/api/feed', feedRoutes); // Unified feed endpoint
 app.use('/api', tempDataRoutes);
 app.use('/api', debugRoutes); // Debug routes
 app.use(goRoutes);

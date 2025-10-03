@@ -9,6 +9,7 @@ import { ExpirationTimer } from './ExpirationTimer'
 import { formatPrice, dateAgo, truncate } from '../../lib/format'
 import { getCompanyName } from '../../lib/companyUtils'
 import { clsx } from 'clsx'
+import { Eye } from 'lucide-react'
 
 export function CommunityDealCard({ deal, className, compact = false }) {
   const [showFullDescription, setShowFullDescription] = useState(false)
@@ -305,7 +306,7 @@ export function CommunityDealCard({ deal, className, compact = false }) {
             </div>
             
             <div className="text-xs text-gray-400">
-              {timeAgo(deal.created_at)}
+              {dateAgo(deal.created_at)}
             </div>
           </div>
 
