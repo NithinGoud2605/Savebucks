@@ -128,7 +128,7 @@ export function SocialDealCard({ deal, index = 0 }) {
       variants={cardVariants}
       initial="hidden"
       animate="visible"
-      className="bg-gradient-to-br from-cream-50 via-yellow-50/30 to-amber-50/40 rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 group hover:border-mint-300 h-24"
+      className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 group hover:border-mint-300 h-24"
     >
       <Link to={`/deal/${deal.id}`} className="block h-full p-3">
         <div className="flex items-center h-full gap-3">

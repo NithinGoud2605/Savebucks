@@ -108,7 +108,7 @@ const FilterPage = () => {
 
   if (!config) {
     return (
-      <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
+      <div className="min-h-screen bg-primary-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-secondary-900 mb-2">Filter Not Found</h1>
           <p className="text-secondary-600">The requested filter category does not exist.</p>
@@ -137,7 +137,7 @@ const FilterPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
+      <div className="min-h-screen bg-primary-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-secondary-900 mb-2">Error Loading Deals</h1>
           <p className="text-secondary-600 mb-4">{error.message}</p>
@@ -153,7 +153,7 @@ const FilterPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-secondary-50 pt-16">
+    <div className="min-h-screen bg-primary-50 pt-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">

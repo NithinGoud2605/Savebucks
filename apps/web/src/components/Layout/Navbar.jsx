@@ -135,7 +135,7 @@ const Navbar = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-primary-200/60 bg-gradient-to-r from-primary-50/95 to-primary-100/95 backdrop-blur-md supports-[backdrop-filter]:bg-gradient-to-r supports-[backdrop-filter]:from-primary-50/80 supports-[backdrop-filter]:to-primary-100/80 shadow-lg">
+      <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-emerald-300/60 bg-gradient-to-r from-emerald-400/95 to-green-600/95 backdrop-blur-md supports-[backdrop-filter]:bg-gradient-to-r supports-[backdrop-filter]:from-emerald-400/90 supports-[backdrop-filter]:to-green-600/90 shadow-lg">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between gap-4">
           
@@ -159,9 +159,9 @@ const Navbar = () => {
             <div className="flex items-center space-x-2 flex-shrink-0">
               {/* Location Display */}
               {userLocation?.address?.display && (
-                <div className="hidden lg:flex items-center space-x-1.5 px-2 py-1 bg-emerald-50 border border-emerald-200 rounded-lg text-xs">
-                  <MapPinIcon className="w-3 h-3 text-emerald-600" />
-                  <span className="text-emerald-700 font-medium truncate max-w-24">
+                <div className="hidden lg:flex items-center space-x-1.5 px-2 py-1 bg-white/80 border border-emerald-300 rounded-lg text-xs">
+                  <MapPinIcon className="w-3 h-3 text-emerald-700" />
+                  <span className="text-emerald-800 font-medium truncate max-w-24">
                     {userLocation.address.display}
                   </span>
                 </div>
@@ -170,7 +170,7 @@ const Navbar = () => {
               {/* Community Link */}
               <Link
                 to="/forums"
-                className="hidden lg:flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600"
+                className="hidden lg:flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-emerald-900 transition-colors hover:bg-emerald-200/50 hover:text-emerald-800"
               >
                 <UserGroupIcon className="h-4 w-4" />
                 <span>Community</span>
@@ -179,7 +179,7 @@ const Navbar = () => {
               {/* Saved Items Link */}
               <Link
                 to="/saved-items"
-                className="hidden lg:flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-100 hover:text-primary-600"
+                className="hidden lg:flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-emerald-900 transition-colors hover:bg-emerald-200/50 hover:text-emerald-800"
               >
                 <BookmarkIcon className="h-4 w-4" />
                 <span>Saved</span>
@@ -188,7 +188,7 @@ const Navbar = () => {
               {/* Post Deal Button */}
               <Link
                 to="/post"
-                className="hidden lg:inline-flex items-center space-x-2 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white px-3 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-sm"
+                className="hidden lg:inline-flex items-center space-x-2 bg-white hover:bg-emerald-50 text-emerald-700 hover:text-emerald-800 px-3 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-sm border border-emerald-200"
               >
                 <PlusIcon className="h-4 w-4" />
                 <span className="hidden xl:inline">Post Deal/Coupon</span>
@@ -291,7 +291,7 @@ const Navbar = () => {
               <div className="flex items-center space-x-3">
                 <Link
                   to="/signin"
-                  className="flex items-center space-x-2 text-secondary-700 hover:text-primary-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-secondary-100"
+                  className="flex items-center space-x-2 text-emerald-900 hover:text-emerald-800 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-emerald-200/50"
                 >
                   <UserIcon className="h-5 w-5" />
                   <span>Log in/Sign Up</span>
@@ -305,7 +305,7 @@ const Navbar = () => {
           <div className="flex lg:hidden flex-shrink-0">
             <Dialog.Root open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <Dialog.Trigger asChild>
-                <button className="inline-flex items-center justify-center rounded-lg p-2 text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-colors">
+                <button className="inline-flex items-center justify-center rounded-lg p-2 text-emerald-900 hover:bg-emerald-200/50 hover:text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-colors">
                   <Bars3Icon className="h-5 w-5" />
                   <span className="sr-only">Open menu</span>
                 </button>
@@ -351,7 +351,7 @@ const Navbar = () => {
                      <Link
                        to="/post"
                        onClick={() => setIsMenuOpen(false)}
-                       className="w-full inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white px-5 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
+                       className="w-full inline-flex items-center justify-center space-x-2 bg-white hover:bg-emerald-50 text-emerald-700 hover:text-emerald-800 px-5 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl border border-emerald-200"
                      >
                        <PlusIcon className="h-5 w-5" />
                        <span>Post Deal/Coupon</span>

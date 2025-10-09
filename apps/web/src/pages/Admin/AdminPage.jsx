@@ -129,9 +129,9 @@ const AdminPage = () => {
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || AdminDashboard
 
   return (
-    <div className="min-h-screen bg-secondary-50 pt-16">
+    <div className="min-h-screen bg-primary-50 pt-16">
       {/* Header */}
-      <div className="bg-white border-b border-secondary-200">
+      <div className="bg-white border-b border-primary-200">
         <Container>
           <div className="py-6">
             <div className="flex items-center justify-between">
@@ -154,7 +154,7 @@ const AdminPage = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="bg-white border-b border-secondary-200">
+      <div className="bg-white border-b border-primary-200">
         <Container>
           <div className="flex space-x-8 overflow-x-auto">
             {tabs.map((tab) => (

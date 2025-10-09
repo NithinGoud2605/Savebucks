@@ -39,9 +39,17 @@ export default function SocialHomepage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16">
+    <div className="min-h-screen bg-white pt-16 relative">
+      {/* Very light green background image with extremely low opacity */}
+      <div 
+        className="absolute inset-0 opacity-[0.02] pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23059669' fill-opacity='1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          backgroundSize: '60px 60px'
+        }}
+      />
       {/* Secondary Navbar - Search Bar & Stats (Scrollable) */}
-      <div className="bg-gradient-to-r from-primary-100/95 to-primary-200/95 border-b border-primary-300/60 shadow-sm">
+      <div className="bg-gradient-to-r from-green-100/80 to-emerald-100/80 border-b border-green-200/60 shadow-sm relative z-10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-4 py-3">
             {/* Left: Empty space for balance on desktop */}
@@ -84,10 +92,10 @@ export default function SocialHomepage() {
       </div>
 
       {/* Main Layout */}
-      <div className="w-full px-[2%]">
+      <div className="w-full px-[2%] relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 border-l border-r border-gray-200 bg-white max-w-full mx-auto rounded-lg shadow-sm">
           {/* Left Sidebar - Filters & Categories - Ultra Compact */}
-          <div className="hidden lg:block lg:col-span-2 border-r border-gray-200 bg-gray-50 rounded-l-lg">
+          <div className="hidden lg:block lg:col-span-2 border-r border-gray-200 bg-white rounded-l-lg">
             <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden p-1.5 scrollbar-thin">
               <FilterSidebar
                 activeFilter={filter}
@@ -127,7 +135,7 @@ export default function SocialHomepage() {
           </div>
 
           {/* Right Sidebar - More Options, Sticky */}
-          <div className="lg:col-span-3 bg-gray-50 rounded-r-lg">
+          <div className="lg:col-span-3 bg-white rounded-r-lg">
             <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden p-2 scrollbar-thin">
               <RightSidebar />
             </div>

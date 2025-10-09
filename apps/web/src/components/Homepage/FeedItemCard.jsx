@@ -42,7 +42,7 @@ function InlineCouponCard({ coupon }) {
   const company = coupon.company || {};
   
   return (
-    <div className="bg-gradient-to-br from-amber-50 via-yellow-50/30 to-orange-50/40 rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 group hover:border-amber-300 h-24">
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 group hover:border-amber-300 h-24">
       <Link to={`/company/${company.slug}?tab=coupons`} className="block h-full p-3">
         <div className="flex items-center h-full gap-3">
           {/* Company Logo - Properly sized and fitted */}
@@ -119,7 +119,7 @@ function FeaturedCompanyCard({ company }) {
   return (
     <Link
       to={`/company/${company.slug}`}
-      className="block bg-gradient-to-br from-white via-mint-50/30 to-emerald-50/40 rounded-xl border border-mint-200 p-4 shadow-sm hover:shadow-md transition-all duration-200 group"
+      className="block bg-white rounded-xl border border-mint-200 p-4 shadow-sm hover:shadow-md transition-all duration-200 group"
     >
       <div className="flex items-center gap-4">
         {/* Company Logo */}
@@ -181,7 +181,7 @@ function RestaurantSectionCard({ restaurants }) {
   if (!restaurants || restaurants.length === 0) return null;
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200 p-4 shadow-sm">
+    <div className="bg-white rounded-xl border border-blue-200 p-4 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
         <MapPin className="w-5 h-5 text-blue-600" />
         <h3 className="text-base font-bold text-gray-900">Nearby Restaurants</h3>
