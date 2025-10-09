@@ -618,6 +618,145 @@ r.post('/', async (req, res) => {
   }
 });
 
+/** Get related deals for a specific deal */
+r.get('/related/:id', async (req, res) => {
+  try {
+    const dealId = parseInt(req.params.id);
+    const limit = parseInt(req.query.limit) || 8;
+    
+    if (isNaN(dealId)) {
+      return res.status(400).json({ error: 'Invalid deal ID' });
+    }
+
+    // First get the current deal to find related deals
+    const { data: currentDeal, error: dealError } = await supabase
+      .from('deals')
+      .select('category_id, company_id, merchant, tags')
+      .eq('id', dealId)
+      .eq('status', 'approved')
+      .single();
+
+    if (dealError || !currentDeal) {
+      return res.status(404).json({ error: 'Deal not found' });
+    }
+
+    let query = supabase
+      .from('deals')
+      .select(`
+        id, title, url, price, original_price, merchant, description, 
+        image_url, deal_images, featured_image, category_id, company_id,
+        deal_type, discount_percentage, discount_amount, coupon_code,
+        coupon_type, minimum_order_amount, maximum_discount_amount,
+        terms_conditions, starts_at, expires_at, stock_status, stock_quantity,
+        is_featured, is_exclusive, karma_points, views_count, clicks_count,
+        created_at, updated_at,
+        companies (
+          id, name, slug, logo_url, is_verified, status
+        ),
+        categories (
+          id, name, slug
+        )
+      `)
+      .eq('status', 'approved')
+      .neq('id', dealId) // Exclude the current deal
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    // Try to find related deals by category first
+    if (currentDeal.category_id) {
+      query = query.eq('category_id', currentDeal.category_id);
+    }
+
+    const { data: relatedDeals, error: relatedError } = await query;
+
+    if (relatedError) {
+      console.error('Error fetching related deals:', relatedError);
+      return res.status(500).json({ error: 'Failed to fetch related deals' });
+    }
+
+    // If we don't have enough deals by category, try to get deals from the same company
+    if (relatedDeals.length < limit && currentDeal.company_id) {
+      const remainingLimit = limit - relatedDeals.length;
+      const existingIds = relatedDeals.map(deal => deal.id);
+      
+      let companyQuery = supabase
+        .from('deals')
+        .select(`
+          id, title, url, price, original_price, merchant, description, 
+          image_url, deal_images, featured_image, category_id, company_id,
+          deal_type, discount_percentage, discount_amount, coupon_code,
+          coupon_type, minimum_order_amount, maximum_discount_amount,
+          terms_conditions, starts_at, expires_at, stock_status, stock_quantity,
+          is_featured, is_exclusive, karma_points, views_count, clicks_count,
+          created_at, updated_at,
+          companies (
+            id, name, slug, logo_url, is_verified, status
+          ),
+          categories (
+            id, name, slug
+          )
+        `)
+        .eq('status', 'approved')
+        .eq('company_id', currentDeal.company_id)
+        .order('created_at', { ascending: false })
+        .limit(remainingLimit);
+
+      if (existingIds.length > 0) {
+        companyQuery = companyQuery.not('id', 'in', `(${existingIds.join(',')})`);
+      }
+
+      const { data: companyDeals, error: companyError } = await companyQuery;
+
+      if (!companyError && companyDeals) {
+        relatedDeals.push(...companyDeals);
+      }
+    }
+
+    // If still not enough deals, get recent popular deals
+    if (relatedDeals.length < limit) {
+      const remainingLimit = limit - relatedDeals.length;
+      const existingIds = relatedDeals.map(deal => deal.id);
+      
+      let popularQuery = supabase
+        .from('deals')
+        .select(`
+          id, title, url, price, original_price, merchant, description, 
+          image_url, deal_images, featured_image, category_id, company_id,
+          deal_type, discount_percentage, discount_amount, coupon_code,
+          coupon_type, minimum_order_amount, maximum_discount_amount,
+          terms_conditions, starts_at, expires_at, stock_status, stock_quantity,
+          is_featured, is_exclusive, karma_points, views_count, clicks_count,
+          created_at, updated_at,
+          companies (
+            id, name, slug, logo_url, is_verified, status
+          ),
+          categories (
+            id, name, slug
+          )
+        `)
+        .eq('status', 'approved')
+        .order('karma_points', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(remainingLimit);
+
+      if (existingIds.length > 0) {
+        popularQuery = popularQuery.not('id', 'in', `(${existingIds.join(',')})`);
+      }
+
+      const { data: popularDeals, error: popularError } = await popularQuery;
+
+      if (!popularError && popularDeals) {
+        relatedDeals.push(...popularDeals);
+      }
+    }
+
+    res.json(relatedDeals.slice(0, limit));
+  } catch (error) {
+    console.error('Error in related deals endpoint:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 /** Vote (JWT required; RLS ensures deal is approved) */
 r.post('/:id/vote', async (req, res) => {
   try {

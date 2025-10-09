@@ -129,7 +129,7 @@ const AdminPage = () => {
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || AdminDashboard
 
   return (
-    <div className="min-h-screen bg-secondary-50">
+    <div className="min-h-screen bg-secondary-50 pt-16">
       {/* Header */}
       <div className="bg-white border-b border-secondary-200">
         <Container>

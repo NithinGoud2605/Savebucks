@@ -575,7 +575,7 @@ export default function PostItemOrCoupon() {
   // Show loading while auth is initializing
   if (!isInitialized) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-secondary-50 to-white py-6">
+      <div className="min-h-screen bg-gradient-to-br from-secondary-50 to-white pt-22 pb-6">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
@@ -592,7 +592,7 @@ export default function PostItemOrCoupon() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary-50 to-white py-6">
+    <div className="min-h-screen bg-gradient-to-br from-secondary-50 to-white pt-22 pb-6">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-6">

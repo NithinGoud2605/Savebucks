@@ -39,3 +39,4 @@ CREATE INDEX IF NOT EXISTS idx_deals_clicks_count ON public.deals(clicks_count);
 
 
 
+

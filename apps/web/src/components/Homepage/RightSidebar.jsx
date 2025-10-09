@@ -228,10 +228,19 @@ function TopCompaniesWidget() {
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
-      <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-        <Store className="w-3 h-3 text-mint-600" />
-        Top Companies
-      </h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide flex items-center gap-1.5">
+          <Store className="w-3 h-3 text-mint-600" />
+          Top Companies
+        </h3>
+        <Link
+          to="/companies"
+          className="text-xs text-mint-600 hover:text-mint-700 font-medium flex items-center gap-1"
+        >
+          View All
+          <ArrowRight className="w-2.5 h-2.5" />
+        </Link>
+      </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-4">
@@ -242,7 +251,7 @@ function TopCompaniesWidget() {
           {companies.slice(0, 8).map((company, index) => (
             <Link
               key={company.id}
-              to={`/company/${company.slug}`}
+              to={`/company/${company.slug}?tab=coupons`}
               className="group relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-1.5 hover:from-mint-50 hover:to-emerald-50 transition-all duration-200 border border-gray-200 hover:border-mint-300 hover:shadow-sm"
               title={company.name}
             >

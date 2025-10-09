@@ -88,31 +88,31 @@ const CompaniesPage = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="bg-white rounded-lg border border-secondary-200 overflow-hidden hover:shadow-lg transition-all duration-200 hover:border-primary-300"
+      className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 hover:border-mint-300 group"
     >
-      <Link to={`/company/${company.slug}`} className="block">
+      <Link to={`/company/${company.slug}?tab=coupons`} className="block">
         <div className="p-6">
           {/* Company Header */}
           <div className="flex items-start space-x-4 mb-4">
             {/* Logo */}
             <div className="flex-shrink-0">
-              {company.logo_url ? (
-                <img
-                  src={company.logo_url}
-                  alt={company.name}
-                  className="w-16 h-16 rounded-lg object-cover border border-secondary-200"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-lg bg-secondary-100 flex items-center justify-center border border-secondary-200">
-                  <BuildingOfficeIcon className="w-8 h-8 text-secondary-400" />
-                </div>
-              )}
+                {company.logo_url ? (
+                  <img
+                    src={company.logo_url}
+                    alt={company.name}
+                    className="w-16 h-16 rounded-lg object-contain bg-white p-2 border border-gray-200"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-mint-100 to-emerald-100 flex items-center justify-center border border-gray-200">
+                    <BuildingOfficeIcon className="w-8 h-8 text-mint-600" />
+                  </div>
+                )}
             </div>
 
             {/* Company Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center space-x-2 mb-1">
-                <h3 className="text-lg font-semibold text-secondary-900 truncate">
+                <h3 className="text-lg font-semibold text-gray-900 truncate group-hover:text-mint-700 transition-colors">
                   {company.name}
                 </h3>
                 {company.is_verified && (
@@ -121,7 +121,7 @@ const CompaniesPage = () => {
               </div>
               
               {company.category_name && (
-                <span className="inline-block px-2 py-1 bg-secondary-100 text-secondary-700 rounded-full text-xs font-medium">
+                <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
                   {company.category_name}
                 </span>
               )}
@@ -130,7 +130,7 @@ const CompaniesPage = () => {
 
           {/* Description */}
           {company.description && (
-            <p className="text-sm text-secondary-600 mb-4 line-clamp-2">
+            <p className="text-sm text-gray-600 mb-4 line-clamp-2">
               {company.description}
             </p>
           )}
@@ -138,22 +138,22 @@ const CompaniesPage = () => {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="text-center">
-              <div className="text-lg font-bold text-primary-600">
+              <div className="text-lg font-bold text-mint-600">
                 {company.deals_count || 0}
               </div>
-              <div className="text-xs text-secondary-500">Deals</div>
+              <div className="text-xs text-gray-500">Deals</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-primary-600">
+              <div className="text-lg font-bold text-mint-600">
                 {company.coupons_count || 0}
               </div>
-              <div className="text-xs text-secondary-500">Coupons</div>
+              <div className="text-xs text-gray-500">Coupons</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-primary-600">
+              <div className="text-lg font-bold text-mint-600">
                 {formatCompactNumber(company.total_views || 0)}
               </div>
-              <div className="text-xs text-secondary-500">Views</div>
+              <div className="text-xs text-gray-500">Views</div>
             </div>
           </div>
 
@@ -162,17 +162,17 @@ const CompaniesPage = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1">
                 <StarIcon className="w-4 h-4 text-yellow-400 fill-current" />
-                <span className="text-sm font-medium text-secondary-900">
+                <span className="text-sm font-medium text-gray-900">
                   {company.rating}/5
                 </span>
                 {company.total_reviews && (
-                  <span className="text-xs text-secondary-500">
+                  <span className="text-xs text-gray-500">
                     ({formatCompactNumber(company.total_reviews)})
                   </span>
                 )}
               </div>
               
-              <div className="text-xs text-secondary-500">
+              <div className="text-xs text-gray-500">
                 {company.website_url && 'Visit Site →'}
               </div>
             </div>
@@ -221,15 +221,15 @@ const CompaniesPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-secondary-50">
+    <div className="min-h-screen bg-gray-50 pt-16">
       <Container>
         <div className="py-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-secondary-900 mb-4">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
               Companies & Merchants
             </h1>
-            <p className="text-xl text-secondary-600 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Discover verified companies and merchants offering the best deals, discounts, and coupons. 
               Save money on your purchases with trusted brands.
             </p>
@@ -238,30 +238,30 @@ const CompaniesPage = () => {
             <div className="mt-6">
               <button
                 onClick={() => setShowCompanyForm(true)}
-                className="inline-flex items-center space-x-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-lg hover:shadow-xl"
+                className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-mint-500 to-emerald-600 text-white rounded-lg hover:from-mint-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 <PlusIcon className="w-5 h-5" />
                 <span>Add New Company</span>
               </button>
-              <p className="text-sm text-secondary-500 mt-2">
+              <p className="text-sm text-gray-500 mt-2">
                 Can't find a company? Add it to our database!
               </p>
             </div>
           </div>
 
           {/* Search and Filters */}
-          <div className="bg-white rounded-lg border border-secondary-200 p-6 mb-8">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8 shadow-sm">
             <div className="flex flex-col lg:flex-row gap-4">
               {/* Search */}
               <div className="flex-1">
                 <div className="relative">
-                  <MagnifyingGlassIcon className="w-5 h-5 text-secondary-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                  <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                   <input
                     type="text"
                     placeholder="Search companies..."
                     value={filters.search}
                     onChange={(e) => handleFilterChange('search', e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mint-500 focus:border-mint-500"
                   />
                 </div>
               </div>
@@ -271,7 +271,7 @@ const CompaniesPage = () => {
                 <select
                   value={filters.category}
                   onChange={(e) => handleFilterChange('category', e.target.value)}
-                  className="w-full px-4 py-3 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mint-500 focus:border-mint-500"
                 >
                   <option value="">All Categories</option>
                   {categories?.map((category) => (
@@ -287,7 +287,7 @@ const CompaniesPage = () => {
                 <select
                   value={filters.sort}
                   onChange={(e) => handleFilterChange('sort', e.target.value)}
-                  className="w-full px-4 py-3 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mint-500 focus:border-mint-500"
                 >
                   {sortOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -304,9 +304,9 @@ const CompaniesPage = () => {
                     type="checkbox"
                     checked={filters.verified}
                     onChange={(e) => handleFilterChange('verified', e.target.checked)}
-                    className="w-4 h-4 text-primary-600 border-secondary-300 rounded focus:ring-primary-500"
+                    className="w-4 h-4 text-mint-600 border-gray-300 rounded focus:ring-mint-500"
                   />
-                  <span className="text-sm font-medium text-secondary-700">
+                  <span className="text-sm font-medium text-gray-700">
                     Verified Only
                   </span>
                 </label>

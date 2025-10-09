@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -29,18 +29,18 @@ import {
   PhotoIcon,
   BookmarkIcon
 } from '@heroicons/react/24/outline'
+import { BookmarkCheck } from 'lucide-react'
 import { Container } from '../components/Layout/Container'
 import { NewDealCard } from '../components/Deal/NewDealCard'
 import { Skeleton } from '../components/Loader/Skeleton'
 import { api } from '../lib/api'
 import { setPageMeta } from '../lib/head'
-import { formatCompactNumber } from '../lib/format'
-import CouponCard from '../components/Coupon/CouponCard'
+import { useAuth } from '../hooks/useAuth'
+import { formatPrice, dateAgo, formatCompactNumber } from '../lib/format'
+import SubmitterBadge from '../components/Deal/SubmitterBadge'
 
 const CompanyPage = () => {
   const { slug } = useParams()
-  const location = useLocation()
-  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [couponSearch, setCouponSearch] = useState('')
@@ -66,28 +66,6 @@ const CompanyPage = () => {
       })
     }
   }, [companyData, slug])
-
-  // Initialize tab from URL once and ensure URL contains a tab value
-  useEffect(() => {
-    const params = new URLSearchParams(location.search)
-    const tabParam = params.get('tab')
-    if (tabParam && ['overview', 'deals', 'coupons', 'about'].includes(tabParam)) {
-      setActiveTab(tabParam)
-    } else {
-      params.set('tab', 'overview')
-      navigate({ pathname: location.pathname, search: params.toString() }, { replace: true })
-    }
-    // run only on mount for initialization
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const setTab = (tabId) => {
-    if (tabId === activeTab) return
-    setActiveTab(tabId)
-    const params = new URLSearchParams(location.search)
-    params.set('tab', tabId)
-    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true })
-  }
 
   if (isLoading) {
     return (
@@ -189,9 +167,9 @@ const CompanyPage = () => {
           <h3 className="text-xl font-semibold text-secondary-900 mb-4">
             Featured Coupons
           </h3>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {coupons.slice(0, 6).map((coupon) => (
-              <CouponCard key={coupon.id} coupon={coupon} variant="modern" />
+              <CouponCard key={coupon.id} coupon={coupon} />
             ))}
           </div>
           {coupons.length > 6 && (
@@ -352,9 +330,9 @@ const CompanyPage = () => {
         </div>
         
         {filteredCoupons.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCoupons.map((coupon) => (
-              <CouponCard key={coupon.id} coupon={coupon} variant="modern" />
+              <CouponCard key={coupon.id} coupon={coupon} />
             ))}
           </div>
         ) : (
@@ -735,7 +713,7 @@ const CompanyPage = () => {
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setTab(tab.id)}
+                onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
                   activeTab === tab.id
                     ? 'text-mint-600 border-b-2 border-mint-600 bg-mint-50'
@@ -757,21 +735,238 @@ const CompanyPage = () => {
           </nav>
         </div>
 
-        {/* Tab Content */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-          >
-            {activeTab === 'overview' && renderOverview()}
-            {activeTab === 'deals' && renderDeals()}
-            {activeTab === 'coupons' && renderCoupons()}
-            {activeTab === 'about' && renderAbout()}
-          </motion.div>
-        </AnimatePresence>
+          {/* Tab Content */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              {activeTab === 'overview' && renderOverview()}
+              {activeTab === 'deals' && renderDeals()}
+              {activeTab === 'coupons' && renderCoupons()}
+              {activeTab === 'about' && renderAbout()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Coupon Card Component
+const CouponCard = ({ coupon }) => {
+  const [isCopied, setIsCopied] = useState(false)
+  const [isSaved, setIsSaved] = useState(coupon.is_saved || false)
+  const [isSaving, setIsSaving] = useState(false)
+  const { user } = useAuth()
+  const navigate = useNavigate()
+
+  const handleCopyCode = async () => {
+    if (!coupon.coupon_code) return
+    
+    try {
+      await navigator.clipboard.writeText(coupon.coupon_code)
+      setIsCopied(true)
+      setTimeout(() => setIsCopied(false), 2000)
+      
+      // Track coupon click when copying code
+      await handleCouponClick('coupon_copy_code')
+    } catch (err) {
+      console.error('Failed to copy code:', err)
+    }
+  }
+
+  const handleSave = async () => {
+    if (!user) {
+      navigate('/signin')
+      return
+    }
+
+    if (isSaving) return
+
+    setIsSaving(true)
+    try {
+      if (isSaved) {
+        await api.unsaveCoupon(coupon.id)
+        setIsSaved(false)
+        console.log('Coupon unsaved successfully')
+      } else {
+        await api.saveCoupon(coupon.id)
+        setIsSaved(true)
+        console.log('Coupon saved successfully')
+      }
+    } catch (error) {
+      console.error('Failed to save/unsave coupon:', error)
+      alert(`Failed to ${isSaved ? 'unsave' : 'save'} coupon: ${error.message}`)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Track coupon click
+  const handleCouponClick = async (source = 'coupon_card') => {
+    try {
+      await api.trackCouponClick(coupon.id, source)
+    } catch (error) {
+      console.error('Failed to track coupon click:', error)
+      // Don't prevent action if tracking fails
+    }
+  }
+
+  const getCouponTypeIcon = (type) => {
+    switch (type) {
+      case 'percentage':
+        return <TagIcon className="w-5 h-5 text-green-600" />
+      case 'fixed_amount':
+        return <CurrencyDollarIcon className="w-5 h-5 text-blue-600" />
+      case 'free_shipping':
+        return <TruckIcon className="w-5 h-5 text-purple-600" />
+      default:
+        return <GiftIcon className="w-5 h-5 text-orange-600" />
+    }
+  }
+
+  const getCouponTypeLabel = (type) => {
+    switch (type) {
+      case 'percentage':
+        return 'Percentage Off'
+      case 'fixed_amount':
+        return 'Fixed Amount Off'
+      case 'free_shipping':
+        return 'Free Shipping'
+      default:
+        return 'Special Offer'
+    }
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-amber-50 via-yellow-50/30 to-orange-50/40 rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 group hover:border-amber-300">
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            {getCouponTypeIcon(coupon.coupon_type)}
+            <span className="text-sm font-medium text-gray-600">
+              {getCouponTypeLabel(coupon.coupon_type)}
+            </span>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            {coupon.is_featured && (
+              <SparklesIcon className="w-5 h-5 text-yellow-500" />
+            )}
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className={`p-2 rounded-lg border transition-all ${
+                isSaved
+                  ? 'bg-mint-50 border-mint-200 text-mint-600'
+                  : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+              } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={isSaved ? 'Remove from saved items' : 'Save coupon'}
+            >
+              {isSaved ? (
+                <BookmarkCheck className="w-4 h-4 fill-current" />
+              ) : (
+                <BookmarkIcon className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-amber-700 transition-colors">
+          {coupon.title}
+        </h3>
+        
+        {/* Submitter Info */}
+        <div className="mb-3">
+          <SubmitterBadge 
+            submitter={coupon.profiles} 
+            submitter_id={coupon.submitter_id}
+            created_at={coupon.created_at}
+            size="sm"
+            showDate={true}
+          />
+        </div>
+        
+        {coupon.description && (
+          <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+            {coupon.description}
+          </p>
+        )}
+
+        <div className="space-y-3 mb-4">
+          {coupon.discount_value && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Discount:</span>
+              <span className="text-lg font-bold text-green-600">
+                {coupon.coupon_type === 'percentage' 
+                  ? `${coupon.discount_value}%` 
+                  : `$${coupon.discount_value}`
+                }
+              </span>
+            </div>
+          )}
+          
+          {coupon.minimum_order_amount && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Min. Order:</span>
+              <span className="text-sm font-medium text-gray-900">
+                ${coupon.minimum_order_amount}
+              </span>
+            </div>
+          )}
+          
+          {coupon.maximum_discount_amount && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Max. Discount:</span>
+              <span className="text-sm font-medium text-gray-900">
+                ${coupon.maximum_discount_amount}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {coupon.coupon_code && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">Coupon Code:</span>
+              <button
+                onClick={handleCopyCode}
+                className="text-xs text-mint-600 hover:text-mint-700 font-medium"
+              >
+                {isCopied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <div className="bg-white border-2 border-dashed border-amber-400 rounded-lg p-3 text-center">
+              <code className="text-lg font-mono font-bold text-amber-900">
+                {coupon.coupon_code}
+              </code>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between text-sm text-secondary-500">
+          <div className="flex items-center space-x-4">
+            <span className="flex items-center space-x-1">
+              <EyeIcon className="w-4 h-4" />
+              <span>{formatCompactNumber(coupon.views_count)}</span>
+            </span>
+            <span className="flex items-center space-x-1">
+              <CursorArrowRaysIcon className="w-4 h-4" />
+              <span>{formatCompactNumber(coupon.clicks_count)}</span>
+            </span>
+          </div>
+          
+          {coupon.expires_at && (
+            <span className="flex items-center space-x-1">
+              <ClockIcon className="w-4 h-4" />
+              <span>Expires {dateAgo(coupon.expires_at)}</span>
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )

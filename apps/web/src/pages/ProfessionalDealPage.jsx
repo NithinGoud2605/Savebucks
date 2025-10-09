@@ -48,10 +48,10 @@ const ProductImageGallery = ({ images, title, onImageClick }) => {
   
   if (validImages.length === 0) {
     return (
-      <div className="bg-gray-100 aspect-square rounded-lg flex items-center justify-center">
+      <div className="bg-gradient-to-br from-cream-50 via-yellow-50/30 to-amber-50/40 rounded-xl border border-gray-200 p-8 flex items-center justify-center">
         <div className="text-center text-gray-500">
-          <div className="w-16 h-16 mx-auto mb-2 bg-gray-300 rounded"></div>
-          <p className="text-sm">No image available</p>
+          <div className="text-6xl mb-4">🎁</div>
+          <p className="text-sm font-medium">No image available</p>
         </div>
       </div>
     )
@@ -62,20 +62,22 @@ const ProductImageGallery = ({ images, title, onImageClick }) => {
   return (
     <div className="space-y-4">
       {/* Main Image */}
-      <div className="relative bg-white rounded-lg border overflow-hidden group">
-        <div className="aspect-square relative">
-          <ImageWithFallback
-            src={currentImage}
-            alt={title}
-            className={`w-full h-full object-contain transition-transform duration-300 cursor-zoom-in ${
-              isZoomed ? 'scale-150' : 'hover:scale-105'
-            }`}
-            onClick={() => setIsZoomed(!isZoomed)}
-            fallbackClassName="w-full h-full"
-          />
+      <div className="bg-gradient-to-br from-cream-50 via-yellow-50/30 to-amber-50/40 rounded-xl border border-gray-200 overflow-hidden group hover:shadow-xl transition-all duration-300">
+        <div className="aspect-square relative p-4">
+          <div className="w-full h-full bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-center">
+            <ImageWithFallback
+              src={currentImage}
+              alt={title}
+              className={`w-full h-full object-contain transition-transform duration-300 cursor-zoom-in ${
+                isZoomed ? 'scale-150' : 'hover:scale-105'
+              }`}
+              onClick={() => setIsZoomed(!isZoomed)}
+              fallbackClassName="w-full h-full"
+            />
+          </div>
           
           {/* Zoom indicator */}
-          <div className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-6 right-6 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
             <MagnifyingGlassIcon className="w-4 h-4" />
           </div>
         </div>
@@ -88,14 +90,14 @@ const ProductImageGallery = ({ images, title, onImageClick }) => {
             <button
               key={index}
               onClick={() => setSelectedIndex(index)}
-              className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden ${
-                selectedIndex === index ? 'border-primary-500' : 'border-gray-200'
+              className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden bg-white p-1 ${
+                selectedIndex === index ? 'border-mint-500' : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               <ImageWithFallback
                 src={image}
                 alt={`${title} - view ${index + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 fallbackClassName="w-full h-full"
               />
             </button>
@@ -114,9 +116,13 @@ const PriceDisplay = ({ deal }) => {
     : deal.discount_percentage
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-baseline space-x-3">
-        <span className="text-3xl font-bold text-red-600">
+    <div className="space-y-3">
+      <div className="flex items-baseline space-x-3 flex-wrap">
+        <span className={`font-bold text-mint-700 ${
+          deal.price > 1000 
+            ? 'text-2xl lg:text-3xl' 
+            : 'text-3xl lg:text-4xl'
+        }`}>
           {formatPrice(deal.price)}
         </span>
         
@@ -127,16 +133,24 @@ const PriceDisplay = ({ deal }) => {
         )}
         
         {discountPercentage > 0 && (
-          <span className="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium">
-            -{discountPercentage}%
+          <span className={`text-white px-3 py-1 rounded-full font-bold ${
+            discountPercentage >= 50 
+              ? 'bg-gradient-to-r from-red-500 to-pink-600' 
+              : discountPercentage >= 30
+              ? 'bg-gradient-to-r from-orange-500 to-red-500'
+              : 'bg-gradient-to-r from-mint-500 to-emerald-600'
+          }`}>
+            -{discountPercentage}% OFF
           </span>
         )}
       </div>
       
       {hasDiscount && (
-        <p className="text-sm text-green-600 font-medium">
-          You save {formatPrice(deal.original_price - deal.price)} ({discountPercentage}%)
-        </p>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <p className="text-sm text-green-800 font-medium">
+            You save {formatPrice(deal.original_price - deal.price)} ({discountPercentage}% off)
+          </p>
+        </div>
       )}
     </div>
   )
@@ -144,60 +158,385 @@ const PriceDisplay = ({ deal }) => {
 
 // Stock and Availability Component
 const StockStatus = ({ deal }) => {
-  const getStatusColor = (status) => {
+  // Show expiry date if available, otherwise show stock status
+  if (deal.expires_at) {
+    return (
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-blue-700">
+            Expires {new Date(deal.expires_at).toLocaleDateString()}
+          </span>
+          {deal.stock_quantity && (
+            <span className="text-xs text-gray-600">
+              ({deal.stock_quantity} remaining)
+            </span>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  const getStatusConfig = (status) => {
     switch (status) {
-      case 'in_stock': return 'text-green-600'
-      case 'low_stock': return 'text-yellow-600'
-      case 'out_of_stock': return 'text-red-600'
-      default: return 'text-gray-600'
+      case 'in_stock': 
+        return {
+          color: 'text-green-700',
+          bgColor: 'bg-green-50',
+          borderColor: 'border-green-200',
+          text: 'In Stock'
+        }
+      case 'low_stock': 
+        return {
+          color: 'text-yellow-700',
+          bgColor: 'bg-yellow-50',
+          borderColor: 'border-yellow-200',
+          text: 'Low Stock - Order Soon'
+        }
+      case 'out_of_stock': 
+        return {
+          color: 'text-red-700',
+          bgColor: 'bg-red-50',
+          borderColor: 'border-red-200',
+          text: 'Currently Unavailable'
+        }
+      default: 
+        return null // Don't show anything for unknown status
     }
   }
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'in_stock': return 'In Stock'
-      case 'low_stock': return 'Low Stock - Order Soon'
-      case 'out_of_stock': return 'Currently Unavailable'
-      default: return 'Stock Status Unknown'
-    }
-  }
+  const config = getStatusConfig(deal.stock_status)
+
+  // Only render if we have a valid status
+  if (!config) return null
 
   return (
-    <div className="flex items-center space-x-2">
-      <div className={`w-2 h-2 rounded-full ${
-        deal.stock_status === 'in_stock' ? 'bg-green-500' :
-        deal.stock_status === 'low_stock' ? 'bg-yellow-500' :
-        deal.stock_status === 'out_of_stock' ? 'bg-red-500' : 'bg-gray-500'
-      }`}></div>
-      <span className={`text-sm font-medium ${getStatusColor(deal.stock_status)}`}>
-        {getStatusText(deal.stock_status)}
-      </span>
-      {deal.stock_quantity && (
-        <span className="text-sm text-gray-500">
-          ({deal.stock_quantity} remaining)
+    <div className={`${config.bgColor} ${config.borderColor} border rounded-lg p-3`}>
+      <div className="flex items-center justify-between">
+        <span className={`text-sm font-medium ${config.color}`}>
+          {config.text}
         </span>
-      )}
+        {deal.stock_quantity && (
+          <span className="text-xs text-gray-600">
+            ({deal.stock_quantity} remaining)
+          </span>
+        )}
+      </div>
     </div>
   )
 }
 
 // Trust Indicators Component
 const TrustIndicators = () => (
-  <div className="space-y-3 text-sm">
-    <div className="flex items-center space-x-2 text-green-600">
-      <ShieldCheckIcon className="w-4 h-4" />
-      <span>Secure checkout</span>
+  <div className="space-y-4">
+    <div className="flex items-center space-x-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+        <ShieldCheckIcon className="w-4 h-4 text-green-600" />
+      </div>
+      <div>
+        <span className="text-sm font-medium text-green-800">Secure checkout</span>
+        <p className="text-xs text-green-600">SSL encrypted payment</p>
+      </div>
     </div>
-    <div className="flex items-center space-x-2 text-blue-600">
-      <TruckIcon className="w-4 h-4" />
-      <span>Fast & reliable delivery</span>
+    <div className="flex items-center space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+        <TruckIcon className="w-4 h-4 text-blue-600" />
+      </div>
+      <div>
+        <span className="text-sm font-medium text-blue-800">Fast & reliable delivery</span>
+        <p className="text-xs text-blue-600">Tracked shipping included</p>
+      </div>
     </div>
-    <div className="flex items-center space-x-2 text-purple-600">
-      <ArrowPathIcon className="w-4 h-4" />
-      <span>Easy returns</span>
+    <div className="flex items-center space-x-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+        <ArrowPathIcon className="w-4 h-4 text-purple-600" />
+      </div>
+      <div>
+        <span className="text-sm font-medium text-purple-800">Easy returns</span>
+        <p className="text-xs text-purple-600">30-day return policy</p>
+      </div>
     </div>
   </div>
 )
+
+// Comprehensive Related Deals and Coupons Component
+const RelatedDealsAndCoupons = ({ dealId, companyId }) => {
+  const [activeTab, setActiveTab] = useState('deals')
+  const [deals, setDeals] = useState([])
+  const [coupons, setCoupons] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchRelatedContent = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        // Fetch related deals (limited to 8 for horizontal scrolling)
+        const dealsResponse = await fetch(`/api/deals/related/${dealId}?limit=8`)
+        if (dealsResponse.ok) {
+          const dealsData = await dealsResponse.json()
+          setDeals(dealsData || [])
+        } else {
+          console.warn('Failed to fetch related deals:', dealsResponse.status)
+          // Fetch fallback deals if related deals fail
+          const fallbackResponse = await fetch(`/api/deals?limit=8&sort=hot`)
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json()
+            setDeals(fallbackData || [])
+          } else {
+            setDeals([])
+          }
+        }
+
+        // Fetch company coupons (limited to 8 for horizontal scrolling)
+        if (companyId) {
+          const couponsResponse = await fetch(`/api/companies/${companyId}/coupons?limit=8`)
+          if (couponsResponse.ok) {
+            const couponsData = await couponsResponse.json()
+            setCoupons(couponsData || [])
+          } else {
+            console.warn('Failed to fetch company coupons:', couponsResponse.status)
+            // Fetch fallback coupons if company coupons fail
+            const fallbackCouponsResponse = await fetch(`/api/coupons?limit=8`)
+            if (fallbackCouponsResponse.ok) {
+              const fallbackCouponsData = await fallbackCouponsResponse.json()
+              setCoupons(fallbackCouponsData || [])
+            } else {
+              setCoupons([])
+            }
+          }
+        } else {
+          // If no company ID, fetch general coupons as fallback
+          const fallbackCouponsResponse = await fetch(`/api/coupons?limit=8`)
+          if (fallbackCouponsResponse.ok) {
+            const fallbackCouponsData = await fallbackCouponsResponse.json()
+            setCoupons(fallbackCouponsData || [])
+          } else {
+            setCoupons([])
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching related content:', error)
+        setError('Failed to load related content')
+        setDeals([])
+        setCoupons([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (dealId) {
+      fetchRelatedContent()
+    } else {
+      setLoading(false)
+    }
+  }, [dealId, companyId])
+
+  const RelatedDealCard = ({ deal }) => (
+    <Link
+      to={`/deal/${deal.id}`}
+      className="group block bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-mint-300 transition-all duration-200 flex-shrink-0 w-80"
+    >
+      <div className="flex flex-col space-y-3">
+        <div className="w-full h-32 rounded-lg bg-gradient-to-br from-cream-50 via-yellow-50/30 to-amber-50/40 border border-gray-200 p-3 flex items-center justify-center">
+          <ImageWithFallback
+            src={deal.image_url || deal.featured_image}
+            alt={deal.title}
+            className="w-full h-full object-contain"
+            fallbackClassName="w-full h-full"
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className={`font-medium text-gray-900 group-hover:text-mint-700 transition-colors line-clamp-2 ${
+            deal.title.length > 60 ? 'text-sm' : 'text-base'
+          }`}>
+            {deal.title}
+          </h3>
+          <div className="mt-2 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="text-lg font-bold text-mint-600">
+                {formatPrice(deal.price)}
+              </span>
+              {deal.original_price && deal.original_price > deal.price && (
+                <span className="text-sm text-gray-500 line-through">
+                  {formatPrice(deal.original_price)}
+                </span>
+              )}
+            </div>
+            {deal.discount_percentage && (
+              <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded">
+                -{deal.discount_percentage}%
+              </span>
+            )}
+          </div>
+          <div className="mt-1 flex items-center space-x-2 text-xs text-gray-500">
+            <span>{deal.companies?.name || deal.merchant}</span>
+            <span>•</span>
+            <span>{dateAgo(deal.created_at)}</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  )
+
+  const RelatedCouponCard = ({ coupon }) => (
+    <Link
+      to={`/company/${coupon.company?.slug || coupon.companies?.slug}?tab=coupons`}
+      className="group block bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-amber-300 transition-all duration-200 flex-shrink-0 w-80"
+    >
+      <div className="flex flex-col space-y-3">
+        <div className="w-full h-32 rounded-lg bg-gradient-to-br from-amber-50 via-yellow-50/30 to-orange-50/40 border border-gray-200 p-3 flex items-center justify-center">
+          {(coupon.company?.logo_url || coupon.companies?.logo_url) ? (
+            <ImageWithFallback
+              src={coupon.company?.logo_url || coupon.companies?.logo_url}
+              alt={coupon.company?.name || coupon.companies?.name}
+              className="w-full h-full object-contain"
+              fallbackClassName="w-full h-full"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-2xl font-bold text-amber-700">
+                {(coupon.company?.name || coupon.companies?.name || 'C').charAt(0)}
+              </span>
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className={`font-medium text-gray-900 group-hover:text-amber-700 transition-colors line-clamp-2 ${
+            coupon.title.length > 60 ? 'text-sm' : 'text-base'
+          }`}>
+            {coupon.title}
+          </h3>
+          {coupon.coupon_code && (
+            <div className="mt-2 bg-amber-50 border-2 border-dashed border-amber-400 rounded-lg px-3 py-2">
+              <div className="text-xs text-amber-700 mb-1">Coupon Code:</div>
+              <div className="font-mono text-sm font-bold text-amber-900">
+                {coupon.coupon_code}
+              </div>
+            </div>
+          )}
+          <div className="mt-2 flex items-center justify-between">
+            <div className="flex items-center space-x-2 text-xs text-gray-500">
+              <span>{coupon.company?.name || coupon.companies?.name}</span>
+              <span>•</span>
+              <span>{dateAgo(coupon.created_at)}</span>
+            </div>
+            {coupon.expires_at && (
+              <span className="text-xs text-gray-500">
+                Expires {new Date(coupon.expires_at).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </Link>
+  )
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="flex space-x-4 overflow-hidden">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="flex-shrink-0 w-80">
+                <div className="w-full h-32 bg-gray-200 rounded-lg mb-3"></div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="text-center py-8">
+          <div className="text-red-400 text-lg mb-2">⚠️</div>
+          <div className="text-gray-600 mb-2">{error}</div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="text-mint-600 hover:text-mint-700 text-sm font-medium"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200">
+        <div className="flex">
+          <button
+            onClick={() => setActiveTab('deals')}
+            className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+              activeTab === 'deals'
+                ? 'text-mint-600 border-b-2 border-mint-600 bg-mint-50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Related Deals
+          </button>
+          <button
+            onClick={() => setActiveTab('coupons')}
+            className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+              activeTab === 'coupons'
+                ? 'text-amber-600 border-b-2 border-amber-600 bg-amber-50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Company Coupons
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      <div className="p-6">
+        {activeTab === 'deals' ? (
+          <div>
+            {deals.length > 0 ? (
+              <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                {deals.map((deal) => (
+                  <RelatedDealCard key={deal.id} deal={deal} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-gray-400 text-lg mb-2">🛍️</div>
+                <div className="text-gray-600 mb-2">No deals available right now</div>
+                <p className="text-gray-500 text-sm">Check back later for amazing deals</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            {coupons.length > 0 ? (
+              <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                {coupons.map((coupon) => (
+                  <RelatedCouponCard key={coupon.id} coupon={coupon} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-gray-400 text-lg mb-2">🎫</div>
+                <div className="text-gray-600 mb-2">No coupons available right now</div>
+                <p className="text-gray-500 text-sm">Check back later for exciting offers</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 
 // Main Deal Page Component
@@ -349,16 +688,17 @@ export default function ProfessionalDealPage() {
   ].filter(Boolean)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Breadcrumb */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <nav className="flex items-center space-x-2 text-sm">
-            <Link to="/" className="text-blue-600 hover:text-blue-800">Home</Link>
+    <div className="min-h-screen bg-gray-50 pt-16">
+      {/* Header Section */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          {/* Breadcrumb */}
+          <nav className="flex items-center space-x-2 text-sm mb-4">
+            <Link to="/" className="text-mint-600 hover:text-mint-700 font-medium">Home</Link>
             <ChevronRightIcon className="w-4 h-4 text-gray-400" />
             {deal.categories && (
               <>
-                <Link to={`/category/${deal.categories.slug}`} className="text-blue-600 hover:text-blue-800">
+                <Link to={`/category/${deal.categories.slug}`} className="text-mint-600 hover:text-mint-700 font-medium">
                   {deal.categories.name}
                 </Link>
                 <ChevronRightIcon className="w-4 h-4 text-gray-400" />
@@ -366,11 +706,83 @@ export default function ProfessionalDealPage() {
             )}
             <span className="text-gray-600 truncate">{truncate(deal.title, 50)}</span>
           </nav>
+
+          {/* Deal Title and Company */}
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <h1 className={`font-bold text-gray-900 mb-3 leading-tight ${
+                deal.title.length > 80 
+                  ? 'text-lg lg:text-xl' 
+                  : deal.title.length > 50 
+                  ? 'text-xl lg:text-2xl' 
+                  : 'text-2xl lg:text-3xl'
+              }`}>
+                {deal.title}
+              </h1>
+              <div className="flex items-center space-x-3 flex-wrap">
+                <div className="flex items-center space-x-2">
+                  <Link 
+                    to={`/company/${deal.companies?.slug || deal.merchant}`}
+                    className="flex items-center space-x-2 text-mint-600 hover:text-mint-700 font-medium group"
+                  >
+                    {deal.companies?.logo_url ? (
+                      <img 
+                        src={deal.companies.logo_url} 
+                        alt={deal.companies.name}
+                        className="w-6 h-6 rounded object-contain bg-white p-0.5 border border-gray-200 group-hover:border-mint-300 transition-colors"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 bg-gradient-to-br from-mint-100 to-emerald-100 rounded flex items-center justify-center group-hover:from-mint-200 group-hover:to-emerald-200 transition-colors">
+                        <span className="text-xs font-bold text-mint-700">
+                          {(deal.companies?.name || deal.merchant || 'S').charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <span className={`${
+                      (deal.companies?.name || deal.merchant || '').length > 20 
+                        ? 'text-sm' 
+                        : 'text-base'
+                    }`}>
+                      {deal.companies?.name || deal.merchant}
+                    </span>
+                  </Link>
+                  {deal.companies?.is_verified && (
+                    <CheckCircleIcon className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                  )}
+                </div>
+                <span className="text-gray-400">•</span>
+                <span className="text-sm text-gray-600">{dateAgo(deal.created_at)}</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-2 ml-4 flex-shrink-0">
+              <button
+                onClick={handleBookmark}
+                className={`p-3 rounded-lg border transition-all duration-200 ${
+                  isBookmarked 
+                    ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100' 
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                }`}
+                title={isBookmarked ? 'Remove from bookmarks' : 'Add to bookmarks'}
+              >
+                {isBookmarked ? <HeartIconSolid className="w-5 h-5" /> : <HeartIcon className="w-5 h-5" />}
+              </button>
+              
+              <button
+                onClick={handleShare}
+                className="p-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+                title="Share deal"
+              >
+                <ShareIcon className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Left Column - Images */}
@@ -386,43 +798,8 @@ export default function ProfessionalDealPage() {
           {/* Middle Column - Main Info */}
           <div className="lg:col-span-1 space-y-6">
             
-            {/* Title and Basic Info */}
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-                {deal.title}
-              </h1>
-              
-              {/* Rating and Reviews Placeholder */}
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <StarIconSolid 
-                      key={i} 
-                      className={`w-5 h-5 ${i < 4 ? 'text-yellow-400' : 'text-gray-300'}`} 
-                    />
-                  ))}
-                  <span className="ml-2 text-sm text-gray-600">(4.2)</span>
-                </div>
-                <span className="text-sm text-blue-600">156 reviews</span>
-              </div>
-
-              {/* Merchant */}
-              <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-                <span>by</span>
-                <Link 
-                  to={`/company/${deal.companies?.slug || deal.merchant}`}
-                  className="text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  {deal.companies?.name || deal.merchant}
-                </Link>
-                {deal.companies?.is_verified && (
-                  <CheckCircleIcon className="w-4 h-4 text-blue-500" />
-                )}
-              </div>
-            </div>
-
-            {/* Price Section */}
-            <div className="border rounded-lg p-4 bg-white">
+            {/* Price and Action Card */}
+            <div className="bg-gradient-to-br from-cream-50 via-yellow-50/30 to-amber-50/40 rounded-xl border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
               <PriceDisplay deal={deal} />
               
               {/* Stock Status */}
@@ -432,11 +809,11 @@ export default function ProfessionalDealPage() {
 
               {/* Coupon Code */}
               {deal.coupon_code && (
-                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="mt-4 p-4 bg-white border-2 border-dashed border-green-400 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-green-800 font-medium">Use coupon code:</p>
-                      <code className="text-lg font-mono font-bold text-green-900">
+                      <p className="text-sm text-gray-600 mb-1">Coupon Code:</p>
+                      <code className="text-xl font-mono font-bold text-green-900">
                         {deal.coupon_code}
                       </code>
                     </div>
@@ -445,62 +822,34 @@ export default function ProfessionalDealPage() {
                         navigator.clipboard.writeText(deal.coupon_code)
                         toast.success('Coupon code copied!')
                       }}
-                      className="text-green-600 hover:text-green-800"
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                     >
                       Copy
                     </button>
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Action Buttons */}
-            <div className="space-y-3">
-              <a
-                href={deal.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-6 rounded-lg text-center block transition-colors text-lg"
-                onClick={() => {
-                  // Track click
-                  api.trackDealClick(deal.id).catch(() => {})
-                }}
-              >
-                Get This Deal
-              </a>
-              
-              <div className="flex space-x-2">
-                <button
-                  onClick={handleBookmark}
-                  className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg border transition-colors ${
-                    isBookmarked 
-                      ? 'bg-red-50 border-red-200 text-red-700' 
-                      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
+              {/* Main Action Button */}
+              <div className="mt-6">
+                <a
+                  href={deal.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-lg text-center block transition-all duration-300 text-lg shadow-lg hover:shadow-xl"
+                  onClick={() => {
+                    // Track click
+                    api.trackDealClick(deal.id).catch(() => {})
+                  }}
                 >
-                  {isBookmarked ? <HeartIconSolid className="w-5 h-5" /> : <HeartIcon className="w-5 h-5" />}
-                  <span>{isBookmarked ? 'Saved' : 'Save'}</span>
-                </button>
-                
-                <button
-                  onClick={handleShare}
-                  className="flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <ShareIcon className="w-5 h-5" />
-                  <span>Share</span>
-                </button>
+                  Get This Deal
+                </a>
               </div>
             </div>
 
-            {/* Trust Indicators */}
-            <div className="border rounded-lg p-4 bg-white">
-              <h3 className="font-semibold text-gray-900 mb-3">Why shop with confidence</h3>
-              <TrustIndicators />
-            </div>
-
-            {/* Description */}
-            <div className="border rounded-lg p-4 bg-white">
-              <h3 className="font-semibold text-gray-900 mb-3">Product Details</h3>
+            {/* Description Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300">
+              <h3 className="font-semibold text-gray-900 mb-4">Product Details</h3>
               {deal.description ? (
                 <div>
                   <p className={`text-gray-700 leading-relaxed ${
@@ -511,7 +860,7 @@ export default function ProfessionalDealPage() {
                   {deal.description.length > 300 && (
                     <button
                       onClick={() => setShowFullDescription(!showFullDescription)}
-                      className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      className="mt-3 text-mint-600 hover:text-mint-700 text-sm font-medium"
                     >
                       {showFullDescription ? 'Show less' : 'Read more'}
                     </button>
@@ -532,19 +881,25 @@ export default function ProfessionalDealPage() {
                 </div>
               )}
             </div>
+
+            {/* Trust Indicators Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300">
+              <h3 className="font-semibold text-gray-900 mb-4">Why shop with confidence</h3>
+              <TrustIndicators />
+            </div>
           </div>
 
           {/* Right Column - Additional Info */}
           <div className="lg:col-span-1 space-y-6">
             
-            {/* Voting */}
-            <div className="border rounded-lg p-4 bg-white">
-              <h3 className="font-semibold text-gray-900 mb-3">Community Rating</h3>
+            {/* Voting Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300">
+              <h3 className="font-semibold text-gray-900 mb-4">Community Rating</h3>
               <div className="flex items-center justify-between">
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleVote('up')}
-                    className={`p-2 rounded-lg border transition-colors ${
+                    className={`p-3 rounded-lg border transition-colors ${
                       deal?.userVote === 1 
                         ? 'bg-green-50 border-green-200 text-green-700' 
                         : 'border-gray-300 text-gray-600 hover:bg-gray-50'
@@ -554,7 +909,7 @@ export default function ProfessionalDealPage() {
                   </button>
                   <button
                     onClick={() => handleVote('down')}
-                    className={`p-2 rounded-lg border transition-colors ${
+                    className={`p-3 rounded-lg border transition-colors ${
                       deal?.userVote === -1 
                         ? 'bg-red-50 border-red-200 text-red-700' 
                         : 'border-gray-300 text-gray-600 hover:bg-gray-50'
@@ -565,12 +920,12 @@ export default function ProfessionalDealPage() {
                 </div>
                 
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-3xl font-bold text-gray-900">
                     {(deal.upvotes || 0) - (deal.downvotes || 0)}
                   </div>
                   <div className="text-sm text-gray-600">Net Score</div>
                   <div className="mt-2 text-xs text-gray-500">
-                    <div className="flex items-center justify-end space-x-3">
+                    <div className="flex items-center justify-end space-x-4">
                       <span className="flex items-center">
                         <HandThumbUpIcon className="w-3 h-3 mr-1 text-green-600" />
                         {deal.upvotes || 0}
@@ -588,24 +943,24 @@ export default function ProfessionalDealPage() {
             {/* Store Information Panel */}
             <StoreInfoPanel company={deal.company} deal={deal} />
 
-            {/* Deal Stats */}
-            <div className="border rounded-lg p-4 bg-white">
-              <h3 className="font-semibold text-gray-900 mb-3">Deal Information</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
+            {/* Deal Stats Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300">
+              <h3 className="font-semibold text-gray-900 mb-4">Deal Information</h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center">
                   <span className="text-gray-600">Views:</span>
-                  <span className="font-medium">{deal.views_count || 0}</span>
+                  <span className="font-medium text-gray-900">{deal.views_count || 0}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-gray-600">Clicks:</span>
-                  <span className="font-medium">{deal.clicks_count || 0}</span>
+                  <span className="font-medium text-gray-900">{deal.clicks_count || 0}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-gray-600">Posted:</span>
-                  <span className="font-medium">{dateAgo(deal.created_at)}</span>
+                  <span className="font-medium text-gray-900">{dateAgo(deal.created_at)}</span>
                 </div>
                 {deal.expires_at && (
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-gray-600">Expires:</span>
                     <span className="font-medium text-red-600">
                       {dateAgo(deal.expires_at)}
@@ -615,30 +970,41 @@ export default function ProfessionalDealPage() {
               </div>
             </div>
 
-            {/* Related Deals */}
+            {/* Related Deals Card */}
             {relatedDeals && relatedDeals.length > 0 && (
-              <div className="border rounded-lg p-4 bg-white">
-                <h3 className="font-semibold text-gray-900 mb-3">Related Deals</h3>
-                <div className="space-y-3">
+              <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300">
+                <h3 className="font-semibold text-gray-900 mb-4">Related Deals</h3>
+                <div className="space-y-4">
                   {relatedDeals.slice(0, 3).map((relatedDeal) => (
                     <Link
                       key={relatedDeal.id}
                       to={`/deal/${relatedDeal.id}`}
-                      className="flex space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
                     >
-                      <ImageWithFallback
-                        src={relatedDeal.image_url || relatedDeal.featured_image}
-                        alt={relatedDeal.title}
-                        className="w-12 h-12 object-cover rounded"
-                        fallbackClassName="w-12 h-12"
-                      />
+                      <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-cream-50 via-yellow-50/30 to-amber-50/40 border border-gray-200 p-2 flex items-center justify-center flex-shrink-0">
+                        <ImageWithFallback
+                          src={relatedDeal.image_url || relatedDeal.featured_image}
+                          alt={relatedDeal.title}
+                          className="w-full h-full object-contain"
+                          fallbackClassName="w-full h-full"
+                        />
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className={`font-medium text-gray-900 group-hover:text-mint-700 transition-colors ${
+                          relatedDeal.title.length > 60 
+                            ? 'text-xs line-clamp-2' 
+                            : 'text-sm line-clamp-2'
+                        }`}>
                           {relatedDeal.title}
                         </p>
-                        <p className="text-sm text-red-600 font-bold">
+                        <p className="text-sm text-mint-600 font-bold mt-1">
                           {formatPrice(relatedDeal.price)}
                         </p>
+                        {relatedDeal.discount_percentage && (
+                          <span className="inline-block mt-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded">
+                            -{relatedDeal.discount_percentage}% OFF
+                          </span>
+                        )}
                       </div>
                     </Link>
                   ))}
@@ -647,6 +1013,16 @@ export default function ProfessionalDealPage() {
             )}
           </div>
         </div>
+
+        {/* Related Deals and Coupons Section */}
+        {deal?.id && (
+          <div className="mt-8">
+            <RelatedDealsAndCoupons 
+              dealId={deal.id} 
+              companyId={deal.companies?.id} 
+            />
+          </div>
+        )}
 
         {/* Reviews and Ratings Section */}
         {deal?.id && (

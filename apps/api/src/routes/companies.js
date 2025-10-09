@@ -374,7 +374,46 @@ router.get('/:slug/deals', async (req, res) => {
   }
 })
 
-// Get company coupons (only approved and verified companies)
+// Get company coupons by company ID (for internal API use)
+router.get('/:id/coupons', async (req, res) => {
+  try {
+    const companyId = parseInt(req.params.id)
+    const limit = parseInt(req.query.limit) || 8
+    
+    if (isNaN(companyId)) {
+      return res.status(400).json({ error: 'Invalid company ID' })
+    }
+
+    // Get coupons for this company
+    const { data: coupons, error: couponsError } = await supabase
+      .from('coupons')
+      .select(`
+        id, title, description, coupon_code, coupon_type, 
+        discount_percentage, discount_amount, minimum_order_amount, 
+        maximum_discount_amount, terms_conditions, starts_at, expires_at,
+        is_featured, is_exclusive, karma_points, views_count, clicks_count,
+        created_at, updated_at,
+        company:companies (
+          id, name, slug, logo_url, is_verified, status
+        )
+      `)
+      .eq('company_id', companyId)
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (couponsError) {
+      return res.status(400).json({ error: couponsError.message })
+    }
+
+    res.json(coupons || [])
+  } catch (error) {
+    console.error('Error fetching company coupons:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Get company coupons by slug (only approved and verified companies)
 router.get('/:slug/coupons', async (req, res) => {
   try {
     const { slug } = req.params
