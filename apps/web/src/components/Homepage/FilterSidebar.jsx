@@ -21,39 +21,52 @@ import {
   Utensils,
   Dumbbell,
   Baby,
-  PawPrint
+  PawPrint,
+  Star,
+  Heart,
+  Target,
+  Shield,
+  Crown,
+  Rocket,
+  Diamond,
+  Award,
+  Compass,
+  Palette,
+  Camera,
+  Music,
+  Coffee
 } from 'lucide-react';
 
-// Comprehensive filter options
+// Comprehensive filter options with blue theme
 const FILTERS = [
   { id: 'all', label: 'All Deals', icon: Grid3x3, color: 'text-blue-600' },
-  { id: 'trending', label: 'Trending', icon: Flame, color: 'text-cyan-600' },
-  { id: 'hot', label: 'Hot Deals', icon: TrendingUp, color: 'text-indigo-600' },
-  { id: '50-off', label: '50% Off+', icon: Percent, color: 'text-blue-700' },
+  { id: 'trending', label: 'Trending', icon: Star, color: 'text-cyan-600' },
+  { id: 'hot', label: 'Hot Deals', icon: Flame, color: 'text-indigo-600' },
+  { id: '50-off', label: '50% Off+', icon: Target, color: 'text-blue-700' },
   { id: 'under-10', label: 'Under $10', icon: DollarSign, color: 'text-cyan-700' },
   { id: 'under-25', label: 'Under $25', icon: DollarSign, color: 'text-indigo-700' },
   { id: 'under-50', label: 'Under $50', icon: DollarSign, color: 'text-blue-800' },
   { id: 'free-shipping', label: 'Free Shipping', icon: Truck, color: 'text-cyan-800' },
   { id: 'ending-soon', label: 'Ending Soon', icon: Clock, color: 'text-indigo-800' },
-  { id: 'new-arrivals', label: 'New Arrivals', icon: Sparkles, color: 'text-blue-900' },
+  { id: 'new-arrivals', label: 'New Arrivals', icon: Rocket, color: 'text-blue-900' },
   { id: 'freebies', label: 'Free Stuff', icon: Gift, color: 'text-cyan-900' },
   { id: 'flash-sale', label: 'Flash Sales', icon: Zap, color: 'text-indigo-900' },
 ];
 
-// Comprehensive categories
+// Comprehensive categories with blue theme
 const CATEGORIES = [
   { id: 'electronics', label: 'Electronics', icon: Smartphone, color: 'text-blue-600' },
-  { id: 'fashion', label: 'Fashion', icon: ShoppingBag, color: 'text-cyan-600' },
+  { id: 'fashion', label: 'Fashion', icon: Heart, color: 'text-cyan-600' },
   { id: 'home', label: 'Home & Garden', icon: Home, color: 'text-indigo-600' },
-  { id: 'beauty', label: 'Beauty & Health', icon: Sparkles, color: 'text-blue-700' },
+  { id: 'beauty', label: 'Beauty & Health', icon: Diamond, color: 'text-blue-700' },
   { id: 'toys', label: 'Toys & Games', icon: Gamepad2, color: 'text-cyan-700' },
   { id: 'sports', label: 'Sports & Fitness', icon: Dumbbell, color: 'text-indigo-700' },
   { id: 'books', label: 'Books & Media', icon: Book, color: 'text-blue-800' },
   { id: 'automotive', label: 'Automotive', icon: Car, color: 'text-cyan-800' },
-  { id: 'food', label: 'Food & Grocery', icon: Utensils, color: 'text-indigo-800' },
+  { id: 'food', label: 'Food & Grocery', icon: Coffee, color: 'text-indigo-800' },
   { id: 'baby', label: 'Baby & Kids', icon: Baby, color: 'text-blue-900' },
   { id: 'pets', label: 'Pet Supplies', icon: PawPrint, color: 'text-cyan-900' },
-  { id: 'office', label: 'Office Supplies', icon: Package, color: 'text-indigo-900' },
+  { id: 'office', label: 'Office Supplies', icon: Shield, color: 'text-indigo-900' },
 ];
 
 export function FilterSidebar({ activeFilter = 'all', onFilterChange, activeCategory, onCategoryChange }) {
@@ -92,7 +105,7 @@ export function FilterSidebar({ activeFilter = 'all', onFilterChange, activeCate
       {/* Categories - Ultra Compact */}
       <div className="bg-white rounded-md border border-gray-200 p-2 shadow-sm">
         <h3 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1">
-          <Grid3x3 className="w-2.5 h-2.5 text-blue-600" />
+          <Compass className="w-2.5 h-2.5 text-blue-600" />
           Categories
         </h3>
         <div className="space-y-0.5">

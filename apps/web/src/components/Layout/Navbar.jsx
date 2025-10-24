@@ -88,9 +88,9 @@ const Navbar = () => {
             {/* Logo - Left Side */}
             <Link to="/" className="flex items-center flex-shrink-0 group">
               <img 
-                src="/logo.png" 
+                src="/logo.svg" 
                 alt="SaveBucks Logo" 
-                className="h-8 w-8 sm:h-10 sm:w-10 lg:h-14 lg:w-14 object-contain group-hover:scale-105 transition-transform duration-200"
+                className="h-14 w-28 sm:h-14 sm:w-14 lg:h-24 lg:w-24 object-contain group-hover:scale-105 transition-transform duration-200 filter brightness-0 invert"
               />
             </Link>
 

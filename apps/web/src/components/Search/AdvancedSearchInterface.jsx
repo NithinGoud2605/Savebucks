@@ -418,10 +418,10 @@ const AdvancedSearchInterface = ({
                   <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
                   <circle cx="12" cy="10" r="3"/>
                 </svg>
-                <span className="font-medium truncate max-w-24">
+                <span className="font-medium truncate max-w-16 sm:max-w-20 lg:max-w-24 text-xs sm:text-sm">
                   {isLocating ? 'Locating…' : (userLocation?.address?.display?.split(',')[0] || zipCode || 'Anywhere')}
                 </span>
-                <ChevronDown className={`${compact ? 'w-3 h-3' : 'w-4 h-4'} text-gray-400 transition-transform duration-200 ${showLocationDropdown ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`${compact ? 'w-2.5 h-2.5 sm:w-3 sm:h-3' : 'w-3 h-3 sm:w-4 sm:h-4'} text-gray-400 transition-transform duration-200 ${showLocationDropdown ? 'rotate-180' : ''}`} />
               </button>
 
             </div>
@@ -441,13 +441,13 @@ const AdvancedSearchInterface = ({
             }}
             onBlur={() => setIsExpanded(false)}
             placeholder={placeholder}
-            className={`${styles.input} placeholder:transition-colors focus:placeholder-gray-400`}
+            className={`${styles.input} placeholder:transition-colors focus:placeholder-gray-400 text-sm sm:text-base`}
             aria-autocomplete="list"
             aria-label="Search for deals, coupons, users, companies"
           />
 
           {/* Search Actions */}
-          <div className="flex items-center space-x-1 px-3 flex-shrink-0">
+          <div className="flex items-center space-x-0.5 sm:space-x-1 px-1 sm:px-2 lg:px-3 flex-shrink-0">
             {query && (
               <button
                 onClick={clearSearch}
@@ -455,7 +455,7 @@ const AdvancedSearchInterface = ({
                 title="Clear search (Esc)"
                 aria-label="Clear search"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3 h-3 sm:w-4 sm:h-4" />
               </button>
             )}
 
@@ -466,17 +466,18 @@ const AdvancedSearchInterface = ({
                 title="Advanced filters"
                 aria-label="Toggle advanced filters"
               >
-                <Filter className="w-4 h-4" />
+                <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
               </button>
             )}
 
             <button
               onClick={() => executeSearch()}
-              className={styles.searchBtn}
+              className={`${styles.searchBtn} text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-2.5`}
               disabled={!query.trim()}
               aria-label="Execute search"
             >
-              Search
+              <span className="hidden sm:inline">Search</span>
+              <Search className="w-3 h-3 sm:hidden" />
             </button>
           </div>
         </div>

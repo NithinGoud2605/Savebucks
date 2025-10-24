@@ -12,7 +12,17 @@ import {
   Trophy,
   Store,
   Hash,
-  TrendingDown
+  TrendingDown,
+  Star,
+  Crown,
+  Award,
+  Target,
+  Shield,
+  Diamond,
+  Rocket,
+  Zap,
+  Compass,
+  Heart
 } from 'lucide-react';
 
 export function RightSidebar() {
@@ -81,7 +91,7 @@ function QuickStatsWidget() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-3">
-          <Loader2 className="w-4 h-4 animate-spin text-mint-600" />
+          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
         </div>
       ) : (
         <div className="space-y-1">
@@ -135,12 +145,12 @@ function LeaderboardWidget() {
     <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide flex items-center gap-1.5">
-          <Trophy className="w-3 h-3 text-yellow-500" />
+          <Crown className="w-3 h-3 text-blue-600" />
           Top Savers
         </h3>
         <Link
           to="/leaderboard"
-          className="text-xs text-mint-600 hover:text-mint-700 font-medium flex items-center gap-1"
+          className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
         >
           View All
           <ArrowRight className="w-2.5 h-2.5" />
@@ -149,7 +159,7 @@ function LeaderboardWidget() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-4">
-          <Loader2 className="w-4 h-4 animate-spin text-mint-600" />
+          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
         </div>
       ) : leaderboard && leaderboard.length > 0 ? (
         <div className="space-y-2">
@@ -196,7 +206,7 @@ function LeaderboardItem({ user, rank }) {
         
         {/* User Info */}
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-semibold text-gray-900 truncate group-hover:text-mint-700 transition-colors">
+          <div className="text-xs font-semibold text-gray-900 truncate group-hover:text-blue-700 transition-colors">
             {user.handle || `User ${user.id}`}
           </div>
           <div className="flex items-center gap-1 text-xs text-gray-600">
@@ -230,12 +240,12 @@ function TopCompaniesWidget() {
     <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide flex items-center gap-1.5">
-          <Store className="w-3 h-3 text-mint-600" />
+          <Shield className="w-3 h-3 text-blue-600" />
           Top Companies
         </h3>
         <Link
           to="/companies"
-          className="text-xs text-mint-600 hover:text-mint-700 font-medium flex items-center gap-1"
+          className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
         >
           View All
           <ArrowRight className="w-2.5 h-2.5" />
@@ -244,7 +254,7 @@ function TopCompaniesWidget() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-4">
-          <Loader2 className="w-4 h-4 animate-spin text-mint-600" />
+          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
         </div>
       ) : companies && companies.length > 0 ? (
         <div className="grid grid-cols-4 gap-1">
@@ -264,7 +274,7 @@ function TopCompaniesWidget() {
                     className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform"
                   />
                 ) : (
-                  <Store className="w-4 h-4 text-gray-400 group-hover:text-mint-600 transition-colors" />
+                  <Store className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
                 )}
               </div>
             </Link>
@@ -297,7 +307,7 @@ function HotCouponsWidget() {
         </h3>
         <Link
           to="/companies"
-          className="text-xs text-mint-600 hover:text-mint-700 font-medium flex items-center gap-1"
+          className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
         >
           View All
           <ArrowRight className="w-2.5 h-2.5" />
@@ -306,7 +316,7 @@ function HotCouponsWidget() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-3">
-          <Loader2 className="w-4 h-4 animate-spin text-mint-600" />
+          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
         </div>
       ) : coupons && coupons.length > 0 ? (
         <div className="space-y-1">
@@ -365,12 +375,13 @@ function TrendingTagsWidget() {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-2 shadow-sm">
       <div className="flex items-center justify-between mb-1.5">
-        <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide">
+        <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide flex items-center gap-1.5">
+          <Hash className="w-3 h-3 text-blue-600" />
           Trending Tags
         </h3>
         <Link
           to="/tags"
-          className="text-xs text-mint-600 hover:text-mint-700 font-medium flex items-center gap-1"
+          className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
         >
           View All
           <ArrowRight className="w-2.5 h-2.5" />
