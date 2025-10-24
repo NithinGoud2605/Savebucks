@@ -124,18 +124,18 @@ const SavedItems = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Saved Items</h1>
-        <p className="text-gray-600">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Saved Items</h1>
+        <p className="text-sm sm:text-base text-gray-600">
           {items.length} {items.length === 1 ? 'item' : 'items'} saved
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-1 mb-8 bg-gray-100 p-1 rounded-lg w-fit">
+      <div className="flex space-x-1 mb-6 sm:mb-8 bg-gray-100 p-1 rounded-lg w-full sm:w-fit overflow-x-auto">
         <button
           onClick={() => setActiveTab('all')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
             activeTab === 'all'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
@@ -145,7 +145,7 @@ const SavedItems = () => {
         </button>
         <button
           onClick={() => setActiveTab('deals')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
             activeTab === 'deals'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
@@ -155,7 +155,7 @@ const SavedItems = () => {
         </button>
         <button
           onClick={() => setActiveTab('coupons')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
             activeTab === 'coupons'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-600 hover:text-gray-900'

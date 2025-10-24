@@ -352,7 +352,7 @@ const Settings = () => {
         <div className="bg-white rounded-lg shadow">
           {/* Tab Navigation */}
           <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6" aria-label="Tabs">
+            <nav className="flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
               {tabs.map((tab) => {
                 const Icon = tab.icon
                 return (
@@ -360,15 +360,16 @@ const Settings = () => {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`
-                      flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm
+                      flex items-center space-x-1 sm:space-x-2 py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0
                       ${activeTab === tab.id
                         ? 'border-blue-500 text-blue-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }
                     `}
                   >
-                    <Icon className="h-5 w-5" />
-                    <span>{tab.name}</span>
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="hidden sm:inline">{tab.name}</span>
+                    <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
                   </button>
                 )
               })}
@@ -376,7 +377,7 @@ const Settings = () => {
           </div>
 
           {/* Tab Content */}
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {prefsLoading ? (
               <div className="space-y-4">
                 <Skeleton className="h-6 w-48" />

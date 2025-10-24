@@ -488,9 +488,9 @@ const AdvancedSearchInterface = ({
             onClick={(e) => e.stopPropagation()}
             className="fixed bg-white rounded-lg shadow-xl border border-gray-200 z-[9999] p-4"
             style={{ 
-              left: locationDropdownRect.left, 
+              left: Math.max(8, locationDropdownRect.left), 
               top: locationDropdownRect.top,
-              width: locationDropdownRect.width
+              width: Math.min(locationDropdownRect.width, window.innerWidth - 16)
             }}
           >
             <div className="space-y-3">
@@ -641,9 +641,9 @@ const AdvancedSearchInterface = ({
           <div
             className="fixed bg-white/95 backdrop-blur-lg border border-gray-200/60 rounded-2xl shadow-2xl z-[9999] max-h-96 overflow-y-auto"
             style={{ 
-              left: dropdownRect.left, 
+              left: Math.max(8, dropdownRect.left), 
               top: dropdownRect.top, 
-              width: dropdownRect.width,
+              width: Math.min(dropdownRect.width, window.innerWidth - 16),
               maxWidth: '90vw'
             }}
           >

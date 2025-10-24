@@ -156,21 +156,22 @@ const AdminPage = () => {
       {/* Navigation Tabs */}
       <div className="bg-white border-b border-primary-200">
         <Container>
-          <div className="flex space-x-8 overflow-x-auto">
+          <div className="flex space-x-4 sm:space-x-8 overflow-x-auto pb-2">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
+                  flex items-center space-x-1 sm:space-x-2 py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0
                   ${activeTab === tab.id
                     ? 'border-primary-500 text-primary-600'
                     : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
                   }
                 `}
               >
-                <tab.icon className="w-5 h-5" />
-                <span>{tab.name}</span>
+                <tab.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">{tab.name}</span>
+                <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
               </button>
             ))}
           </div>

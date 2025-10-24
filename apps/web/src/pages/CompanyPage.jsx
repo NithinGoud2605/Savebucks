@@ -731,20 +731,21 @@ const CompanyPage = () => {
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Navigation Tabs */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-8">
-          <nav className="flex">
+          <nav className="flex overflow-x-auto">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setTab(tab.id)}
-                className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+                className={`flex-1 px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
                     ? 'text-mint-600 border-b-2 border-mint-600 bg-mint-50'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                {tab.label}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
                 {tab.count !== null && (
-                  <span className={`ml-2 py-0.5 px-2 rounded-full text-xs ${
+                  <span className={`ml-1 sm:ml-2 py-0.5 px-1 sm:px-2 rounded-full text-xs ${
                     activeTab === tab.id
                       ? 'bg-mint-100 text-mint-700'
                       : 'bg-gray-100 text-gray-600'

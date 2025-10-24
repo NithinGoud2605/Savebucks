@@ -575,7 +575,7 @@ export default function PostItemOrCoupon() {
   // Show loading while auth is initializing
   if (!isInitialized) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white pt-22 pb-6">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white pt-12 sm:pt-14 lg:pt-16 pb-6">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
@@ -592,21 +592,21 @@ export default function PostItemOrCoupon() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white pt-22 pb-6">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white pt-12 sm:pt-14 lg:pt-16 pb-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-secondary-900 mb-3">
+          <h1 className="text-2xl sm:text-3xl font-bold text-secondary-900 mb-3">
             Share with the Community
           </h1>
-          <p className="text-base text-secondary-600 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base text-secondary-600 max-w-2xl mx-auto px-4">
             Found a great deal or have a coupon to share? Help others save money!
           </p>
         </div>
 
         {/* Type Selection */}
-        <div className="bg-white rounded-xl shadow-lg border border-secondary-200 p-4 mb-6">
-          <div className="flex space-x-3">
+        <div className="bg-white rounded-xl shadow-lg border border-secondary-200 p-3 sm:p-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => setPostType('deal')}
               className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
@@ -634,8 +634,8 @@ export default function PostItemOrCoupon() {
 
         {/* Deal Form */}
         {postType === 'deal' && (
-          <div className="bg-white rounded-xl shadow-lg border border-secondary-200 p-6">
-            <h2 className="text-xl font-bold text-secondary-900 mb-4 text-center">
+          <div className="bg-white rounded-xl shadow-lg border border-secondary-200 p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-bold text-secondary-900 mb-4 text-center">
               Share a Great Deal
             </h2>
             
@@ -648,7 +648,7 @@ export default function PostItemOrCoupon() {
             
             <form onSubmit={handleDealSubmit} className="space-y-4">
               {/* Basic Information */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
                   label="Deal Title *"
                   name="title"
@@ -730,7 +730,7 @@ export default function PostItemOrCoupon() {
                   </div>
                   
                   {/* Advanced Pricing */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input
                       label="Original Price"
                       name="original_price"
@@ -1058,8 +1058,8 @@ export default function PostItemOrCoupon() {
 
         {/* Coupon Form */}
         {postType === 'coupon' && (
-          <div className="bg-white rounded-xl shadow-lg border border-secondary-200 p-6">
-            <h2 className="text-xl font-bold text-secondary-900 mb-4 text-center">
+          <div className="bg-white rounded-xl shadow-lg border border-secondary-200 p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-bold text-secondary-900 mb-4 text-center">
               Share a Coupon
             </h2>
             

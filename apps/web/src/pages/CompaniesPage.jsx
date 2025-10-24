@@ -221,7 +221,7 @@ const CompaniesPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-primary-50 pt-16">
+    <div className="min-h-screen bg-primary-50 pt-12 sm:pt-14 lg:pt-16">
       <Container>
         <div className="py-8">
           {/* Header */}
@@ -250,10 +250,10 @@ const CompaniesPage = () => {
           </div>
 
           {/* Search and Filters */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8 shadow-sm">
-            <div className="flex flex-col lg:flex-row gap-4">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-8 shadow-sm">
+            <div className="flex flex-col gap-4">
               {/* Search */}
-              <div className="flex-1">
+              <div className="w-full">
                 <div className="relative">
                   <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                   <input
@@ -266,39 +266,42 @@ const CompaniesPage = () => {
                 </div>
               </div>
 
-              {/* Category Filter */}
-              <div className="lg:w-48">
-                <select
-                  value={filters.category}
-                  onChange={(e) => handleFilterChange('category', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mint-500 focus:border-mint-500"
-                >
-                  <option value="">All Categories</option>
-                  {categories?.map((category) => (
-                    <option key={category.id} value={category.slug}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Filters Row */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Category Filter */}
+                <div className="flex-1 sm:w-48">
+                  <select
+                    value={filters.category}
+                    onChange={(e) => handleFilterChange('category', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mint-500 focus:border-mint-500"
+                  >
+                    <option value="">All Categories</option>
+                    {categories?.map((category) => (
+                      <option key={category.id} value={category.slug}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              {/* Sort */}
-              <div className="lg:w-48">
-                <select
-                  value={filters.sort}
-                  onChange={(e) => handleFilterChange('sort', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mint-500 focus:border-mint-500"
-                >
-                  {sortOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                {/* Sort */}
+                <div className="flex-1 sm:w-48">
+                  <select
+                    value={filters.sort}
+                    onChange={(e) => handleFilterChange('sort', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mint-500 focus:border-mint-500"
+                  >
+                    {sortOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Verified Filter */}
-              <div className="lg:w-auto">
+              <div className="sm:w-auto">
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <input
                     type="checkbox"

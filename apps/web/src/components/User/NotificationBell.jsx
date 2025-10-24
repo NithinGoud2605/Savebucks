@@ -115,17 +115,17 @@ const NotificationBell = () => {
   if (!user) return null
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative flex-shrink-0" ref={dropdownRef}>
       {/* Notification Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full transition-colors"
+        className="relative flex items-center justify-center h-7 w-7 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-white hover:text-cyan-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded-lg transition-colors flex-shrink-0"
       >
-        <BellIcon className="h-6 w-6" />
+        <BellIcon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
         
         {/* Unread Badge */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+          <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-3.5 w-3.5 sm:h-4 sm:w-4 bg-red-500 text-white text-[9px] sm:text-[10px] rounded-full flex items-center justify-center font-medium">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -133,7 +133,7 @@ const NotificationBell = () => {
 
       {/* Notification Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 max-w-[calc(100vw-1rem)] bg-white rounded-lg shadow-lg border border-gray-200 z-50">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Notifications</h3>

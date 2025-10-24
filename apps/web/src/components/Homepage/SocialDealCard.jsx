@@ -128,14 +128,14 @@ export function SocialDealCard({ deal, index = 0 }) {
       variants={cardVariants}
       initial="hidden"
       animate="visible"
-      className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 group hover:border-mint-300 h-24"
+      className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 group hover:border-mint-300 min-h-20 sm:h-24"
     >
       <Link to={`/deal/${deal.id}`} className="block h-full p-3">
         <div className="flex items-center h-full gap-3">
           {/* Deal Photo - Properly sized and fitted */}
           <div className="flex-shrink-0">
             {currentImage && !imageError ? (
-              <div className="w-20 h-20 rounded-lg bg-white border border-gray-200 p-2 flex items-center justify-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-white border border-gray-200 p-2 flex items-center justify-center">
                 <img
                   src={currentImage}
                   alt={deal.title}
@@ -145,7 +145,7 @@ export function SocialDealCard({ deal, index = 0 }) {
                 />
               </div>
             ) : (
-              <div className="w-20 h-20 bg-gradient-to-br from-mint-100 to-emerald-100 rounded-lg flex items-center justify-center border border-gray-200">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-mint-100 to-emerald-100 rounded-lg flex items-center justify-center border border-gray-200">
                 <span className="text-xl">🎁</span>
               </div>
             )}
