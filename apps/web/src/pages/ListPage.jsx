@@ -5,7 +5,7 @@ import { Container } from '../components/Layout/Container'
 import { NewDealCard } from '../components/Deal/NewDealCard'
 import { TagChips } from '../components/Deal/TagChips'
 import { AdSlot } from '../components/AdSlot'
-import { SkeletonList } from '../components/Loader/Skeleton'
+import { SkeletonList } from '../components/ui/Skeleton'
 import { NoDealsFound } from '../components/EmptyState'
 import { useToast } from '../components/Toast'
 import { useConfirm } from '../components/ConfirmDialog'
@@ -56,7 +56,7 @@ export default function ListPage() {
   const queryClient = useQueryClient()
   const toast = useToast()
   const confirm = useConfirm()
-  
+
   // Enhanced state management with URL sync
   const [selectedTags, setSelectedTags] = useState(() => {
     const tags = searchParams.get('tags')
@@ -69,7 +69,7 @@ export default function ListPage() {
   })
   const [showFilters, setShowFilters] = useState(false)
   const [showSavedSearches, setShowSavedSearches] = useState(false)
-  
+
   // Advanced filters state
   const [filters, setFilters] = useState({
     priceRange: [0, 1000],
@@ -81,7 +81,7 @@ export default function ListPage() {
     hasImage: searchParams.get('image') === 'true',
     localDeals: searchParams.get('local') === 'true',
   })
-  
+
   // User preferences from localStorage
   const [userPrefs, setUserPrefs] = useState(() => {
     try {
@@ -90,7 +90,7 @@ export default function ListPage() {
       return {}
     }
   })
-  
+
   const [savedSearches, setSavedSearches] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('savedSearches') || '[]')
@@ -98,7 +98,7 @@ export default function ListPage() {
       return []
     }
   })
-  
+
   const [followedMerchants, setFollowedMerchants] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('followedMerchants') || '[]')
@@ -106,7 +106,7 @@ export default function ListPage() {
       return []
     }
   })
-  
+
   const [dealAlerts, setDealAlerts] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('dealAlerts') || '[]')
@@ -114,9 +114,9 @@ export default function ListPage() {
       return []
     }
   })
-  
+
   useAdsense()
-  
+
   // Determine tab based on pathname for different filter views
   const tab = (() => {
     const path = location.pathname
@@ -153,8 +153,8 @@ export default function ListPage() {
     refetch
   } = useInfiniteQuery({
     queryKey: ['deals', tab, sortBy, searchQuery, selectedTags, filters],
-    queryFn: ({ pageParam = 1 }) => api.getDeals({ 
-      tab, 
+    queryFn: ({ pageParam = 1 }) => api.getDeals({
+      tab,
       sort: sortBy,
       search: searchQuery,
       tags: selectedTags,
@@ -170,7 +170,7 @@ export default function ListPage() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     cacheTime: 10 * 60 * 1000, // 10 minutes
   })
-  
+
   const deals = useMemo(() => {
     return data?.pages?.flatMap(page => page?.data || []) || []
   }, [data])
@@ -195,25 +195,25 @@ export default function ListPage() {
   // Advanced filtering with multiple criteria
   const filteredDeals = useMemo(() => {
     if (!deals.length) return []
-    
+
     let filtered = deals
-    
+
     // Tag filtering
     if (selectedTags.length > 0) {
-      filtered = filtered.filter(deal => 
-        selectedTags.some(tag => 
+      filtered = filtered.filter(deal =>
+        selectedTags.some(tag =>
           deal.merchant === tag || deal.category === tag
         )
       )
     }
-    
+
     // Category filtering
     if (filters.categories.length > 0) {
-      filtered = filtered.filter(deal => 
+      filtered = filtered.filter(deal =>
         filters.categories.includes(deal.category)
       )
     }
-    
+
     // Price filtering
     if (filters.freeOnly) {
       filtered = filtered.filter(deal => deal.price === 0)
@@ -223,29 +223,29 @@ export default function ListPage() {
         return price >= filters.priceRange[0] && price <= filters.priceRange[1]
       })
     }
-    
+
     // Rating filtering
     if (filters.minRating > 0) {
       filtered = filtered.filter(deal => (deal.rating || 0) >= filters.minRating)
     }
-    
+
     // Image filtering
     if (filters.hasImage) {
       filtered = filtered.filter(deal => deal.image_url)
     }
-    
+
     // Expired filtering
     if (!filters.includeExpired) {
       filtered = filtered.filter(deal => deal.status !== 'expired')
     }
-    
+
     return filtered
   }, [deals, selectedTags, filters])
 
   // Update URL when filters change
   useEffect(() => {
     const params = new URLSearchParams()
-    
+
     if (searchQuery) params.set('q', searchQuery)
     if (sortBy !== 'hot') params.set('sort', sortBy)
     if (viewMode !== 'comfortable') params.set('view', viewMode)
@@ -257,7 +257,7 @@ export default function ListPage() {
     if (filters.freeOnly) params.set('free', 'true')
     if (filters.hasImage) params.set('image', 'true')
     if (filters.localDeals) params.set('local', 'true')
-    
+
     const newSearch = params.toString()
     if (newSearch !== searchParams.toString()) {
       navigate(`${location.pathname}${newSearch ? '?' + newSearch : ''}`, { replace: true })
@@ -266,8 +266,8 @@ export default function ListPage() {
 
   // Handlers
   const handleTagClick = useCallback((tag) => {
-    setSelectedTags(current => 
-      current.includes(tag) 
+    setSelectedTags(current =>
+      current.includes(tag)
         ? current.filter(t => t !== tag)
         : [...current, tag]
     )
@@ -289,7 +289,7 @@ export default function ListPage() {
       const name = prompt('Save this search as:', `${tab} deals`)
       resolve(name)
     })
-    
+
     if (searchName) {
       const newSearch = {
         id: Date.now(),
@@ -301,7 +301,7 @@ export default function ListPage() {
         tab,
         createdAt: new Date().toISOString(),
       }
-      
+
       const updated = [...savedSearches, newSearch]
       setSavedSearches(updated)
       localStorage.setItem('savedSearches', JSON.stringify(updated))
@@ -336,16 +336,16 @@ export default function ListPage() {
   // Infinite scroll
   useEffect(() => {
     if (!hasNextPage || isFetchingNextPage) return
-    
+
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
         fetchNextPage()
       }
     })
-    
+
     const target = document.querySelector('#load-more-trigger')
     if (target) observer.observe(target)
-    
+
     return () => observer.disconnect()
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
@@ -353,7 +353,7 @@ export default function ListPage() {
   useEffect(() => {
     const titles = {
       hot: 'Hot Deals',
-      new: 'New Deals', 
+      new: 'New Deals',
       trending: 'Trending Deals',
       'under-20': 'Under $20 Deals',
       '50-percent-off': '50% Off+ Deals',
@@ -362,17 +362,17 @@ export default function ListPage() {
       'hot-deals': 'Hot Deals',
       'ending-soon': 'Ending Soon'
     }
-    
+
     let description = `Discover the best ${titles[tab]} and save money with our community-driven platform.`
-    
+
     if (searchQuery) {
       description = `Search results for "${searchQuery}" - ${filteredDeals.length} deals found.`
     }
-    
+
     if (selectedTags.length > 0) {
       description += ` Filtered by: ${selectedTags.join(', ')}.`
     }
-    
+
     setPageMeta({
       title: searchQuery ? `"${searchQuery}" - ${titles[tab]}` : titles[tab],
       description,
@@ -392,8 +392,8 @@ export default function ListPage() {
               We're having trouble loading deals right now. Please try again.
             </p>
           </div>
-          <button 
-            onClick={() => refetch()} 
+          <button
+            onClick={() => refetch()}
             className="btn-primary"
           >
             Try Again
@@ -411,7 +411,7 @@ export default function ListPage() {
           <div className="flex items-center space-x-3 mb-2">
             <h1 className="text-3xl font-bold text-gray-900">
               {tab === 'hot' && 'Hot Deals 🔥'}
-              {tab === 'new' && 'New Deals 🆕'}  
+              {tab === 'new' && 'New Deals 🆕'}
               {tab === 'trending' && 'Trending Deals 📈'}
               {tab === 'under-20' && 'Under $20 Deals 💰'}
               {tab === '50-percent-off' && '50% Off+ Deals 🎯'}
@@ -420,13 +420,13 @@ export default function ListPage() {
               {tab === 'hot-deals' && 'Hot Deals 🔥'}
               {tab === 'ending-soon' && 'Ending Soon ⏰'}
             </h1>
-            
+
             {/* Real-time deal count */}
             <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
               {filteredDeals.length.toLocaleString()} deals
             </span>
           </div>
-          
+
           <p className="text-gray-600">
             {tab === 'hot' && 'The most popular deals right now'}
             {tab === 'new' && 'Latest deals from our community'}
@@ -444,7 +444,7 @@ export default function ListPage() {
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-3">
           {/* View Mode Toggle */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-gray-50 rounded-lg p-1">
             {VIEW_MODES.map((mode) => (
               <button
                 key={mode.value}
@@ -488,7 +488,7 @@ export default function ListPage() {
             onClick={() => setShowFilters(!showFilters)}
             className={clsx(
               'btn flex items-center space-x-2',
-              showFilters || Object.values(filters).some(f => 
+              showFilters || Object.values(filters).some(f =>
                 Array.isArray(f) ? f.length > 0 : f > 0 || f === true
               ) ? 'btn-primary' : 'btn-secondary'
             )}
@@ -558,9 +558,9 @@ export default function ListPage() {
       {showFilters && (
         <div className="card p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
-                         <h3 className="text-lg font-semibold text-gray-900">
-               Advanced Filters
-             </h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Advanced Filters
+            </h3>
             <button
               onClick={handleClearFilters}
               className="text-sm text-gray-600 hover:text-gray-900"
@@ -713,7 +713,7 @@ export default function ListPage() {
                   'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors',
                   selectedTags.includes(tag)
                     ? 'bg-blue-100 text-blue-800'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-50 text-gray-700 hover:bg-gray-200'
                 )}
               >
                 <span>{tag}</span>
@@ -730,7 +730,7 @@ export default function ListPage() {
           Showing {filteredDeals.length.toLocaleString()} of {deals.length.toLocaleString()} deals
           {searchQuery && ` for "${searchQuery}"`}
         </div>
-        
+
         {savedSearches.length > 0 && (
           <button
             onClick={() => setShowSavedSearches(!showSavedSearches)}
@@ -778,18 +778,18 @@ export default function ListPage() {
         )}>
           {filteredDeals.map((deal, index) => (
             <div key={deal.id}>
-              <NewDealCard 
-                deal={deal} 
+              <NewDealCard
+                deal={deal}
                 index={index}
               />
-              
+
               {/* Strategic Ad Placement */}
               {viewMode !== 'grid' && (index + 1) % 7 === 0 && (
                 <div className="my-8">
                   <AdSlot size="banner" />
                 </div>
               )}
-              
+
               {/* Native ads in grid */}
               {viewMode === 'grid' && (index + 1) % 9 === 0 && (
                 <div className="md:col-span-2 lg:col-span-3 my-4">
@@ -798,7 +798,7 @@ export default function ListPage() {
               )}
             </div>
           ))}
-          
+
           {/* Infinite Scroll Trigger */}
           {hasNextPage && (
             <div id="load-more-trigger" className="py-8 text-center">
@@ -819,7 +819,7 @@ export default function ListPage() {
           )}
         </div>
       )}
-      
+
       {/* Bottom Ad */}
       <div className="mt-12">
         <AdSlot size="rectangle" />

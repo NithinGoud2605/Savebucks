@@ -15,7 +15,7 @@ export function Nav() {
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false)
   const { user, isAuthenticated, signOut } = useAuth()
-  
+
   const { data: adminCheck } = useQuery({
     queryKey: ['admin', 'whoami'],
     queryFn: api.checkAdmin,
@@ -30,7 +30,7 @@ export function Nav() {
         document.getElementById('search')?.focus()
       }
     }
-    
+
     document.addEventListener('keydown', handleKeydown)
     return () => document.removeEventListener('keydown', handleKeydown)
   }, [isSearchFocused])
@@ -54,12 +54,12 @@ export function Nav() {
       <Container>
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="flex items-center space-x-2 font-bold text-xl text-primary-600 focus-ring rounded-lg"
           >
             <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 9.74s9-4.19 9-9.74V7L12 2zm0 2.18L18.18 7 12 10.82 5.82 7 12 4.18zm6 10.82c0 4.25-2.53 7.1-6 7.1s-6-2.85-6-7.1V8.82l6 3.63 6-3.63V15z"/>
+              <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 9.74s9-4.19 9-9.74V7L12 2zm0 2.18L18.18 7 12 10.82 5.82 7 12 4.18zm6 10.82c0 4.25-2.53 7.1-6 7.1s-6-2.85-6-7.1V8.82l6 3.63 6-3.63V15z" />
             </svg>
             <span>{getSiteName()}</span>
           </Link>
@@ -118,7 +118,7 @@ export function Nav() {
                         </span>
                       </div>
                     )}
-                    
+
                     <div className="hidden sm:block">
                       <span className="text-sm text-gray-600">
                         Signed in as{' '}
@@ -128,7 +128,7 @@ export function Nav() {
                       </span>
                     </div>
                   </div>
-                  
+
                   {/* User Menu */}
                   <div className="relative group">
                     <button className="text-gray-600 hover:text-gray-900 focus-ring rounded p-1">
@@ -136,7 +136,7 @@ export function Nav() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
-                    
+
                     {/* Dropdown Menu */}
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-soft border border-secondary-200 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                       <Link
@@ -216,7 +216,7 @@ export function Nav() {
       </div>
 
       {/* Advanced Search Modal */}
-      <AdvancedSearch 
+      <AdvancedSearch
         isOpen={showAdvancedSearch}
         onClose={() => setShowAdvancedSearch(false)}
       />

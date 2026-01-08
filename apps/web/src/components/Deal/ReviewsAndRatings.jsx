@@ -20,13 +20,13 @@ import {
 // Star Rating Component
 const StarRating = ({ rating, size = 'w-5 h-5', onRatingChange = null, readonly = false }) => {
   const [hoverRating, setHoverRating] = useState(0)
-  
+
   return (
     <div className="flex items-center space-x-1">
       {[1, 2, 3, 4, 5].map((star) => {
         const isFilled = readonly ? star <= rating : star <= (hoverRating || rating)
         const StarComponent = isFilled ? StarIconSolid : StarIcon
-        
+
         return (
           <button
             key={star}
@@ -35,13 +35,11 @@ const StarRating = ({ rating, size = 'w-5 h-5', onRatingChange = null, readonly 
             onClick={() => onRatingChange?.(star)}
             onMouseEnter={() => !readonly && setHoverRating(star)}
             onMouseLeave={() => !readonly && setHoverRating(0)}
-            className={`${size} ${
-              readonly 
-                ? 'cursor-default' 
-                : 'cursor-pointer hover:scale-110 transition-transform'
-            } ${
-              isFilled ? 'text-yellow-400' : 'text-gray-300'
-            }`}
+            className={`${size} ${readonly
+              ? 'cursor-default'
+              : 'cursor-pointer hover:scale-110 transition-transform'
+              } ${isFilled ? 'text-yellow-400' : 'text-gray-300'
+              }`}
           >
             <StarComponent />
           </button>
@@ -55,10 +53,10 @@ const StarRating = ({ rating, size = 'w-5 h-5', onRatingChange = null, readonly 
 const ReviewItem = ({ review, onVote }) => {
   const { user } = useAuth()
   const [isVoting, setIsVoting] = useState(false)
-  
+
   const handleVote = async (isHelpful) => {
     if (!user || isVoting) return
-    
+
     setIsVoting(true)
     try {
       await onVote?.(review.id, isHelpful)
@@ -66,7 +64,7 @@ const ReviewItem = ({ review, onVote }) => {
       setIsVoting(false)
     }
   }
-  
+
   return (
     <div className="border-b border-gray-200 pb-6 mb-6 last:border-b-0">
       <div className="flex items-start space-x-4">
@@ -82,7 +80,7 @@ const ReviewItem = ({ review, onVote }) => {
             <UserCircleIcon className="w-10 h-10 text-gray-400" />
           )}
         </div>
-        
+
         {/* Review Content */}
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2">
@@ -102,13 +100,13 @@ const ReviewItem = ({ review, onVote }) => {
               {dateAgo(review.createdAt)}
             </span>
           </div>
-          
+
           {review.title && (
             <h4 className="font-medium text-gray-900 mb-2">{review.title}</h4>
           )}
-          
+
           <p className="text-gray-700 mb-3">{review.content}</p>
-          
+
           {/* Review Actions */}
           <div className="flex items-center space-x-4">
             <button
@@ -119,7 +117,7 @@ const ReviewItem = ({ review, onVote }) => {
               <HandThumbUpIcon className="w-4 h-4" />
               <span>Helpful ({review.helpfulCount || 0})</span>
             </button>
-            
+
             <button
               onClick={() => handleVote(false)}
               disabled={!user || isVoting}
@@ -128,7 +126,7 @@ const ReviewItem = ({ review, onVote }) => {
               <HandThumbDownIcon className="w-4 h-4" />
               <span>Not helpful ({review.notHelpfulCount || 0})</span>
             </button>
-            
+
             {isVoting && (
               <span className="text-sm text-gray-500">Voting...</span>
             )}
@@ -145,29 +143,29 @@ const ReviewForm = ({ dealId, onSubmit, onCancel }) => {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (rating === 0) {
       toast.error('Please select a rating')
       return
     }
-    
+
     if (content.trim().length < 10) {
       toast.error('Review must be at least 10 characters long')
       return
     }
-    
+
     setIsSubmitting(true)
-    
+
     try {
       await onSubmit({
         rating,
         title: title.trim(),
         content: content.trim()
       })
-      
+
       // Reset form
       setRating(0)
       setTitle('')
@@ -179,22 +177,22 @@ const ReviewForm = ({ dealId, onSubmit, onCancel }) => {
       setIsSubmitting(false)
     }
   }
-  
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg bg-gray-50">
       <h3 className="text-lg font-semibold text-gray-900">Write a Review</h3>
-      
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Your Rating *
         </label>
-        <StarRating 
-          rating={rating} 
+        <StarRating
+          rating={rating}
           onRatingChange={setRating}
           size="w-8 h-8"
         />
       </div>
-      
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Review Title (Optional)
@@ -208,7 +206,7 @@ const ReviewForm = ({ dealId, onSubmit, onCancel }) => {
           maxLength={100}
         />
       </div>
-      
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Your Review *
@@ -226,7 +224,7 @@ const ReviewForm = ({ dealId, onSubmit, onCancel }) => {
           {content.length}/1000 characters
         </p>
       </div>
-      
+
       <div className="flex space-x-3">
         <button
           type="submit"
@@ -235,7 +233,7 @@ const ReviewForm = ({ dealId, onSubmit, onCancel }) => {
         >
           {isSubmitting ? 'Submitting...' : 'Submit Review'}
         </button>
-        
+
         <button
           type="button"
           onClick={onCancel}
@@ -254,22 +252,22 @@ export default function ReviewsAndRatings({ dealId }) {
   const queryClient = useQueryClient()
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [sortBy, setSortBy] = useState('newest') // newest, oldest, highest_rated, most_helpful
-  
+
   // Ensure dealId is a string and handle edge cases
   const normalizedDealId = dealId ? String(dealId) : null
-  
+
   // Don't render if no valid dealId
   if (!normalizedDealId || normalizedDealId === 'undefined' || normalizedDealId === 'null') {
     return null
   }
-  
+
   // Fetch reviews
   const { data: reviewsData, isLoading } = useQuery({
     queryKey: ['deal-reviews', normalizedDealId, sortBy],
     queryFn: () => api.getDealReviews(normalizedDealId, { sort: sortBy, limit: 20, page: 1 }),
     enabled: !!normalizedDealId && normalizedDealId !== 'undefined'
   })
-  
+
   // Submit review mutation
   const submitReviewMutation = useMutation({
     mutationFn: (reviewData) => api.submitDealReview(normalizedDealId, reviewData),
@@ -278,7 +276,7 @@ export default function ReviewsAndRatings({ dealId }) {
       setShowReviewForm(false)
     }
   })
-  
+
   // Vote on review mutation
   const voteReviewMutation = useMutation({
     mutationFn: ({ reviewId, isHelpful }) => api.voteOnReview(reviewId, isHelpful),
@@ -291,10 +289,10 @@ export default function ReviewsAndRatings({ dealId }) {
       toast.error(error.response?.data?.error || 'Failed to vote on review')
     }
   })
-  
+
   const reviews = reviewsData?.reviews || []
   const stats = reviewsData?.stats || { average_rating: 0, total_reviews: 0, rating_distribution: {} }
-  
+
   const handleVoteReview = (reviewId, isHelpful) => {
     if (!user) {
       toast.error('Please login to vote on reviews')
@@ -302,7 +300,7 @@ export default function ReviewsAndRatings({ dealId }) {
     }
     voteReviewMutation.mutate({ reviewId, isHelpful })
   }
-  
+
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-4">
@@ -312,7 +310,7 @@ export default function ReviewsAndRatings({ dealId }) {
       </div>
     )
   }
-  
+
   return (
     <div className="space-y-6">
       {/* Rating Summary */}
@@ -328,7 +326,7 @@ export default function ReviewsAndRatings({ dealId }) {
             </button>
           )}
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* Overall Rating */}
           <div className="text-center">
@@ -340,13 +338,13 @@ export default function ReviewsAndRatings({ dealId }) {
               Based on {stats.total_reviews} review{stats.total_reviews !== 1 ? 's' : ''}
             </p>
           </div>
-          
+
           {/* Rating Distribution */}
           <div className="space-y-2">
             {[5, 4, 3, 2, 1].map((stars) => {
               const count = stats.rating_distribution[`${stars}_star`] || 0
               const percentage = stats.total_reviews > 0 ? (count / stats.total_reviews) * 100 : 0
-              
+
               return (
                 <div key={stars} className="flex items-center space-x-2 text-sm">
                   <span className="w-8">{stars}★</span>
@@ -362,7 +360,7 @@ export default function ReviewsAndRatings({ dealId }) {
             })}
           </div>
         </div>
-        
+
         {/* Review Form */}
         {showReviewForm && (
           <ReviewForm
@@ -372,7 +370,7 @@ export default function ReviewsAndRatings({ dealId }) {
           />
         )}
       </div>
-      
+
       {/* Reviews List */}
       {reviews.length > 0 && (
         <div className="bg-white border rounded-lg p-6">
@@ -381,7 +379,7 @@ export default function ReviewsAndRatings({ dealId }) {
             <h3 className="text-lg font-semibold text-gray-900">
               Reviews ({stats.total_reviews})
             </h3>
-            
+
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
@@ -393,7 +391,7 @@ export default function ReviewsAndRatings({ dealId }) {
               <option value="most_helpful">Most Helpful</option>
             </select>
           </div>
-          
+
           {/* Reviews */}
           <div>
             {reviews.map((review) => (
@@ -406,7 +404,7 @@ export default function ReviewsAndRatings({ dealId }) {
           </div>
         </div>
       )}
-      
+
       {/* No Reviews State */}
       {reviews.length === 0 && (
         <div className="bg-white border rounded-lg p-8 text-center">

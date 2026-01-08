@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Search, 
-  X, 
-  Sparkles, 
-  TrendingUp, 
+import {
+  Search,
+  X,
+  Sparkles,
+  TrendingUp,
   Clock,
   Tag,
   Store,
-  Loader2 
+  Loader2
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../lib/api'
@@ -24,12 +24,12 @@ export default function ModernSearchBar({ className = '', placeholder = "Search 
 
   // Debounced search suggestions
   const [debouncedQuery, setDebouncedQuery] = useState('')
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query)
     }, 300)
-    
+
     return () => clearTimeout(timer)
   }, [query])
 
@@ -60,7 +60,7 @@ export default function ModernSearchBar({ className = '', placeholder = "Search 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        searchRef.current && 
+        searchRef.current &&
         !searchRef.current.contains(event.target) &&
         suggestionsRef.current &&
         !suggestionsRef.current.contains(event.target)
@@ -103,7 +103,7 @@ export default function ModernSearchBar({ className = '', placeholder = "Search 
         <div className="relative">
           {/* Search Icon */}
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          
+
           {/* Input Field */}
           <input
             ref={searchRef}
@@ -120,8 +120,8 @@ export default function ModernSearchBar({ className = '', placeholder = "Search 
               w-full h-12 pl-12 pr-24 rounded-2xl border-2 bg-white
               text-gray-900 placeholder:text-gray-500
               transition-all duration-200
-              ${isFocused 
-                ? 'border-primary-500 shadow-lg shadow-primary-500/20' 
+              ${isFocused
+                ? 'border-primary-500 shadow-lg shadow-primary-500/20'
                 : 'border-gray-200 hover:border-gray-300'
               }
               focus:outline-none
@@ -138,12 +138,12 @@ export default function ModernSearchBar({ className = '', placeholder = "Search 
                 exit={{ opacity: 0, scale: 0 }}
                 type="button"
                 onClick={clearSearch}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
               >
                 <X className="w-4 h-4 text-gray-500" />
               </motion.button>
             )}
-            
+
             {/* Search Button */}
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -199,7 +199,7 @@ export default function ModernSearchBar({ className = '', placeholder = "Search 
                       </div>
                     </button>
                   ))}
-                  
+
                   {suggestions.stores?.slice(0, 2).map((store) => (
                     <button
                       key={store.id}
@@ -218,7 +218,7 @@ export default function ModernSearchBar({ className = '', placeholder = "Search 
                     </button>
                   ))}
                 </div>
-                
+
                 {(suggestions.deals?.length > 3 || suggestions.stores?.length > 2) && (
                   <button
                     onClick={() => handleSearch()}
@@ -265,7 +265,7 @@ export default function ModernSearchBar({ className = '', placeholder = "Search 
                       <button
                         key={index}
                         onClick={() => handleSuggestionClick(search)}
-                        className="flex items-center gap-2 p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm text-gray-700"
+                        className="flex items-center gap-2 p-2 bg-gray-50 hover:bg-gray-50 rounded-lg transition-colors text-sm text-gray-700"
                       >
                         <Sparkles className="w-3 h-3 text-orange-500" />
                         {search}

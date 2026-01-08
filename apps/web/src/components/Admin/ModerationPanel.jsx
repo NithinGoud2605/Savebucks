@@ -62,7 +62,7 @@ export function ModerationPanel({ deal, onUpdate }) {
 
     const confirmed = await confirm({
       title: 'Approve Deal',
-      message: isEditing 
+      message: isEditing
         ? 'Approve deal with your edits?'
         : 'Approve this deal as submitted?',
       confirmText: 'Approve',
@@ -84,7 +84,7 @@ export function ModerationPanel({ deal, onUpdate }) {
             <h3 class="text-lg font-semibold mb-4">Reject Deal</h3>
             <textarea id="reject-reason" placeholder="Reason for rejection..." class="w-full p-3 border rounded-lg mb-4" rows="4"></textarea>
             <div class="flex space-x-3 justify-end">
-              <button id="cancel-reject" class="px-4 py-2 bg-gray-100 rounded-lg">Cancel</button>
+              <button id="cancel-reject" class="px-4 py-2 bg-gray-50 rounded-lg">Cancel</button>
               <button id="confirm-reject" class="px-4 py-2 bg-red-600 text-white rounded-lg">Reject</button>
             </div>
           </div>
@@ -213,7 +213,7 @@ export function ModerationPanel({ deal, onUpdate }) {
             )}
 
             <div className="mt-4">
-              <a 
+              <a
                 href={deal.url}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -226,7 +226,7 @@ export function ModerationPanel({ deal, onUpdate }) {
 
           {/* Get images array - prioritize deal_images, fallback to image_url */}
           {(deal.deal_images?.length > 0 ? deal.deal_images[0] : deal.image_url) && (
-            <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-gray-100 ml-4">
+            <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-gray-50 ml-4">
               <img
                 src={deal.deal_images?.length > 0 ? deal.deal_images[0] : deal.image_url}
                 alt={deal.title}
@@ -241,10 +241,10 @@ export function ModerationPanel({ deal, onUpdate }) {
           <span className={clsx(
             'px-3 py-1 rounded-full text-sm font-medium',
             {
-                          'bg-yellow-100 text-yellow-800': deal.status === 'pending',
-            'bg-green-100 text-green-800': deal.status === 'approved',
-            'bg-red-100 text-red-800': deal.status === 'rejected',
-            'bg-gray-100 text-gray-800': deal.status === 'expired',
+              'bg-yellow-100 text-yellow-800': deal.status === 'pending',
+              'bg-green-100 text-green-800': deal.status === 'approved',
+              'bg-red-100 text-red-800': deal.status === 'rejected',
+              'bg-gray-50 text-gray-800': deal.status === 'expired',
             }
           )}>
             {deal.status?.charAt(0).toUpperCase() + deal.status?.slice(1) || 'Unknown'}

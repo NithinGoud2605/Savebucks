@@ -1,11 +1,11 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { 
-  Building2, 
-  ExternalLink, 
-  CheckCircle, 
-  TrendingUp, 
+import {
+  Building2,
+  ExternalLink,
+  CheckCircle,
+  TrendingUp,
   Tag,
   Star,
   Calendar
@@ -19,9 +19,8 @@ const CompanyCard = ({ company, variant = 'default' }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-white rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200 ${
-        isCompact ? 'p-3' : 'p-4'
-      }`}
+      className={`bg-white rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200 ${isCompact ? 'p-3' : 'p-4'
+        }`}
     >
       {/* Company Header */}
       <div className="flex items-start gap-3">
@@ -34,7 +33,7 @@ const CompanyCard = ({ company, variant = 'default' }) => {
               className="w-full h-full rounded-lg object-cover bg-gray-50"
             />
           ) : (
-            <div className="w-full h-full rounded-lg bg-gray-100 flex items-center justify-center">
+            <div className="w-full h-full rounded-lg bg-gray-50 flex items-center justify-center">
               <Building2 className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} text-gray-500`} />
             </div>
           )}
@@ -45,13 +44,12 @@ const CompanyCard = ({ company, variant = 'default' }) => {
           <div className="flex items-center gap-2 mb-1">
             <Link
               to={`/company/${company.slug}`}
-              className={`font-semibold text-gray-900 hover:text-primary-600 transition-colors ${
-                isCompact ? 'text-sm' : 'text-base'
-              }`}
+              className={`font-semibold text-gray-900 hover:text-primary-600 transition-colors ${isCompact ? 'text-sm' : 'text-base'
+                }`}
             >
               {company.name}
             </Link>
-            
+
             {/* Verification Badge */}
             {company.is_verified && (
               <CheckCircle className={`${isCompact ? 'w-4 h-4' : 'w-5 h-5'} text-blue-500`} />
@@ -61,7 +59,7 @@ const CompanyCard = ({ company, variant = 'default' }) => {
           {/* Category */}
           {company.categories && (
             <div className="flex items-center gap-1 mb-2">
-              <span 
+              <span
                 className={`px-2 py-0.5 rounded-full text-xs font-medium`}
                 style={{
                   backgroundColor: company.categories.color ? `${company.categories.color}20` : '#f3f4f6',
@@ -89,7 +87,7 @@ const CompanyCard = ({ company, variant = 'default' }) => {
                 <span>offers</span>
               </div>
             )}
-            
+
             {company.website_url && (
               <a
                 href={company.website_url}
@@ -101,7 +99,7 @@ const CompanyCard = ({ company, variant = 'default' }) => {
                 <span>Website</span>
               </a>
             )}
-            
+
             <div className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               <span>Added {dateAgo(company.created_at)}</span>
@@ -117,7 +115,7 @@ const CompanyCard = ({ company, variant = 'default' }) => {
             <Star className="w-4 h-4" />
             Latest Offers
           </h4>
-          
+
           <div className="space-y-1">
             {/* Recent Deals */}
             {company.recent_deals?.slice(0, 2).map((deal) => (
@@ -139,7 +137,7 @@ const CompanyCard = ({ company, variant = 'default' }) => {
                 </span>
               </div>
             ))}
-            
+
             {/* Recent Coupons */}
             {company.recent_coupons?.slice(0, 2).map((coupon) => (
               <div key={coupon.id} className="flex items-center gap-2 text-xs text-gray-600">

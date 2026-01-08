@@ -21,12 +21,10 @@ const AchievementBadge = ({ achievement, isUnlocked = false, progress = 0, compa
 
   if (compact) {
     return (
-      <div className={`relative inline-flex items-center justify-center w-8 h-8 rounded-full border-2 ${
-        isUnlocked ? rarityBorders[achievement.rarity] : 'border-gray-200'
-      } ${isUnlocked ? 'opacity-100' : 'opacity-50'}`}>
-        <div className={`w-full h-full rounded-full bg-gradient-to-br ${
-          isUnlocked ? rarityColors[achievement.rarity] : 'from-gray-300 to-gray-400'
-        } flex items-center justify-center`}>
+      <div className={`relative inline-flex items-center justify-center w-8 h-8 rounded-full border-2 ${isUnlocked ? rarityBorders[achievement.rarity] : 'border-gray-200'
+        } ${isUnlocked ? 'opacity-100' : 'opacity-50'}`}>
+        <div className={`w-full h-full rounded-full bg-gradient-to-br ${isUnlocked ? rarityColors[achievement.rarity] : 'from-gray-300 to-gray-400'
+          } flex items-center justify-center`}>
           <span className="text-white text-xs">
             {achievement.badge_icon || '🏆'}
           </span>
@@ -43,25 +41,21 @@ const AchievementBadge = ({ achievement, isUnlocked = false, progress = 0, compa
   }
 
   return (
-    <div className={`relative p-4 rounded-xl border-2 ${
-      isUnlocked ? rarityBorders[achievement.rarity] : 'border-gray-200'
-    } ${isUnlocked ? 'bg-white' : 'bg-gray-50'} transition-all duration-300 hover:shadow-lg`}>
+    <div className={`relative p-4 rounded-xl border-2 ${isUnlocked ? rarityBorders[achievement.rarity] : 'border-gray-200'
+      } ${isUnlocked ? 'bg-white' : 'bg-gray-50'} transition-all duration-300 hover:shadow-lg`}>
       {/* Rarity indicator */}
-      <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${
-        isUnlocked 
-          ? `bg-gradient-to-r ${rarityColors[achievement.rarity]} text-white`
-          : 'bg-gray-200 text-gray-600'
-      }`}>
+      <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${isUnlocked
+        ? `bg-gradient-to-r ${rarityColors[achievement.rarity]} text-white`
+        : 'bg-gray-200 text-gray-600'
+        }`}>
         {achievement.rarity}
       </div>
 
       <div className="flex items-start space-x-3">
-        <div className={`w-12 h-12 rounded-full border-2 ${
-          isUnlocked ? rarityBorders[achievement.rarity] : 'border-gray-200'
-        } ${isUnlocked ? 'opacity-100' : 'opacity-50'}`}>
-          <div className={`w-full h-full rounded-full bg-gradient-to-br ${
-            isUnlocked ? rarityColors[achievement.rarity] : 'from-gray-300 to-gray-400'
-          } flex items-center justify-center`}>
+        <div className={`w-12 h-12 rounded-full border-2 ${isUnlocked ? rarityBorders[achievement.rarity] : 'border-gray-200'
+          } ${isUnlocked ? 'opacity-100' : 'opacity-50'}`}>
+          <div className={`w-full h-full rounded-full bg-gradient-to-br ${isUnlocked ? rarityColors[achievement.rarity] : 'from-gray-300 to-gray-400'
+            } flex items-center justify-center`}>
             <span className="text-white text-lg">
               {achievement.badge_icon || '🏆'}
             </span>
@@ -75,7 +69,7 @@ const AchievementBadge = ({ achievement, isUnlocked = false, progress = 0, compa
           <p className={`text-sm ${isUnlocked ? 'text-gray-600' : 'text-gray-400'}`}>
             {achievement.description}
           </p>
-          
+
           {achievement.xp_reward > 0 && (
             <div className="mt-2 flex items-center space-x-1">
               <div className="w-4 h-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
@@ -92,7 +86,7 @@ const AchievementBadge = ({ achievement, isUnlocked = false, progress = 0, compa
                 <span>{Math.round(progress)}%</span>
               </div>
               <div className="bg-gray-200 rounded-full h-2">
-                <div 
+                <div
                   className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(progress, 100)}%` }}
                 />
@@ -113,9 +107,9 @@ const AchievementBadge = ({ achievement, isUnlocked = false, progress = 0, compa
 
 const AchievementCategory = ({ category, achievements, userAchievements = [] }) => {
   const [isExpanded, setIsExpanded] = useState(true)
-  
+
   const categoryAchievements = achievements.filter(a => a.category === category)
-  const unlockedCount = categoryAchievements.filter(a => 
+  const unlockedCount = categoryAchievements.filter(a =>
     userAchievements.some(ua => ua.achievement_id === a.id)
   ).length
 
@@ -127,14 +121,14 @@ const AchievementCategory = ({ category, achievements, userAchievements = [] }) 
       >
         <div className="flex items-center space-x-3">
           <h3 className="font-semibold text-gray-900 capitalize">{category}</h3>
-          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
+          <span className="px-2 py-1 bg-gray-50 text-gray-600 text-sm rounded-full">
             {unlockedCount}/{categoryAchievements.length}
           </span>
         </div>
-        <svg 
+        <svg
           className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-          fill="none" 
-          stroke="currentColor" 
+          fill="none"
+          stroke="currentColor"
           viewBox="0 0 24 24"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -166,7 +160,7 @@ const AchievementCategory = ({ category, achievements, userAchievements = [] }) 
 const AchievementStats = ({ userAchievements, totalAchievements }) => {
   const unlockedCount = userAchievements?.length || 0
   const completionRate = totalAchievements > 0 ? (unlockedCount / totalAchievements) * 100 : 0
-  
+
   const rarityStats = {
     common: 0,
     uncommon: 0,
@@ -184,7 +178,7 @@ const AchievementStats = ({ userAchievements, totalAchievements }) => {
   return (
     <div className="bg-white rounded-lg p-6 border">
       <h3 className="font-semibold text-gray-900 mb-4">Achievement Stats</h3>
-      
+
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="text-center">
           <div className="text-3xl font-bold text-blue-600">{unlockedCount}</div>
@@ -250,7 +244,7 @@ export default function Achievements({ userId, compact = false }) {
         {recentAchievements.map(ua => {
           const achievement = achievements.find(a => a.id === ua.achievement_id)
           if (!achievement) return null
-          
+
           return (
             <AchievementBadge
               key={ua.id}
@@ -273,11 +267,11 @@ export default function Achievements({ userId, compact = false }) {
 
   return (
     <div className="space-y-6">
-      <AchievementStats 
-        userAchievements={userAchievements} 
+      <AchievementStats
+        userAchievements={userAchievements}
         totalAchievements={achievements.length}
       />
-      
+
       <div className="space-y-4">
         {categories.map(category => (
           <AchievementCategory

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiRequest } from '../../lib/api'
 import { toast } from '../../lib/toast'
-import { Skeleton } from '../../components/Loader/Skeleton'
+import { Skeleton } from '../../components/ui/Skeleton'
 import {
   TrophyIcon,
   StarIcon,

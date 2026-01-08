@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
-import { Skeleton } from '../../components/Loader/Skeleton'
+import { Skeleton } from '../../components/ui/Skeleton'
 import ImageUpload from '../../components/Upload/ImageUpload'
 import { useAuth } from '../../hooks/useAuth'
 import {
@@ -211,10 +211,10 @@ const CompanyManagement = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    
+
     console.log('🔧 Form submission data:', formData)
     console.log('🔧 Category ID being sent:', formData.category_id)
-    
+
     if (editingCompany) {
       updateCompanyMutation.mutate({ id: editingCompany.id, data: formData })
     } else {
@@ -247,7 +247,7 @@ const CompanyManagement = () => {
     console.log('🔧 Starting edit for company:', company)
     console.log('🔧 Company category:', company.category)
     console.log('🔧 Mapped category_id:', getCategoryIdFromName(company.category))
-    
+
     setEditingCompany(company)
     setFormData({
       name: company.name || '',
@@ -328,7 +328,7 @@ const CompanyManagement = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target
-    
+
     // Handle nested object fields (e.g., contact_info.phone)
     if (name.includes('.')) {
       const [parentKey, childKey] = name.split('.')
@@ -360,7 +360,7 @@ const CompanyManagement = () => {
   const handleQuickApprove = async (companyId) => {
     try {
       console.log('Approving company:', companyId, 'User:', user)
-      const updateData = { 
+      const updateData = {
         status: 'approved',
         is_verified: true,
         reviewed_by: user?.id || 'admin',
@@ -385,7 +385,7 @@ const CompanyManagement = () => {
     if (notes !== null) {
       try {
         console.log('Rejecting company:', companyId, 'with notes:', notes, 'User:', user)
-        const updateData = { 
+        const updateData = {
           status: 'rejected',
           review_notes: notes || 'Rejected by admin',
           reviewed_by: user?.id || 'admin',
@@ -450,7 +450,7 @@ const CompanyManagement = () => {
       case 'high': return 'text-red-600 bg-red-100'
       case 'medium': return 'text-orange-600 bg-orange-100'
       case 'low': return 'text-blue-600 bg-blue-100'
-      default: return 'text-gray-600 bg-gray-100'
+      default: return 'text-gray-600 bg-gray-50'
     }
   }
 
@@ -463,7 +463,7 @@ const CompanyManagement = () => {
 
   const getUrgencyIndicator = (submittedAt, priority) => {
     const days = Math.floor((new Date() - new Date(submittedAt)) / (1000 * 60 * 60 * 24))
-    
+
     if (priority === 'high' && days >= 2) return 'urgent'
     if (priority === 'medium' && days >= 5) return 'warning'
     if (days >= 7) return 'overdue'
@@ -482,7 +482,7 @@ const CompanyManagement = () => {
           {/* Debug info */}
           <div className="text-xs text-gray-500 mt-2">
             User: {user?.id || 'Not authenticated'} | Admin: {isAdmin ? 'Yes' : 'No'}
-            <button 
+            <button
               onClick={() => console.log('Current state:', { user, isAdmin, companies: companies?.length })}
               className="ml-2 text-blue-500 hover:text-blue-700"
             >
@@ -514,7 +514,7 @@ const CompanyManagement = () => {
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
           </select>
-          
+
           <button
             onClick={() => setStatusFilter('')}
             className="text-sm text-secondary-600 hover:text-secondary-800"
@@ -574,7 +574,7 @@ const CompanyManagement = () => {
                   const priorityOrder = { high: 3, medium: 2, low: 1, normal: 0 }
                   const aPriority = priorityOrder[a.priority || 'normal']
                   const bPriority = priorityOrder[b.priority || 'normal']
-                  
+
                   if (aPriority !== bPriority) return bPriority - aPriority
                   return new Date(a.submitted_at) - new Date(b.submitted_at)
                 })
@@ -590,16 +590,15 @@ const CompanyManagement = () => {
                               {company.priority || 'normal'}
                             </span>
                             {urgency !== 'normal' && (
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                urgency === 'urgent' ? 'bg-red-100 text-red-800' :
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${urgency === 'urgent' ? 'bg-red-100 text-red-800' :
                                 urgency === 'warning' ? 'bg-orange-100 text-orange-800' :
-                                'bg-red-100 text-red-800'
-                              }`}>
+                                  'bg-red-100 text-red-800'
+                                }`}>
                                 {urgency === 'urgent' ? 'Urgent' : urgency === 'warning' ? 'Warning' : 'Overdue'}
                               </span>
                             )}
                           </div>
-                          
+
                           <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
                             <span className="flex items-center space-x-1">
                               <CalendarIcon className="w-4 h-4" />
@@ -671,178 +670,177 @@ const CompanyManagement = () => {
             {companies
               .filter(company => !statusFilter || company.status === statusFilter)
               .map((company) => (
-              <div key={company.id} className="p-6">
-                <div className="flex items-start space-x-4">
-                  {/* Logo */}
-                  <div className="flex-shrink-0">
-                    {company.logo_url ? (
-                      <img
-                        src={company.logo_url}
-                        alt={company.name}
-                        className="w-16 h-16 rounded-lg object-cover border border-secondary-200"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-lg bg-secondary-100 flex items-center justify-center border border-secondary-200">
-                        <BuildingOfficeIcon className="w-8 h-8 text-secondary-400" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Company Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <h3 className="text-lg font-semibold text-secondary-900">
-                            {company.name}
-                          </h3>
-                          {company.is_verified && (
-                            <CheckBadgeIcon className="w-5 h-5 text-blue-500" />
-                          )}
+                <div key={company.id} className="p-6">
+                  <div className="flex items-start space-x-4">
+                    {/* Logo */}
+                    <div className="flex-shrink-0">
+                      {company.logo_url ? (
+                        <img
+                          src={company.logo_url}
+                          alt={company.name}
+                          className="w-16 h-16 rounded-lg object-cover border border-secondary-200"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-lg bg-secondary-100 flex items-center justify-center border border-secondary-200">
+                          <BuildingOfficeIcon className="w-8 h-8 text-secondary-400" />
                         </div>
-                        
-                        <p className="text-sm text-secondary-600 mb-2">
-                          /{company.slug}
-                        </p>
-                        
-                        {company.description && (
-                          <p className="text-sm text-secondary-700 mb-2 line-clamp-2">
-                            {company.description}
-                          </p>
-                        )}
-                        
-                        <div className="flex items-center space-x-4 text-sm text-secondary-500">
-                          {company.website && (
-                            <a
-                              href={company.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary-600 hover:text-primary-700"
-                            >
-                              Website
-                            </a>
-                          )}
-                          {company.company_categories && (
-                            <span>Category: {company.company_categories.name}</span>
-                          )}
-                          <span>
-                            Created: {new Date(company.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
+                      )}
+                    </div>
 
-                        {/* Review History */}
-                        {(company.review_notes || company.reviewed_at || company.flags?.length > 0) && (
-                          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                            <h5 className="text-sm font-medium text-gray-700 mb-2">Review History</h5>
-                            <div className="space-y-2 text-sm">
-                              {company.review_notes && (
-                                <div className="flex items-start space-x-2">
-                                  <ChatBubbleLeftRightIcon className="w-4 h-4 text-gray-500 mt-0.5" />
-                                  <span className="text-gray-600">{company.review_notes}</span>
-                                </div>
-                              )}
-                              {company.reviewed_at && (
-                                <div className="flex items-center space-x-2 text-gray-500">
-                                  <CalendarIcon className="w-4 h-4" />
-                                  <span>Reviewed: {new Date(company.reviewed_at).toLocaleDateString()}</span>
-                                </div>
-                              )}
-                              {company.flags && company.flags.length > 0 && (
-                                <div className="flex items-center space-x-2">
-                                  <FlagIcon className="w-4 h-4 text-gray-500" />
-                                  <div className="flex flex-wrap gap-1">
-                                    {company.flags.map((flag, index) => (
-                                      <span key={index} className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs">
-                                        {flag.replace('_', ' ')}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Status and Quick Actions */}
-                        <div className="flex items-center space-x-4 mt-2">
+                    {/* Company Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div>
                           <div className="flex items-center space-x-2">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              company.status === 'approved' 
-                                ? 'bg-green-100 text-green-800' 
-                                : company.status === 'rejected'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {company.status === 'approved' ? 'Approved' : 
-                               company.status === 'rejected' ? 'Rejected' : 'Pending'}
-                            </span>
-                            
-                            {company.status === 'pending' && company.priority && (
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(company.priority)}`}>
-                                {company.priority}
-                              </span>
-                            )}
-                            
-                            {company.status === 'pending' && (
-                              <span className="text-xs text-gray-500">
-                                {getDaysPending(company.submitted_at)}
-                              </span>
+                            <h3 className="text-lg font-semibold text-secondary-900">
+                              {company.name}
+                            </h3>
+                            {company.is_verified && (
+                              <CheckBadgeIcon className="w-5 h-5 text-blue-500" />
                             )}
                           </div>
-                          
-                          {company.status === 'pending' && (
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => openReviewModal(company)}
-                                className="text-xs bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700 transition-colors"
+
+                          <p className="text-sm text-secondary-600 mb-2">
+                            /{company.slug}
+                          </p>
+
+                          {company.description && (
+                            <p className="text-sm text-secondary-700 mb-2 line-clamp-2">
+                              {company.description}
+                            </p>
+                          )}
+
+                          <div className="flex items-center space-x-4 text-sm text-secondary-500">
+                            {company.website && (
+                              <a
+                                href={company.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary-600 hover:text-primary-700"
                               >
-                                Review
-                              </button>
-                              <button
-                                onClick={() => {
-                                  console.log('Quick approve clicked for company:', company.id, company.name)
-                                  handleQuickApprove(company.id)
-                                }}
-                                className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition-colors"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => {
-                                  console.log('Quick reject clicked for company:', company.id, company.name)
-                                  handleQuickReject(company.id)
-                                }}
-                                className="text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 transition-colors"
-                              >
-                                Reject
-                              </button>
+                                Website
+                              </a>
+                            )}
+                            {company.company_categories && (
+                              <span>Category: {company.company_categories.name}</span>
+                            )}
+                            <span>
+                              Created: {new Date(company.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+
+                          {/* Review History */}
+                          {(company.review_notes || company.reviewed_at || company.flags?.length > 0) && (
+                            <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                              <h5 className="text-sm font-medium text-gray-700 mb-2">Review History</h5>
+                              <div className="space-y-2 text-sm">
+                                {company.review_notes && (
+                                  <div className="flex items-start space-x-2">
+                                    <ChatBubbleLeftRightIcon className="w-4 h-4 text-gray-500 mt-0.5" />
+                                    <span className="text-gray-600">{company.review_notes}</span>
+                                  </div>
+                                )}
+                                {company.reviewed_at && (
+                                  <div className="flex items-center space-x-2 text-gray-500">
+                                    <CalendarIcon className="w-4 h-4" />
+                                    <span>Reviewed: {new Date(company.reviewed_at).toLocaleDateString()}</span>
+                                  </div>
+                                )}
+                                {company.flags && company.flags.length > 0 && (
+                                  <div className="flex items-center space-x-2">
+                                    <FlagIcon className="w-4 h-4 text-gray-500" />
+                                    <div className="flex flex-wrap gap-1">
+                                      {company.flags.map((flag, index) => (
+                                        <span key={index} className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs">
+                                          {flag.replace('_', ' ')}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           )}
-                        </div>
-                      </div>
 
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => startEdit(company)}
-                          className="flex items-center space-x-1 px-3 py-1 text-sm text-secondary-600 border border-secondary-300 rounded hover:bg-secondary-50 transition-colors"
-                        >
-                          <PencilIcon className="w-4 h-4" />
-                          <span>Edit</span>
-                        </button>
-                        
-                        <button
-                          onClick={() => handleDeleteClick(company)}
-                          className="flex items-center space-x-1 px-3 py-1 text-sm text-red-600 border border-red-300 rounded hover:bg-red-50 transition-colors"
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                          <span>Delete</span>
-                        </button>
+                          {/* Status and Quick Actions */}
+                          <div className="flex items-center space-x-4 mt-2">
+                            <div className="flex items-center space-x-2">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${company.status === 'approved'
+                                ? 'bg-green-100 text-green-800'
+                                : company.status === 'rejected'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                {company.status === 'approved' ? 'Approved' :
+                                  company.status === 'rejected' ? 'Rejected' : 'Pending'}
+                              </span>
+
+                              {company.status === 'pending' && company.priority && (
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(company.priority)}`}>
+                                  {company.priority}
+                                </span>
+                              )}
+
+                              {company.status === 'pending' && (
+                                <span className="text-xs text-gray-500">
+                                  {getDaysPending(company.submitted_at)}
+                                </span>
+                              )}
+                            </div>
+
+                            {company.status === 'pending' && (
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={() => openReviewModal(company)}
+                                  className="text-xs bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700 transition-colors"
+                                >
+                                  Review
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    console.log('Quick approve clicked for company:', company.id, company.name)
+                                    handleQuickApprove(company.id)
+                                  }}
+                                  className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition-colors"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    console.log('Quick reject clicked for company:', company.id, company.name)
+                                    handleQuickReject(company.id)
+                                  }}
+                                  className="text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 transition-colors"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => startEdit(company)}
+                            className="flex items-center space-x-1 px-3 py-1 text-sm text-secondary-600 border border-secondary-300 rounded hover:bg-secondary-50 transition-colors"
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                            <span>Edit</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteClick(company)}
+                            className="flex items-center space-x-1 px-3 py-1 text-sm text-red-600 border border-red-300 rounded hover:bg-red-50 transition-colors"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         ) : (
           <div className="text-center py-12">
@@ -1048,7 +1046,7 @@ const CompanyManagement = () => {
                     </span>
                   </label>
                 </div>
-                
+
                 {formData.is_restaurant && (
                   <div className="space-y-6">
                     {/* Location Information */}
@@ -1292,10 +1290,9 @@ const CompanyManagement = () => {
                       <p className="text-xs text-secondary-600">Add more detailed information about the company</p>
                     </div>
                   </div>
-                  <ChevronDownIcon 
-                    className={`w-5 h-5 text-secondary-500 transition-transform duration-200 ${
-                      showAdditionalDetails ? 'rotate-180' : ''
-                    }`} 
+                  <ChevronDownIcon
+                    className={`w-5 h-5 text-secondary-500 transition-transform duration-200 ${showAdditionalDetails ? 'rotate-180' : ''
+                      }`}
                   />
                 </button>
               </div>
@@ -1304,7 +1301,7 @@ const CompanyManagement = () => {
               {showAdditionalDetails && (
                 <div className="space-y-6 bg-secondary-50 p-6 rounded-lg border border-secondary-200">
                   <h4 className="text-lg font-medium text-secondary-900 border-b pb-2">Company Details</h4>
-                  
+
                   {/* Company Information */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -1581,7 +1578,7 @@ const CompanyManagement = () => {
               {/* Company Logo Section */}
               <div className="space-y-4">
                 <h4 className="text-lg font-medium text-secondary-900 border-b pb-2">Company Logo</h4>
-                
+
                 {/* Logo Upload */}
                 <div>
                   <label className="block text-sm font-medium text-secondary-700 mb-2">
@@ -1631,10 +1628,10 @@ const CompanyManagement = () => {
                   disabled={createCompanyMutation.isLoading || updateCompanyMutation.isLoading}
                   className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {(createCompanyMutation.isLoading || updateCompanyMutation.isLoading) 
-                    ? 'Saving...' 
-                    : editingCompany 
-                      ? 'Update Company' 
+                  {(createCompanyMutation.isLoading || updateCompanyMutation.isLoading)
+                    ? 'Saving...'
+                    : editingCompany
+                      ? 'Update Company'
                       : 'Create Company'
                   }
                 </button>
@@ -1667,31 +1664,31 @@ const CompanyManagement = () => {
                 {/* Company Information */}
                 <div className="space-y-4">
                   <h4 className="text-lg font-medium text-secondary-900 border-b pb-2">Company Details</h4>
-                  
+
                   <div className="space-y-3">
                     <div>
                       <label className="text-sm font-medium text-secondary-700">Company Name</label>
                       <p className="text-secondary-900">{selectedCompanyForReview.name}</p>
                     </div>
-                    
+
                     <div>
                       <label className="text-sm font-medium text-secondary-700">Slug</label>
                       <p className="text-secondary-900">/{selectedCompanyForReview.slug}</p>
                     </div>
-                    
+
                     {selectedCompanyForReview.description && (
                       <div>
                         <label className="text-sm font-medium text-secondary-700">Description</label>
                         <p className="text-secondary-900">{selectedCompanyForReview.description}</p>
                       </div>
                     )}
-                    
+
                     {selectedCompanyForReview.website && (
                       <div>
                         <label className="text-sm font-medium text-secondary-700">Website</label>
-                        <a 
-                          href={selectedCompanyForReview.website} 
-                          target="_blank" 
+                        <a
+                          href={selectedCompanyForReview.website}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-primary-600 hover:text-primary-800"
                         >
@@ -1699,14 +1696,14 @@ const CompanyManagement = () => {
                         </a>
                       </div>
                     )}
-                    
+
                     {selectedCompanyForReview.headquarters && (
                       <div>
                         <label className="text-sm font-medium text-secondary-700">Headquarters</label>
                         <p className="text-secondary-900">{selectedCompanyForReview.headquarters}</p>
                       </div>
                     )}
-                    
+
                     {selectedCompanyForReview.company_categories && (
                       <div>
                         <label className="text-sm font-medium text-secondary-700">Category</label>
@@ -1719,7 +1716,7 @@ const CompanyManagement = () => {
                 {/* Review Form */}
                 <div className="space-y-4">
                   <h4 className="text-lg font-medium text-secondary-900 border-b pb-2">Review Decision</h4>
-                  
+
                   <form onSubmit={handleReviewSubmit} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-secondary-700 mb-2">
@@ -1802,16 +1799,15 @@ const CompanyManagement = () => {
                       </button>
                       <button
                         type="submit"
-                        className={`px-4 py-2 text-white rounded-lg transition-colors ${
-                          reviewForm.action === 'approve' 
-                            ? 'bg-green-600 hover:bg-green-700' 
-                            : reviewForm.action === 'reject'
+                        className={`px-4 py-2 text-white rounded-lg transition-colors ${reviewForm.action === 'approve'
+                          ? 'bg-green-600 hover:bg-green-700'
+                          : reviewForm.action === 'reject'
                             ? 'bg-red-600 hover:bg-red-700'
                             : 'bg-yellow-600 hover:bg-yellow-700'
-                        }`}
+                          }`}
                       >
-                        {reviewForm.action === 'approve' ? 'Approve Company' : 
-                         reviewForm.action === 'reject' ? 'Reject Company' : 'Request Changes'}
+                        {reviewForm.action === 'approve' ? 'Approve Company' :
+                          reviewForm.action === 'reject' ? 'Reject Company' : 'Request Changes'}
                       </button>
                     </div>
                   </form>
@@ -1840,7 +1836,7 @@ const CompanyManagement = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="mb-6">
                 <p className="text-secondary-700">
                   Are you sure you want to delete <strong>{deleteConfirmModal.company?.name}</strong>?
@@ -1857,7 +1853,7 @@ const CompanyManagement = () => {
                   </ul>
                 </div>
               </div>
-              
+
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={handleDeleteCancel}

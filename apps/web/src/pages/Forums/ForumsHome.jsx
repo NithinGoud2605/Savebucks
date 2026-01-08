@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Container } from '../../components/Layout/Container'
 import { ForumCard } from '../../components/Forums/ForumCard'
 import { ThreadRow } from '../../components/Forums/ThreadRow'
-import { Skeleton } from '../../components/Loader/Skeleton'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { forumService } from '../../forums/service'
 import { setPageMeta } from '../../lib/head'
 

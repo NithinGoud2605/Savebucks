@@ -3,17 +3,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Container } from '../components/Layout/Container'
 import { useAuth } from '../hooks/useAuth'
 import { Navigate } from 'react-router-dom'
-import { Skeleton } from '../components/Loader/Skeleton'
+import { Skeleton } from '../components/ui/Skeleton'
 import { api } from '../lib/api'
 import { toast } from '../lib/toast'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/Tabs'
+import { Switch } from '../components/ui/Switch'
+import { Input } from '../components/ui/Input'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card'
+import { Separator } from '../components/ui/Separator'
 import {
   BellIcon,
   UserIcon,
   ShieldCheckIcon,
   Cog6ToothIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  ClockIcon,
   EnvelopeIcon,
   DevicePhoneMobileIcon
 } from '@heroicons/react/24/outline'
@@ -75,7 +77,7 @@ const Settings = () => {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium text-gray-900 mb-4">Notification Settings</h3>
-        
+
         {/* Global Notification Toggles */}
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -86,15 +88,10 @@ const Settings = () => {
                 <p className="text-sm text-gray-600">Receive notifications on your device</p>
               </div>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={preferences?.push_notifications_enabled ?? true}
-                onChange={(e) => handlePreferenceChange('push_notifications_enabled', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
+            <Switch
+              checked={preferences?.push_notifications_enabled ?? true}
+              onCheckedChange={(checked) => handlePreferenceChange('push_notifications_enabled', checked)}
+            />
           </div>
 
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -105,15 +102,10 @@ const Settings = () => {
                 <p className="text-sm text-gray-600">Receive notifications via email</p>
               </div>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={preferences?.email_notifications_enabled ?? true}
-                onChange={(e) => handlePreferenceChange('email_notifications_enabled', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
+            <Switch
+              checked={preferences?.email_notifications_enabled ?? true}
+              onCheckedChange={(checked) => handlePreferenceChange('email_notifications_enabled', checked)}
+            />
           </div>
 
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -124,15 +116,10 @@ const Settings = () => {
                 <p className="text-sm text-gray-600">Show notifications within the app</p>
               </div>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={preferences?.in_app_notifications_enabled ?? true}
-                onChange={(e) => handlePreferenceChange('in_app_notifications_enabled', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
+            <Switch
+              checked={preferences?.in_app_notifications_enabled ?? true}
+              onCheckedChange={(checked) => handlePreferenceChange('in_app_notifications_enabled', checked)}
+            />
           </div>
         </div>
 
@@ -238,7 +225,7 @@ const Settings = () => {
         <p className="text-gray-600 mb-6">
           Manage your profile information and preferences
         </p>
-        
+
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -269,7 +256,7 @@ const Settings = () => {
         <p className="text-gray-600 mb-6">
           Control your privacy and data settings
         </p>
-        
+
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -300,7 +287,7 @@ const Settings = () => {
         <p className="text-gray-600 mb-6">
           Manage your account and security settings
         </p>
-        
+
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -349,46 +336,48 @@ const Settings = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow">
-          {/* Tab Navigation */}
-          <div className="border-b border-gray-200">
-            <nav className="flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
-              {tabs.map((tab) => {
-                const Icon = tab.icon
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`
-                      flex items-center space-x-1 sm:space-x-2 py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0
-                      ${activeTab === tab.id
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }
-                    `}
-                  >
-                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                    <span className="hidden sm:inline">{tab.name}</span>
-                    <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
-                  </button>
-                )
-              })}
-            </nav>
-          </div>
+        <Card>
+          <Tabs defaultValue="notifications" className="w-full">
+            <CardHeader className="pb-0">
+              <TabsList className="grid w-full grid-cols-4">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon
+                  return (
+                    <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
+                      <Icon className="h-4 w-4" />
+                      <span className="hidden sm:inline">{tab.name}</span>
+                    </TabsTrigger>
+                  )
+                })}
+              </TabsList>
+            </CardHeader>
 
-          {/* Tab Content */}
-          <div className="p-4 sm:p-6">
-            {prefsLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-              </div>
-            ) : (
-              renderTabContent()
-            )}
-          </div>
-        </div>
+            <CardContent className="pt-6">
+              {prefsLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              ) : (
+                <>
+                  <TabsContent value="notifications">
+                    <NotificationSettings />
+                  </TabsContent>
+                  <TabsContent value="profile">
+                    <ProfileSettings />
+                  </TabsContent>
+                  <TabsContent value="privacy">
+                    <PrivacySettings />
+                  </TabsContent>
+                  <TabsContent value="account">
+                    <AccountSettings />
+                  </TabsContent>
+                </>
+              )}
+            </CardContent>
+          </Tabs>
+        </Card>
       </div>
     </Container>
   )

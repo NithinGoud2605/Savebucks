@@ -41,7 +41,7 @@ const StoreInfoPanel = ({ company, deal }) => {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+          <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center">
             <BuildingOfficeIcon className="w-6 h-6 text-gray-400" />
           </div>
           <div>
@@ -74,16 +74,15 @@ const StoreInfoPanel = ({ company, deal }) => {
 
   const renderRating = (rating, reviewsCount, label) => {
     if (!rating) return null
-    
+
     return (
       <div className="flex items-center gap-2">
         <div className="flex items-center">
           {[...Array(5)].map((_, i) => (
             <StarIcon
               key={i}
-              className={`w-4 h-4 ${
-                i < Math.floor(rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
-              }`}
+              className={`w-4 h-4 ${i < Math.floor(rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                }`}
             />
           ))}
         </div>
@@ -109,7 +108,7 @@ const StoreInfoPanel = ({ company, deal }) => {
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-700 transition-colors"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-gray-50 hover:bg-gray-200 rounded-full text-sm text-gray-700 transition-colors"
             >
               <ArrowTopRightOnSquareIcon className="w-3 h-3" />
               {platform.charAt(0).toUpperCase() + platform.slice(1)}
@@ -297,15 +296,14 @@ const StoreInfoPanel = ({ company, deal }) => {
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <button
             onClick={handleFollow}
-            className={`p-2 rounded-lg border transition-colors ${
-              isFollowing
-                ? 'bg-red-50 border-red-200 text-red-600'
-                : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`p-2 rounded-lg border transition-colors ${isFollowing
+              ? 'bg-red-50 border-red-200 text-red-600'
+              : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
           >
             {isFollowing ? (
               <HeartIconSolid className="w-5 h-5" />
@@ -315,7 +313,7 @@ const StoreInfoPanel = ({ company, deal }) => {
           </button>
           <button
             onClick={handleShare}
-            className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
           >
             <ShareIcon className="w-5 h-5" />
           </button>
@@ -332,7 +330,7 @@ const StoreInfoPanel = ({ company, deal }) => {
             </div>
           </div>
         )}
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {company.trustpilot_rating && renderRating(company.trustpilot_rating, company.trustpilot_reviews_count, 'Trustpilot')}
           {company.app_store_rating && renderRating(company.app_store_rating, null, 'App Store')}
@@ -342,12 +340,11 @@ const StoreInfoPanel = ({ company, deal }) => {
         {company.bbb_rating && (
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-gray-900">BBB Rating:</span>
-            <span className={`px-2 py-1 rounded text-xs font-medium ${
-              company.bbb_rating === 'A+' ? 'bg-green-100 text-green-800' :
+            <span className={`px-2 py-1 rounded text-xs font-medium ${company.bbb_rating === 'A+' ? 'bg-green-100 text-green-800' :
               company.bbb_rating === 'A' ? 'bg-green-100 text-green-800' :
-              company.bbb_rating === 'B' ? 'bg-yellow-100 text-yellow-800' :
-              'bg-red-100 text-red-800'
-            }`}>
+                company.bbb_rating === 'B' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+              }`}>
               {company.bbb_rating}
             </span>
             {company.bbb_accreditation && (

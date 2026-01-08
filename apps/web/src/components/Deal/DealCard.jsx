@@ -24,8 +24,8 @@ export function DealCard({ deal, className, compact = false, enhanced = false })
     )}>
       <div className="flex items-start space-x-4">
         {/* Vote Button */}
-        <VoteButton 
-          dealId={deal.id} 
+        <VoteButton
+          dealId={deal.id}
           votes={score}
           userVote={deal.user_vote}
         />
@@ -34,7 +34,7 @@ export function DealCard({ deal, className, compact = false, enhanced = false })
         <div className="flex-1 min-w-0">
           {/* Title */}
           <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            <Link 
+            <Link
               to={`/deal/${deal.id}`}
               className="hover:text-blue-600 focus-ring rounded"
             >
@@ -92,7 +92,7 @@ export function DealCard({ deal, className, compact = false, enhanced = false })
 
         {/* Image */}
         {deal.image_url && (
-          <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
+          <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-gray-50">
             <img
               src={deal.image_url}
               alt={deal.title}

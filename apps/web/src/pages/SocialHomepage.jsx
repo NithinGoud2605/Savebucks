@@ -1,102 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { setPageMeta } from '../lib/head';
-import { Container } from '../components/Layout/Container';
 import { FilterSidebar } from '../components/Homepage/FilterSidebar';
 import { InfiniteFeed } from '../components/Homepage/InfiniteFeed';
 import { RightSidebar } from '../components/Homepage/RightSidebar';
 import { useLocation } from '../context/LocationContext';
-import AdvancedSearchInterface from '../components/Search/AdvancedSearchInterface';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '../lib/api';
-import { UserIcon, FireIcon, TagIcon } from '@heroicons/react/24/outline';
+import { AIFeedSearch } from '../components/AI';
+import { CommandPalette } from '../components/ui/CommandPalette';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Sparkles,
+  Clock,
+  Tag,
+  Zap,
+  Flame,
+  Percent
+} from 'lucide-react';
+
+const FILTERS = [
+  { id: 'all', label: 'All Deals', icon: Sparkles },
+  { id: 'trending', label: 'Trending', icon: Flame },
+  { id: 'new-arrivals', label: 'New', icon: Zap },
+  { id: '50-off', label: '50%+ Off', icon: Percent },
+  { id: 'under-20', label: 'Under $20', icon: Tag },
+  { id: 'ending-soon', label: 'Ending Soon', icon: Clock },
+];
 
 export default function SocialHomepage() {
   const [filter, setFilter] = useState('all');
   const [category, setCategory] = useState(null);
+  const [isAIActive, setIsAIActive] = useState(false);
   const { location } = useLocation();
-
-  // Get navbar stats
-  const { data: navbarStats } = useQuery({
-    queryKey: ['navbar-stats'],
-    queryFn: () => api.getNavbarStats(),
-    refetchInterval: 30000, // Refetch every 30 seconds
-    staleTime: 15000, // Consider data stale after 15 seconds
-    retry: 2
-  });
+  const aiInputRef = useRef(null);
 
   useEffect(() => {
     setPageMeta({
       title: 'SaveBucks - Discover Amazing Deals & Save Big',
-      description:
-        'Find the hottest deals, exclusive coupons, and biggest discounts on your favorite brands. Join thousands saving money every day!',
+      description: 'Find the hottest deals, exclusive coupons, and biggest discounts.',
       canonical: window.location.origin,
     });
   }, []);
 
-  // Prepare location for API (only if enabled)
   const locationParam = location?.latitude && location?.longitude
     ? { lat: location.latitude, lng: location.longitude }
     : null;
 
+  const handleAskAI = () => {
+    setIsAIActive(true);
+    // Focus the AI input after opening
+    setTimeout(() => aiInputRef.current?.focus(), 100);
+  };
+
+  // Ref for main feed scroll area
+  const feedRef = useRef(null);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-cyan-50/30 to-indigo-50/30 pt-12 sm:pt-14 lg:pt-16 relative">
-      {/* Bright blue background pattern */}
-      <div 
-        className="absolute inset-0 opacity-[0.01] pointer-events-none"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          backgroundSize: '60px 60px'
-        }}
-      />
-      {/* Secondary Navbar - Search Bar & Stats (Scrollable) */}
-      <div className="bg-gradient-to-r from-blue-100/20 to-cyan-200/20 border-b border-blue-300/30 shadow-sm relative z-10">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-4 py-3">
-            {/* Left: Empty space for balance on desktop */}
-            <div className="hidden lg:block w-[200px] flex-shrink-0"></div>
+    <div className="h-screen overflow-hidden bg-surface pt-14 lg:pt-16">
+      {/* Command Palette - ⌘K */}
+      <CommandPalette onFilterChange={setFilter} onAskAI={handleAskAI} />
 
-            {/* Center: Search Bar */}
-            <div className="flex-1 max-w-2xl mx-auto">
-              <AdvancedSearchInterface
-                showFilters={false}
-                showSuggestions={true}
-                compact={true}
-                placeholder="Search deals, coupons, stores..."
-                className="drop-shadow-sm"
-              />
-            </div>
-            
-            {/* Right: Stats */}
-            <div className="hidden lg:flex items-center gap-4 text-xs text-secondary-700 flex-shrink-0 w-[200px]">
-              <div className="flex items-center gap-1">
-                <UserIcon className="w-3.5 h-3.5 text-mint-600" />
-                <span className="whitespace-nowrap font-medium">
-                  <span className="text-mint-600 font-semibold">Users:</span> {navbarStats?.stats?.usersOnline?.toLocaleString() || '...'}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <FireIcon className="w-3.5 h-3.5 text-orange-500" />
-                <span className="whitespace-nowrap font-medium">
-                  <span className="text-orange-500 font-semibold">Deals:</span> {navbarStats?.stats?.dealsToday?.toLocaleString() || '...'}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <TagIcon className="w-3.5 h-3.5 text-blue-500" />
-                <span className="whitespace-nowrap font-medium">
-                  <span className="text-blue-500 font-semibold">Coupons:</span> {navbarStats?.stats?.couponsToday?.toLocaleString() || '...'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Layout */}
-      <div className="w-full px-2 sm:px-4 lg:px-[2%] relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 border-l border-r border-blue-200 bg-white max-w-full mx-auto rounded-lg shadow-lg">
-          {/* Left Sidebar - Filters & Categories - Desktop Only */}
-          <div className="hidden lg:block lg:col-span-2 border-r border-blue-200 bg-gradient-to-b from-blue-50/20 to-cyan-50/20 rounded-l-lg">
-            <div className="sticky top-12 sm:top-14 lg:top-16 h-[calc(100vh-3rem)] sm:h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden p-1.5 scrollbar-thin">
+      {/* Main Content - Fixed height, only middle scrolls */}
+      <div className="h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-4rem)] max-w-screen-2xl mx-auto">
+        <div className="flex h-full">
+          {/* Left Sidebar - Compact, no scrollbar */}
+          <aside className="hidden lg:block w-48 flex-shrink-0">
+            <div className="sticky top-20 px-3 py-4 h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide">
               <FilterSidebar
                 activeFilter={filter}
                 onFilterChange={setFilter}
@@ -104,42 +71,62 @@ export default function SocialHomepage() {
                 onCategoryChange={setCategory}
               />
             </div>
-          </div>
+          </aside>
 
-          {/* Main Feed - Full width on mobile, 7 cols on desktop */}
-          <div className="lg:col-span-7 border-r border-blue-200 bg-gradient-to-br from-blue-50/20 to-cyan-50/20">
-            {/* Mobile Filter Pills - Horizontal Scroll */}
-            <div className="lg:hidden mb-3 p-2 sm:p-3">
-              <div className="flex gap-1 sm:gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
-                {['all', 'trending', 'under-20', 'under-50', '50-off', 'free-shipping', 'ending-soon', 'new-arrivals'].map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`px-2 sm:px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
-                      filter === f
-                        ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-sm'
-                        : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-300'
-                    }`}
+          {/* Main Feed / AI Chat */}
+          <main className="flex-1 min-w-0 flex flex-col h-full">
+            {/* Content Area - Native smooth scroll with GPU acceleration */}
+            <div
+              ref={feedRef}
+              className="flex-1 overflow-y-auto scrollbar-hide"
+              style={{
+                scrollBehavior: 'smooth',
+                WebkitOverflowScrolling: 'touch',
+                willChange: 'scroll-position'
+              }}
+            >
+              <AnimatePresence mode="wait">
+                {!isAIActive ? (
+                  <motion.div
+                    key="feed"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="px-4 lg:px-8 py-6"
                   >
-                    {f.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-                  </button>
-                ))}
-              </div>
+                    <InfiniteFeed
+                      filter={filter}
+                      category={category}
+                      location={locationParam}
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="ai-content"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  />
+                )}
+              </AnimatePresence>
             </div>
 
-            <InfiniteFeed
-              filter={filter}
-              category={category}
-              location={locationParam}
-            />
-          </div>
+            {/* AI Chat Bar - Floating, no border */}
+            <div className="flex-shrink-0 px-4 pb-4">
+              <AIFeedSearch
+                onAIActive={setIsAIActive}
+                isAIActive={isAIActive}
+              />
+            </div>
+          </main>
 
-          {/* Right Sidebar - Hidden on mobile, 3 cols on desktop */}
-          <div className="hidden lg:block lg:col-span-3 bg-gradient-to-b from-cyan-50/20 to-indigo-50/20 rounded-r-lg">
-            <div className="sticky top-12 sm:top-14 lg:top-16 h-[calc(100vh-3rem)] sm:h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden p-2 scrollbar-thin">
+          {/* Right Sidebar - Wider for full info */}
+          <aside className="hidden lg:block w-64 flex-shrink-0">
+            <div className="sticky top-20 px-3 py-4 h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide">
               <RightSidebar />
             </div>
-          </div>
+          </aside>
         </div>
       </div>
     </div>

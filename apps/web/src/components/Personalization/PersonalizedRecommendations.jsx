@@ -73,7 +73,7 @@ const PersonalizedRecommendations = ({ limit = 6, showTitle = true, className = 
             score: rec.score,
             confidence: rec.confidence
           }
-        }).catch(() => {}) // Silent fail
+        }).catch(() => { }) // Silent fail
       })
     }
   }, [recommendations])
@@ -91,7 +91,7 @@ const PersonalizedRecommendations = ({ limit = 6, showTitle = true, className = 
       metadata: {
         recommendation_id: recommendationId
       }
-    }).catch(() => {}) // Silent fail
+    }).catch(() => { }) // Silent fail
   }
 
   if (!user) {
@@ -153,112 +153,112 @@ const PersonalizedRecommendations = ({ limit = 6, showTitle = true, className = 
           const isRecommendation = item.recommendation_type
           const deal = isRecommendation ? item.metadata : item
           const recId = isRecommendation ? item.id : `fallback-${item.id}`
-          
+
           return (
-          <div key={recId} className="group relative">
-            {/* Recommendation Badge */}
-            {isRecommendation && (
-              <div className="absolute top-3 left-3 z-10">
-                <div className="flex items-center gap-1 px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
-                  <SparklesIcon className="w-3 h-3" />
-                  <span>Recommended</span>
+            <div key={recId} className="group relative">
+              {/* Recommendation Badge */}
+              {isRecommendation && (
+                <div className="absolute top-3 left-3 z-10">
+                  <div className="flex items-center gap-1 px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                    <SparklesIcon className="w-3 h-3" />
+                    <span>Recommended</span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Confidence Score */}
-            {isRecommendation && (
-              <div className="absolute top-3 right-3 z-10">
-                <div className="flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm text-gray-700 text-xs rounded-full">
-                  <StarIcon className="w-3 h-3" />
-                  <span>{(item.confidence * 100).toFixed(0)}%</span>
+              {/* Confidence Score */}
+              {isRecommendation && (
+                <div className="absolute top-3 right-3 z-10">
+                  <div className="flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm text-gray-700 text-xs rounded-full">
+                    <StarIcon className="w-3 h-3" />
+                    <span>{(item.confidence * 100).toFixed(0)}%</span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <Link
-              to={`/deal/${deal.id}`}
-              onClick={() => handleDealClick(deal.id, isRecommendation ? item.id : null)}
-              className="block bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200 group-hover:border-blue-300"
-            >
-              {/* Deal Image */}
-              <div className="aspect-w-16 aspect-h-9 bg-gray-100">
-                <ImageWithFallback
-                  src={deal.featured_image || deal.image_url || deal.deal_images?.[0]}
-                  alt={deal.title || 'Deal image'}
-                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
-                />
-              </div>
+              <Link
+                to={`/deal/${deal.id}`}
+                onClick={() => handleDealClick(deal.id, isRecommendation ? item.id : null)}
+                className="block bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200 group-hover:border-blue-300"
+              >
+                {/* Deal Image */}
+                <div className="aspect-w-16 aspect-h-9 bg-gray-50">
+                  <ImageWithFallback
+                    src={deal.featured_image || deal.image_url || deal.deal_images?.[0]}
+                    alt={deal.title || 'Deal image'}
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                </div>
 
-              {/* Deal Content */}
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                  {deal.title || `Deal ${deal.id}`}
-                </h3>
+                {/* Deal Content */}
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                    {deal.title || `Deal ${deal.id}`}
+                  </h3>
 
-                {/* Price */}
-                {deal.price && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg font-bold text-green-600">
-                      {formatPrice(deal.price)}
-                    </span>
-                    {deal.original_price && deal.original_price > deal.price && (
-                      <span className="text-sm text-gray-500 line-through">
-                        {formatPrice(deal.original_price)}
+                  {/* Price */}
+                  {deal.price && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg font-bold text-green-600">
+                        {formatPrice(deal.price)}
                       </span>
+                      {deal.original_price && deal.original_price > deal.price && (
+                        <span className="text-sm text-gray-500 line-through">
+                          {formatPrice(deal.original_price)}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Discount */}
+                  {deal.discount_percentage && (
+                    <div className="inline-block px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded mb-2">
+                      {deal.discount_percentage}% OFF
+                    </div>
+                  )}
+
+                  {/* Recommendation Reason */}
+                  {isRecommendation && item.reason && (
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      {item.reason}
+                    </p>
+                  )}
+
+                  {/* Deal Stats */}
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <div className="flex items-center gap-3">
+                      {deal.views_count && (
+                        <div className="flex items-center gap-1">
+                          <EyeIcon className="w-3 h-3" />
+                          <span>{deal.views_count}</span>
+                        </div>
+                      )}
+                      {deal.upvotes && (
+                        <div className="flex items-center gap-1">
+                          <HeartIcon className="w-3 h-3" />
+                          <span>{deal.upvotes}</span>
+                        </div>
+                      )}
+                    </div>
+                    {deal.created_at && (
+                      <span>{dateAgo(deal.created_at)}</span>
                     )}
                   </div>
-                )}
 
-                {/* Discount */}
-                {deal.discount_percentage && (
-                  <div className="inline-block px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded mb-2">
-                    {deal.discount_percentage}% OFF
-                  </div>
-                )}
-
-                {/* Recommendation Reason */}
-                {isRecommendation && item.reason && (
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                    {item.reason}
-                  </p>
-                )}
-
-                {/* Deal Stats */}
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <div className="flex items-center gap-3">
-                    {deal.views_count && (
-                      <div className="flex items-center gap-1">
-                        <EyeIcon className="w-3 h-3" />
-                        <span>{deal.views_count}</span>
+                  {/* Company Info */}
+                  {getCompanyName(deal) && (
+                    <div className="mt-2 pt-2 border-t border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">from</span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {getCompanyName(deal)}
+                        </span>
                       </div>
-                    )}
-                    {deal.upvotes && (
-                      <div className="flex items-center gap-1">
-                        <HeartIcon className="w-3 h-3" />
-                        <span>{deal.upvotes}</span>
-                      </div>
-                    )}
-                  </div>
-                  {deal.created_at && (
-                    <span>{dateAgo(deal.created_at)}</span>
+                    </div>
                   )}
                 </div>
-
-                {/* Company Info */}
-                {getCompanyName(deal) && (
-                  <div className="mt-2 pt-2 border-t border-gray-100">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500">from</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {getCompanyName(deal)}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Link>
-          </div>
+              </Link>
+            </div>
           )
         }) : (
           <div className="col-span-full text-center py-12">

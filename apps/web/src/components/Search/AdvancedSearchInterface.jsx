@@ -7,11 +7,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { 
-  Search, 
-  Filter, 
-  Clock, 
-  X, 
+import {
+  Search,
+  Filter,
+  Clock,
+  X,
   Sparkles,
   ChevronDown,
   Loader2
@@ -20,8 +20,8 @@ import { api } from '../../lib/api'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useLocation as useUserLocation } from '../../context/LocationContext'
 
-const AdvancedSearchInterface = ({ 
-  onSearch, 
+const AdvancedSearchInterface = ({
+  onSearch,
   placeholder = "Search deals, coupons, users, companies...",
   showFilters = true,
   showSuggestions = true,
@@ -34,13 +34,13 @@ const AdvancedSearchInterface = ({
   const searchInputRef = useRef(null)
   const containerRef = useRef(null)
   const [dropdownRect, setDropdownRect] = useState(null)
-  
+
   // Search state
   const [query, setQuery] = useState(searchParams.get('q') || '')
   const [isExpanded, setIsExpanded] = useState(false)
   const [showSuggestionsDropdown, setShowSuggestionsDropdown] = useState(false)
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
-  
+
   // Filter state
   const [filters, setFilters] = useState({
     type: searchParams.get('type') || 'all',
@@ -56,7 +56,7 @@ const AdvancedSearchInterface = ({
 
   // Location state from context
   const { location: userLocation, isLoading: isLocating, error: locationError, getCurrentLocation, setManualLocation, clearLocation } = useUserLocation?.() || {}
-  
+
   // Location dropdown state
   const [showLocationDropdown, setShowLocationDropdown] = useState(false)
   const [locationDropdownRect, setLocationDropdownRect] = useState(null)
@@ -70,7 +70,7 @@ const AdvancedSearchInterface = ({
       // Using a free geocoding service (you can replace with your preferred service)
       const response = await fetch(`https://api.zippopotam.us/us/${zipcode}`)
       const data = await response.json()
-      
+
       if (data && data.places && data.places.length > 0) {
         const place = data.places[0]
         return {
@@ -116,11 +116,11 @@ const AdvancedSearchInterface = ({
 
     const params = new URLSearchParams()
     params.set('q', searchQuery.trim())
-    
+
     if (searchFilters.type !== 'all') params.set('type', searchFilters.type)
     if (searchFilters.category) params.set('category', searchFilters.category)
     if (searchFilters.sort !== 'relevance') params.set('sort', searchFilters.sort)
-    
+
     // Add other filters if they're not default values
     if (searchFilters.priceRange[1] < 1000) {
       params.set('max_price', searchFilters.priceRange[1])
@@ -148,7 +148,7 @@ const AdvancedSearchInterface = ({
     // Hide suggestions and record analytics
     setShowSuggestionsDropdown(false)
     setSelectedSuggestionIndex(-1)
-    
+
     // Record search analytics
     recordInteractionMutation.mutate({
       query: searchQuery,
@@ -171,7 +171,7 @@ const AdvancedSearchInterface = ({
     setQuery(suggestion.text)
     setShowSuggestionsDropdown(false)
     executeSearch(suggestion.text, filters)
-    
+
     // Record suggestion usage
     recordInteractionMutation.mutate({
       query: suggestion.text,
@@ -193,16 +193,16 @@ const AdvancedSearchInterface = ({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
-        setSelectedSuggestionIndex(prev => 
+        setSelectedSuggestionIndex(prev =>
           prev < suggestions.length - 1 ? prev + 1 : prev
         )
         break
-      
+
       case 'ArrowUp':
         e.preventDefault()
         setSelectedSuggestionIndex(prev => prev > 0 ? prev - 1 : -1)
         break
-      
+
       case 'Enter':
         e.preventDefault()
         if (selectedSuggestionIndex >= 0) {
@@ -211,7 +211,7 @@ const AdvancedSearchInterface = ({
           executeSearch()
         }
         break
-      
+
       case 'Escape':
         setShowSuggestionsDropdown(false)
         setSelectedSuggestionIndex(-1)
@@ -269,20 +269,20 @@ const AdvancedSearchInterface = ({
         target?.tagName === 'TEXTAREA' ||
         target?.isContentEditable
       )
-      
+
       // '/' focuses search when not typing
       if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey && !isTypingContext) {
         e.preventDefault()
         searchInputRef.current?.focus()
       }
-      
+
       // Cmd/Ctrl + K focuses search anywhere
       if ((e.key.toLowerCase() === 'k') && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
         searchInputRef.current?.focus()
       }
     }
-    
+
     document.addEventListener('keydown', handleGlobalShortcut)
     return () => document.removeEventListener('keydown', handleGlobalShortcut)
   }, [])
@@ -295,12 +295,12 @@ const AdvancedSearchInterface = ({
         setShowSuggestionsDropdown(false)
         setSelectedSuggestionIndex(-1)
       }
-      
+
       // Close location dropdown when clicking outside
       // Check if click is outside both the container and the location dropdown portal
       const isOutsideContainer = containerRef.current && !containerRef.current.contains(event.target)
       const isOutsideLocationDropdown = !event.target.closest('[data-location-dropdown]')
-      
+
       if (isOutsideContainer && isOutsideLocationDropdown) {
         setShowLocationDropdown(false)
       }
@@ -323,45 +323,45 @@ const AdvancedSearchInterface = ({
   // Professional UX sizing and styling
   const styles = {
     // Container styles
-    container: compact 
-      ? 'rounded-full shadow-lg hover:shadow-xl border border-mint-200/70 bg-gradient-to-r from-white/95 via-mint-50/40 to-emerald-50/30 backdrop-blur-sm' 
+    container: compact
+      ? 'rounded-full shadow-lg hover:shadow-xl border border-mint-200/70 bg-gradient-to-r from-white/95 via-mint-50/40 to-emerald-50/30 backdrop-blur-sm'
       : 'rounded-2xl shadow-xl hover:shadow-2xl border-2 border-mint-200/70 bg-gradient-to-r from-white via-mint-50/30 to-emerald-50/20 backdrop-blur-sm',
-    
+
     // Focus states
     containerFocused: compact
       ? 'border-mint-400 shadow-xl ring-4 ring-mint-100/60 bg-gradient-to-r from-white via-mint-50/50 to-emerald-50/40'
       : 'border-mint-500 shadow-2xl ring-4 ring-mint-100/70 bg-gradient-to-r from-white via-mint-50/40 to-emerald-50/30',
-    
+
     // Location button
     locationBtn: compact
       ? 'ml-3 mr-2 px-3 py-1.5 text-xs bg-gradient-to-r from-mint-50/80 to-emerald-50/60 hover:from-mint-100 hover:to-emerald-100 border border-mint-200/60 rounded-full transition-all duration-200 hover:shadow-md'
       : 'ml-4 mr-3 px-4 py-2 text-sm bg-gradient-to-r from-mint-50 to-emerald-50 hover:from-mint-100 hover:to-emerald-100 border border-mint-200 rounded-full transition-all duration-200 hover:shadow-lg',
-    
+
     // Search icon
-    searchIcon: compact 
-      ? 'w-4 h-4 text-mint-500 ml-3' 
+    searchIcon: compact
+      ? 'w-4 h-4 text-mint-500 ml-3'
       : 'w-5 h-5 text-mint-600 ml-5',
-    
+
     // Input field
     input: compact
       ? 'flex-1 px-3 py-3 text-sm placeholder-mint-500 bg-transparent border-0 focus:outline-none focus:ring-0 font-medium min-w-0'
       : 'flex-1 px-4 py-4 text-base placeholder-mint-500 bg-transparent border-0 focus:outline-none focus:ring-0 font-medium min-w-0',
-    
+
     // Action buttons
     clearBtn: compact
       ? 'p-1.5 text-mint-400 hover:text-mint-600 hover:bg-mint-100/80 rounded-full transition-all duration-200'
       : 'p-2 text-mint-400 hover:text-mint-600 hover:bg-mint-100 rounded-full transition-all duration-200 hover:scale-105',
-    
+
     filterBtn: compact
       ? 'p-1.5 text-mint-400 hover:text-mint-600 hover:bg-mint-50 rounded-full transition-all duration-200'
       : 'p-2 text-mint-400 hover:text-mint-600 hover:bg-mint-50 rounded-full transition-all duration-200 hover:scale-105',
-    
+
     searchBtn: compact
       ? 'px-3 py-2 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0'
       : 'px-4 py-2.5 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0',
     // Dropdown (very high z-index to overlay everything)
     dropdown: 'absolute top-full left-0 right-0 mt-3 bg-white/95 backdrop-blur-lg border border-gray-200/60 rounded-2xl shadow-2xl z-[9999] max-h-96 overflow-y-auto',
-    
+
     // Suggestion items
     suggestion: 'w-full text-left px-4 py-3 hover:bg-gray-50/80 transition-all duration-150 group border-l-2 border-transparent hover:border-gray-200',
     suggestionActive: 'bg-primary-50/80 text-primary-800 border-l-2 border-primary-500'
@@ -369,11 +369,11 @@ const AdvancedSearchInterface = ({
 
   return (
     <div className={`relative ${className}`}>
-      
+
 
       {/* Main Search Bar */}
       <div className="relative" ref={containerRef}>
-        <div 
+        <div
           className={`
             flex items-center transition-all duration-300 
             ${styles.container}
@@ -405,18 +405,18 @@ const AdvancedSearchInterface = ({
                 title={`Current location: ${userLocation?.address?.display || zipCode || 'Not set'}`}
                 aria-label="Set search location"
               >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   className={`${compact ? 'w-3 h-3' : 'w-4 h-4'} text-gray-500 group-hover:text-primary-600 transition-colors`}
                 >
-                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-                  <circle cx="12" cy="10" r="3"/>
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                  <circle cx="12" cy="10" r="3" />
                 </svg>
                 <span className="font-medium truncate max-w-16 sm:max-w-20 lg:max-w-24 text-xs sm:text-sm">
                   {isLocating ? 'Locating…' : (userLocation?.address?.display?.split(',')[0] || zipCode || 'Anywhere')}
@@ -428,7 +428,7 @@ const AdvancedSearchInterface = ({
           )}
 
           <Search className={`${styles.searchIcon} flex-shrink-0`} />
-          
+
           <input
             ref={searchInputRef}
             type="text"
@@ -488,8 +488,8 @@ const AdvancedSearchInterface = ({
             data-location-dropdown
             onClick={(e) => e.stopPropagation()}
             className="fixed bg-white rounded-lg shadow-xl border border-gray-200 z-[9999] p-4"
-            style={{ 
-              left: Math.max(8, locationDropdownRect.left), 
+            style={{
+              left: Math.max(8, locationDropdownRect.left),
               top: locationDropdownRect.top,
               width: Math.min(locationDropdownRect.width, window.innerWidth - 16)
             }}
@@ -511,7 +511,7 @@ const AdvancedSearchInterface = ({
                             maximumAge: 60000
                           })
                         })
-                        
+
                         if (getCurrentLocation) {
                           getCurrentLocation()
                         }
@@ -589,7 +589,7 @@ const AdvancedSearchInterface = ({
                               },
                               timestamp: Date.now()
                             }
-                            
+
                             // Set the location using LocationContext
                             if (setManualLocation) {
                               setManualLocation(locationData)
@@ -641,9 +641,9 @@ const AdvancedSearchInterface = ({
         {showSuggestionsDropdown && dropdownRect && createPortal(
           <div
             className="fixed bg-white/95 backdrop-blur-lg border border-gray-200/60 rounded-2xl shadow-2xl z-[9999] max-h-96 overflow-y-auto"
-            style={{ 
-              left: Math.max(8, dropdownRect.left), 
-              top: dropdownRect.top, 
+            style={{
+              left: Math.max(8, dropdownRect.left),
+              top: dropdownRect.top,
               width: Math.min(dropdownRect.width, window.innerWidth - 16),
               maxWidth: '90vw'
             }}

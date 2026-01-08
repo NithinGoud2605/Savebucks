@@ -32,7 +32,7 @@ export default function ThreadComposer() {
   const toast = useToast()
   const confirm = useConfirm()
   const textareaRef = useRef(null)
-  
+
   // Form state
   const [formData, setFormData] = useState({
     title: '',
@@ -43,12 +43,12 @@ export default function ThreadComposer() {
     sticky: false,
     nsfw: false,
   })
-  
+
   const [showPreview, setShowPreview] = useState(false)
   const [errors, setErrors] = useState({})
   const [isDirty, setIsDirty] = useState(false)
   const [autoSaveStatus, setAutoSaveStatus] = useState('')
-  
+
   // Drafts management
   const [drafts, setDrafts] = useState(() => {
     try {
@@ -57,13 +57,13 @@ export default function ThreadComposer() {
       return {}
     }
   })
-  
+
   // Load forum data
   const { data: forum } = useQuery({
     queryKey: ['forum', slug],
     queryFn: () => forumService.getForum(slug),
   })
-  
+
   // Set page meta
   React.useEffect(() => {
     setPageMeta({
@@ -71,11 +71,11 @@ export default function ThreadComposer() {
       description: 'Create a new discussion thread in the community forum.',
     })
   }, [forum])
-  
+
   // Auto-save draft
   React.useEffect(() => {
     if (!isDirty) return
-    
+
     const timeoutId = setTimeout(() => {
       const draftKey = `${slug}_${Date.now()}`
       const updatedDrafts = {
@@ -86,28 +86,28 @@ export default function ThreadComposer() {
           savedAt: new Date().toISOString(),
         }
       }
-      
+
       // Keep only last 5 drafts per forum
       const forumDrafts = Object.entries(updatedDrafts)
         .filter(([key]) => key.startsWith(slug))
-        .sort(([,a], [,b]) => new Date(b.savedAt) - new Date(a.savedAt))
+        .sort(([, a], [, b]) => new Date(b.savedAt) - new Date(a.savedAt))
         .slice(0, 5)
-      
+
       const finalDrafts = {
         ...Object.fromEntries(Object.entries(updatedDrafts).filter(([key]) => !key.startsWith(slug))),
         ...Object.fromEntries(forumDrafts)
       }
-      
+
       setDrafts(finalDrafts)
       localStorage.setItem('threadDrafts', JSON.stringify(finalDrafts))
       setAutoSaveStatus('Draft saved')
-      
+
       setTimeout(() => setAutoSaveStatus(''), 2000)
     }, 3000) // Auto-save after 3 seconds of inactivity
-    
+
     return () => clearTimeout(timeoutId)
   }, [formData, isDirty, slug, drafts])
-  
+
   // Create thread mutation
   const createThreadMutation = useMutation({
     mutationFn: (threadData) => forumService.createThread(slug, threadData),
@@ -118,7 +118,7 @@ export default function ThreadComposer() {
       )
       setDrafts(clearedDrafts)
       localStorage.setItem('threadDrafts', JSON.stringify(clearedDrafts))
-      
+
       toast.success('Thread created successfully!')
       navigate(`/forums/${slug}/thread/${newThread.id}`)
     },
@@ -127,18 +127,18 @@ export default function ThreadComposer() {
       console.error('Thread creation error:', error)
     }
   })
-  
+
   // Form handlers
   const handleChange = useCallback((field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     setIsDirty(true)
-    
+
     // Clear specific field error
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
   }, [errors])
-  
+
   const handleTagToggle = useCallback((tag) => {
     setFormData(prev => ({
       ...prev,
@@ -148,70 +148,70 @@ export default function ThreadComposer() {
     }))
     setIsDirty(true)
   }, [])
-  
+
   // Markdown toolbar actions
   const insertMarkdown = useCallback((before, after = '') => {
     const textarea = textareaRef.current
     if (!textarea) return
-    
+
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
     const selectedText = formData.body.substring(start, end)
     const newText = before + selectedText + after
-    
+
     const newBody = formData.body.substring(0, start) + newText + formData.body.substring(end)
     handleChange('body', newBody)
-    
+
     // Restore cursor position
     setTimeout(() => {
       textarea.focus()
       textarea.setSelectionRange(start + before.length, start + before.length + selectedText.length)
     }, 0)
   }, [formData.body, handleChange])
-  
+
   // Form validation
   const validateForm = useCallback(() => {
     const newErrors = {}
-    
+
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required'
     } else if (formData.title.length > 200) {
       newErrors.title = 'Title must be less than 200 characters'
     }
-    
+
     if (!formData.body.trim()) {
       newErrors.body = 'Body content is required'
     } else if (formData.body.length > 10000) {
       newErrors.body = 'Content must be less than 10,000 characters'
     }
-    
+
     if (formData.tags.length > 5) {
       newErrors.tags = 'Maximum 5 tags allowed'
     }
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }, [formData])
-  
+
   // Form submission
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     // Check authentication
     const user = localStorage.getItem('demo_user')
     if (!user) {
       toast.error('Please sign in to create threads')
       return
     }
-    
+
     if (!validateForm()) {
       toast.error('Please fix the errors before submitting')
       return
     }
-    
+
     createThreadMutation.mutate(formData)
   }
-  
+
   // Draft management
   const loadDraft = (draftKey) => {
     const draft = drafts[draftKey]
@@ -229,7 +229,7 @@ export default function ThreadComposer() {
       toast.success('Draft loaded')
     }
   }
-  
+
   const deleteDraft = (draftKey) => {
     const updatedDrafts = { ...drafts }
     delete updatedDrafts[draftKey]
@@ -237,7 +237,7 @@ export default function ThreadComposer() {
     localStorage.setItem('threadDrafts', JSON.stringify(updatedDrafts))
     toast.success('Draft deleted')
   }
-  
+
   // Navigation guard
   const handleNavigation = useCallback(async () => {
     if (isDirty) {
@@ -252,7 +252,7 @@ export default function ThreadComposer() {
     }
     return true
   }, [isDirty, confirm])
-  
+
   if (!forum) {
     return (
       <Container className="py-8">
@@ -264,23 +264,23 @@ export default function ThreadComposer() {
       </Container>
     )
   }
-  
+
   const previewHtml = showPreview ? parseMarkdown(formData.body) : ''
   const forumDrafts = Object.entries(drafts).filter(([key]) => key.startsWith(slug))
-  
+
   return (
     <Container className="py-8">
       <div className="max-w-4xl mx-auto">
         {/* Navigation */}
         <nav className="mb-6 text-sm">
-          <Link 
-            to="/forums" 
+          <Link
+            to="/forums"
             className="text-blue-600 hover:text-blue-700"
           >
             Forums
           </Link>
           <span className="mx-2 text-gray-500">/</span>
-          <Link 
+          <Link
             to={`/forums/${slug}`}
             className="text-blue-600 hover:text-blue-700"
           >
@@ -289,7 +289,7 @@ export default function ThreadComposer() {
           <span className="mx-2 text-gray-500">/</span>
           <span className="text-gray-900">Thread</span>
         </nav>
-        
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -299,7 +299,7 @@ export default function ThreadComposer() {
             Start a new discussion in {forum.name}. Be respectful and follow the community guidelines.
           </p>
         </div>
-        
+
         {/* Drafts Panel */}
         {forumDrafts.length > 0 && (
           <div className="card p-4 mb-6">
@@ -334,7 +334,7 @@ export default function ThreadComposer() {
             </div>
           </div>
         )}
-        
+
         {/* Main Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
@@ -361,7 +361,7 @@ export default function ThreadComposer() {
               </p>
             </div>
           </div>
-          
+
           {/* Category and Tags */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Category */}
@@ -387,7 +387,7 @@ export default function ThreadComposer() {
                 ))}
               </div>
             </div>
-            
+
             {/* Tags */}
             <div className="card p-6">
               <label className="block text-sm font-medium text-gray-900 mb-3">
@@ -404,7 +404,7 @@ export default function ThreadComposer() {
                       'px-3 py-1 rounded-full text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
                       formData.tags.includes(tag)
                         ? 'bg-blue-100 text-blue-800'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-50 text-gray-700 hover:bg-gray-200'
                     )}
                   >
                     {tag}
@@ -416,7 +416,7 @@ export default function ThreadComposer() {
               )}
             </div>
           </div>
-          
+
           {/* Body Content */}
           <div className="card">
             {/* Editor Tabs */}
@@ -447,7 +447,7 @@ export default function ThreadComposer() {
                 >
                   Preview
                 </button>
-                
+
                 {autoSaveStatus && (
                   <div className="flex items-center ml-auto text-sm text-green-600">
                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -458,7 +458,7 @@ export default function ThreadComposer() {
                 )}
               </nav>
             </div>
-            
+
             <div className="p-6">
               {!showPreview ? (
                 <div>
@@ -467,7 +467,7 @@ export default function ThreadComposer() {
                     <button
                       type="button"
                       onClick={() => insertMarkdown('**', '**')}
-                      className="p-2 text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
+                      className="p-2 text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-50"
                       title="Bold"
                     >
                       <strong>B</strong>
@@ -475,7 +475,7 @@ export default function ThreadComposer() {
                     <button
                       type="button"
                       onClick={() => insertMarkdown('*', '*')}
-                      className="p-2 text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
+                      className="p-2 text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-50"
                       title="Italic"
                     >
                       <em>I</em>
@@ -483,7 +483,7 @@ export default function ThreadComposer() {
                     <button
                       type="button"
                       onClick={() => insertMarkdown('[', '](url)')}
-                      className="p-2 text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
+                      className="p-2 text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-50"
                       title="Link"
                     >
                       🔗
@@ -491,7 +491,7 @@ export default function ThreadComposer() {
                     <button
                       type="button"
                       onClick={() => insertMarkdown('`', '`')}
-                      className="p-2 text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100 font-mono"
+                      className="p-2 text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-50 font-mono"
                       title="Code"
                     >
                       {`</>`}
@@ -499,7 +499,7 @@ export default function ThreadComposer() {
                     <button
                       type="button"
                       onClick={() => insertMarkdown('\n> ')}
-                      className="p-2 text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
+                      className="p-2 text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-50"
                       title="Quote"
                     >
                       “”
@@ -507,13 +507,13 @@ export default function ThreadComposer() {
                     <button
                       type="button"
                       onClick={() => insertMarkdown('\n- ')}
-                      className="p-2 text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
+                      className="p-2 text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-50"
                       title="List"
                     >
                       •
                     </button>
                   </div>
-                  
+
                   {/* Textarea */}
                   <textarea
                     ref={textareaRef}
@@ -523,7 +523,7 @@ export default function ThreadComposer() {
                     placeholder="Write your thread content here. You can use Markdown formatting."
                     maxLength={10000}
                   />
-                  
+
                   <div className="flex justify-between mt-2">
                     {errors.body && (
                       <p className="text-sm text-red-600">
@@ -538,7 +538,7 @@ export default function ThreadComposer() {
               ) : (
                 <div className="prose prose-gray max-w-none min-h-[16rem]">
                   {previewHtml ? (
-                    <div 
+                    <div
                       className="markdown-content"
                       dangerouslySetInnerHTML={{ __html: previewHtml }}
                     />
@@ -551,7 +551,7 @@ export default function ThreadComposer() {
               )}
             </div>
           </div>
-          
+
           {/* Thread Options */}
           <div className="card p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -569,7 +569,7 @@ export default function ThreadComposer() {
                   Allow comments and replies
                 </span>
               </label>
-              
+
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -581,7 +581,7 @@ export default function ThreadComposer() {
                   Mark as NSFW (Not Safe For Work)
                 </span>
               </label>
-              
+
               {/* Only show sticky option for moderators */}
               {localStorage.getItem('demo_user') === 'demo' && (
                 <label className="flex items-center">
@@ -598,7 +598,7 @@ export default function ThreadComposer() {
               )}
             </div>
           </div>
-          
+
           {/* Submit Actions */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -609,12 +609,12 @@ export default function ThreadComposer() {
               >
                 Cancel
               </Link>
-              
+
               <div className="text-sm text-gray-600">
                 By posting, you agree to follow our community guidelines
               </div>
             </div>
-            
+
             <button
               type="submit"
               disabled={createThreadMutation.isPending || !formData.title.trim() || !formData.body.trim()}

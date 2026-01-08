@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
+import {
   BuildingOfficeIcon,
   GlobeAltIcon,
   PhoneIcon,
@@ -31,7 +31,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { Container } from '../components/Layout/Container'
 import { NewDealCard } from '../components/Deal/NewDealCard'
-import { Skeleton } from '../components/Loader/Skeleton'
+import { Skeleton } from '../components/ui/Skeleton'
 import { api } from '../lib/api'
 import { setPageMeta } from '../lib/head'
 import { formatCompactNumber } from '../lib/format'
@@ -257,7 +257,7 @@ const CompanyPage = () => {
                             </span>
                           )}
                         </div>
-                        
+
                         {/* Discount Badge */}
                         {deal.discount_percentage && (
                           <div className="px-2 py-1 bg-red-100 text-red-700 text-sm font-bold rounded">
@@ -304,13 +304,13 @@ const CompanyPage = () => {
   const renderCoupons = () => {
     // Filter coupons based on search and type
     const filteredCoupons = coupons.filter(coupon => {
-      const matchesSearch = !couponSearch || 
+      const matchesSearch = !couponSearch ||
         coupon.title.toLowerCase().includes(couponSearch.toLowerCase()) ||
         coupon.description?.toLowerCase().includes(couponSearch.toLowerCase()) ||
         coupon.coupon_code?.toLowerCase().includes(couponSearch.toLowerCase())
-      
+
       const matchesType = couponTypeFilter === 'all' || coupon.coupon_type === couponTypeFilter
-      
+
       return matchesSearch && matchesType
     })
 
@@ -350,7 +350,7 @@ const CompanyPage = () => {
             </select>
           </div>
         </div>
-        
+
         {filteredCoupons.length > 0 ? (
           <div className="space-y-4">
             {filteredCoupons.map((coupon) => (
@@ -364,7 +364,7 @@ const CompanyPage = () => {
               {coupons.length === 0 ? 'No Coupons Available' : 'No Coupons Match Your Search'}
             </h3>
             <p className="text-secondary-600">
-              {coupons.length === 0 
+              {coupons.length === 0
                 ? "This company doesn't have any active coupons at the moment."
                 : "Try adjusting your search terms or filters."
               }
@@ -392,7 +392,7 @@ const CompanyPage = () => {
               </div>
             </div>
           )}
-          
+
           {company.headquarters && (
             <div className="flex items-center space-x-3">
               <MapPinIcon className="w-5 h-5 text-secondary-400" />
@@ -402,7 +402,7 @@ const CompanyPage = () => {
               </div>
             </div>
           )}
-          
+
           {company.employee_count && (
             <div className="flex items-center space-x-3">
               <UsersIcon className="w-5 h-5 text-secondary-400" />
@@ -412,7 +412,7 @@ const CompanyPage = () => {
               </div>
             </div>
           )}
-          
+
           {company.revenue_range && (
             <div className="flex items-center space-x-3">
               <CurrencyDollarIcon className="w-5 h-5 text-secondary-400" />
@@ -435,7 +435,7 @@ const CompanyPage = () => {
             {company.contact_info.phone && (
               <div className="flex items-center space-x-3">
                 <PhoneIcon className="w-5 h-5 text-secondary-400" />
-                <a 
+                <a
                   href={`tel:${company.contact_info.phone}`}
                   className="text-primary-600 hover:text-primary-700"
                 >
@@ -443,11 +443,11 @@ const CompanyPage = () => {
                 </a>
               </div>
             )}
-            
+
             {company.contact_info.email && (
               <div className="flex items-center space-x-3">
                 <EnvelopeIcon className="w-5 h-5 text-secondary-400" />
-                <a 
+                <a
                   href={`mailto:${company.contact_info.email}`}
                   className="text-primary-600 hover:text-primary-700"
                 >
@@ -486,7 +486,7 @@ const CompanyPage = () => {
           </h3>
           <div className="flex flex-wrap gap-2">
             {company.payment_methods.map((method) => (
-              <span 
+              <span
                 key={method}
                 className="px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm"
               >
@@ -560,7 +560,7 @@ const CompanyPage = () => {
                 )}
               </div>
             )}
-            
+
             {company.app_store_rating && (
               <div className="text-center">
                 <div className="flex items-center justify-center space-x-1 mb-2">
@@ -570,7 +570,7 @@ const CompanyPage = () => {
                 <div className="text-sm text-secondary-600">App Store</div>
               </div>
             )}
-            
+
             {company.play_store_rating && (
               <div className="text-center">
                 <div className="flex items-center justify-center space-x-1 mb-2">
@@ -585,47 +585,47 @@ const CompanyPage = () => {
       )}
 
       {/* Certifications & Awards */}
-      {((company.certifications && company.certifications.length > 0) || 
+      {((company.certifications && company.certifications.length > 0) ||
         (company.awards && company.awards.length > 0)) && (
-        <div className="bg-white rounded-lg border border-secondary-200 p-6">
-          <h3 className="text-lg font-semibold text-secondary-900 mb-4">
-            Certifications & Awards
-          </h3>
-          <div className="space-y-4">
-            {company.certifications && company.certifications.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-secondary-700 mb-2">Certifications</h4>
-                <div className="flex flex-wrap gap-2">
-                  {company.certifications.map((cert) => (
-                    <span 
-                      key={cert}
-                      className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm"
-                    >
-                      {cert}
-                    </span>
-                  ))}
+          <div className="bg-white rounded-lg border border-secondary-200 p-6">
+            <h3 className="text-lg font-semibold text-secondary-900 mb-4">
+              Certifications & Awards
+            </h3>
+            <div className="space-y-4">
+              {company.certifications && company.certifications.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-secondary-700 mb-2">Certifications</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {company.certifications.map((cert) => (
+                      <span
+                        key={cert}
+                        className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm"
+                      >
+                        {cert}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-            
-            {company.awards && company.awards.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-secondary-700 mb-2">Awards</h4>
-                <div className="flex flex-wrap gap-2">
-                  {company.awards.map((award) => (
-                    <span 
-                      key={award}
-                      className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm"
-                    >
-                      {award}
-                    </span>
-                  ))}
+              )}
+
+              {company.awards && company.awards.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-secondary-700 mb-2">Awards</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {company.awards.map((award) => (
+                      <span
+                        key={award}
+                        className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm"
+                      >
+                        {award}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   )
 
@@ -671,7 +671,7 @@ const CompanyPage = () => {
                         <CheckBadgeIcon className="w-6 h-6 text-blue-500" />
                       )}
                     </div>
-                    
+
                     {company.description && (
                       <p className="text-gray-600 mb-2 max-w-3xl">
                         {company.description}
@@ -691,7 +691,7 @@ const CompanyPage = () => {
                           <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                         </a>
                       )}
-                      
+
                       {company.rating && (
                         <div className="flex items-center space-x-2">
                           <StarIcon className="w-4 h-4 text-yellow-400 fill-current" />
@@ -714,7 +714,7 @@ const CompanyPage = () => {
                 >
                   <BookmarkIcon className="w-5 h-5" />
                 </button>
-                
+
                 <button
                   className="p-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
                   title="Share company"
@@ -736,20 +736,18 @@ const CompanyPage = () => {
               <button
                 key={tab.id}
                 onClick={() => setTab(tab.id)}
-                className={`flex-1 px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                  activeTab === tab.id
-                    ? 'text-mint-600 border-b-2 border-mint-600 bg-mint-50'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
+                className={`flex-1 px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === tab.id
+                  ? 'text-mint-600 border-b-2 border-mint-600 bg-mint-50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
               >
                 <span className="hidden sm:inline">{tab.label}</span>
                 <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
                 {tab.count !== null && (
-                  <span className={`ml-1 sm:ml-2 py-0.5 px-1 sm:px-2 rounded-full text-xs ${
-                    activeTab === tab.id
-                      ? 'bg-mint-100 text-mint-700'
-                      : 'bg-gray-100 text-gray-600'
-                  }`}>
+                  <span className={`ml-1 sm:ml-2 py-0.5 px-1 sm:px-2 rounded-full text-xs ${activeTab === tab.id
+                    ? 'bg-mint-100 text-mint-700'
+                    : 'bg-gray-50 text-gray-600'
+                    }`}>
                     {tab.count}
                   </span>
                 )}

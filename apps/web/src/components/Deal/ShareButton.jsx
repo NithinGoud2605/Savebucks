@@ -55,7 +55,7 @@ export function ShareButton({ deal, size = 'sm' }) {
   return (
     <button
       onClick={handleShare}
-      className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full hover:bg-gray-100 transition-colors"
+      className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full hover:bg-gray-50 transition-colors"
       title="Share this deal"
     >
       <svg className={iconSize} fill="none" stroke="currentColor" viewBox="0 0 24 24">

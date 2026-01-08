@@ -4,13 +4,13 @@ import { api } from '../../lib/api'
 import { useToast } from '../Toast'
 import { clsx } from 'clsx'
 
-export function FollowButton({ 
-  userId, 
-  className = '', 
+export function FollowButton({
+  userId,
+  className = '',
   size = 'md',
   variant = 'default',
   showFollowerCount = false,
-  disabled = false 
+  disabled = false
 }) {
   const toast = useToast()
   const queryClient = useQueryClient()
@@ -40,7 +40,7 @@ export function FollowButton({
     mutationFn: () => api.toggleFollowUser(userId),
     onSuccess: () => {
       toast.success('Updated follow status')
-      
+
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['is-following', currentUserId, userId] })
       queryClient.invalidateQueries({ queryKey: ['user-followers', userId] })
@@ -57,7 +57,7 @@ export function FollowButton({
       toast.error('Please log in to follow users')
       return
     }
-    
+
     followMutation.mutate()
   }
 
@@ -73,14 +73,14 @@ export function FollowButton({
   }
 
   const variantClasses = {
-    default: isFollowing 
-      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+    default: isFollowing
+      ? 'bg-gray-50 text-gray-700 hover:bg-gray-200 border border-gray-300'
       : 'bg-blue-600 text-white hover:bg-blue-700',
     outline: isFollowing
       ? 'border-2 border-gray-300 text-gray-700 hover:bg-gray-50'
       : 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50',
     ghost: isFollowing
-      ? 'text-gray-700 hover:bg-gray-100'
+      ? 'text-gray-700 hover:bg-gray-50'
       : 'text-blue-600 hover:bg-blue-50'
   }
 
@@ -106,7 +106,7 @@ export function FollowButton({
             <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
           </div>
         )}
-        
+
         {/* Button Content */}
         <div className={clsx('flex items-center space-x-2', isProcessing && 'invisible')}>
           {/* Follow Icon */}
@@ -119,7 +119,7 @@ export function FollowButton({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
           )}
-          
+
           <span>{buttonText}</span>
         </div>
       </button>
@@ -137,7 +137,7 @@ export function FollowButton({
 // Compact version for use in lists
 export function FollowButtonCompact({ userId, className = '' }) {
   return (
-    <FollowButton 
+    <FollowButton
       userId={userId}
       size="sm"
       variant="outline"
@@ -149,7 +149,7 @@ export function FollowButtonCompact({ userId, className = '' }) {
 // Follow/Following indicator (non-interactive)
 export function FollowStatus({ userId, className = '' }) {
   const currentUserId = localStorage.getItem('demo_user')
-  
+
   const { data: isFollowing = false } = useQuery({
     queryKey: ['is-following', currentUserId, userId],
     queryFn: () => api.isFollowing(userId),

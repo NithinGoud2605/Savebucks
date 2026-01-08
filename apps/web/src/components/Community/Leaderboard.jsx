@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { api } from '../../lib/api'
-import { Skeleton } from '../Loader/Skeleton'
+import { Skeleton } from '../ui/Skeleton'
 import { TrophyIcon, FireIcon, CalendarIcon, ClockIcon } from '@heroicons/react/24/solid'
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
 

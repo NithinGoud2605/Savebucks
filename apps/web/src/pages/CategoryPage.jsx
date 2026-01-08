@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { Container } from '../components/Layout/Container'
 import { NewDealCard } from '../components/Deal/NewDealCard'
-import { Skeleton } from '../components/Loader/Skeleton'
+import { Skeleton } from '../components/ui/Skeleton'
 import { ChevronRightIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline'
 import { TagIcon, FireIcon, ClockIcon } from '@heroicons/react/24/solid'
 

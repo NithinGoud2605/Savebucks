@@ -1,9 +1,11 @@
 import React, { useCallback, useRef, useEffect } from 'react';
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { useFeed, useFeedItemView } from '../../hooks/useFeed';
 import { useIntersection } from '../../hooks/useIntersection';
 import { FeedItemCard } from './FeedItemCard';
 import { Loader2, X } from 'lucide-react';
 import { api } from '../../lib/api';
+import { Skeleton } from '../ui/Skeleton';
 
 /**
  * Industry-Standard Infinite Feed Component
@@ -26,6 +28,7 @@ import { api } from '../../lib/api';
  */
 export function InfiniteFeed({ filter = 'all', category = null, location = null }) {
   const prefetchThreshold = 3; // Start prefetching when 3 items from bottom
+  const [animateRef] = useAutoAnimate({ duration: 250 });
 
   // Log filter changes for debugging
   useEffect(() => {
@@ -228,8 +231,8 @@ export function InfiniteFeed({ filter = 'all', category = null, location = null 
         </div>
       )}
 
-      {/* Feed Items Grid - 2 Cards Per Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Feed Items Grid - 2 Cards Per Row with Auto-animate */}
+      <div ref={animateRef} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {allItems.map((item, index) => (
           <FeedItemCard
             key={item.content_id || item.id || `item-${index}`}
@@ -292,35 +295,37 @@ export function InfiniteFeed({ filter = 'all', category = null, location = null 
 /**
  * Enhanced Skeleton Card
  * Pattern: Facebook/LinkedIn skeleton screens with shimmer effect
+ * Uses Shadcn Skeleton component for consistent styling
  */
+
 function SkeletonCard() {
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
       {/* Header skeleton */}
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gray-200 rounded-lg animate-pulse" />
+          <Skeleton className="w-10 h-10 rounded-lg" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-32 animate-pulse" />
-            <div className="h-3 bg-gray-200 rounded w-20 animate-pulse" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-20" />
           </div>
         </div>
       </div>
 
       {/* Title skeleton */}
       <div className="px-4 pt-3 pb-2 space-y-2">
-        <div className="h-5 bg-gray-200 rounded w-full animate-pulse" />
-        <div className="h-5 bg-gray-200 rounded w-3/4 animate-pulse" />
+        <Skeleton className="h-5 w-full" />
+        <Skeleton className="h-5 w-3/4" />
       </div>
 
       {/* Image skeleton */}
-      <div className="w-full aspect-[16/9] bg-gray-200 animate-pulse" />
+      <Skeleton className="w-full aspect-[16/9]" />
 
       {/* Price section skeleton */}
       <div className="px-4 py-3 bg-gray-50">
         <div className="flex items-center justify-between">
-          <div className="h-8 bg-gray-200 rounded w-24 animate-pulse" />
-          <div className="h-6 bg-gray-200 rounded w-20 animate-pulse" />
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-6 w-20" />
         </div>
       </div>
 
@@ -328,14 +333,15 @@ function SkeletonCard() {
       <div className="px-4 py-3 border-t border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="h-6 bg-gray-200 rounded w-12 animate-pulse" />
-            <div className="h-6 bg-gray-200 rounded w-12 animate-pulse" />
-            <div className="h-6 bg-gray-200 rounded w-12 animate-pulse" />
+            <Skeleton className="h-6 w-12" />
+            <Skeleton className="h-6 w-12" />
+            <Skeleton className="h-6 w-12" />
           </div>
-          <div className="h-8 bg-gray-200 rounded w-24 animate-pulse" />
+          <Skeleton className="h-8 w-24" />
         </div>
       </div>
     </div>
   );
 }
+
 

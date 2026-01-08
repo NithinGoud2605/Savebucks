@@ -27,7 +27,7 @@ const SaveSearchModal = ({ isOpen, onClose, initialQuery = '', initialFilters = 
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    
+
     if (!searchName.trim()) {
       alert('Please enter a name for this search')
       return
@@ -116,7 +116,7 @@ const SaveSearchModal = ({ isOpen, onClose, initialQuery = '', initialFilters = 
 
           <div className="border-t pt-4">
             <h4 className="font-medium text-gray-900 mb-3">Alert Settings</h4>
-            
+
             <div className="space-y-3">
               <div className="flex items-center">
                 <input
@@ -165,7 +165,7 @@ const SaveSearchModal = ({ isOpen, onClose, initialQuery = '', initialFilters = 
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              className="flex-1 px-4 py-2 text-gray-700 bg-gray-50 rounded-md hover:bg-gray-200 transition-colors"
             >
               Cancel
             </button>
@@ -212,11 +212,10 @@ const SavedSearchItem = ({ search, onEdit, onDelete }) => {
         <div className="flex-1">
           <div className="flex items-center space-x-3 mb-2">
             <h3 className="font-medium text-gray-900">{search.name}</h3>
-            <span className={`px-2 py-1 rounded-full text-xs ${
-              search.is_active 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-gray-100 text-gray-800'
-            }`}>
+            <span className={`px-2 py-1 rounded-full text-xs ${search.is_active
+              ? 'bg-green-100 text-green-800'
+              : 'bg-gray-50 text-gray-800'
+              }`}>
               {search.is_active ? 'Active' : 'Paused'}
             </span>
             {search.match_count > 0 && (
@@ -228,13 +227,13 @@ const SavedSearchItem = ({ search, onEdit, onDelete }) => {
 
           <div className="space-y-1 text-sm text-gray-600">
             {search.query_text && (
-              <div>Query: <span className="font-mono bg-gray-100 px-1 rounded">{search.query_text}</span></div>
+              <div>Query: <span className="font-mono bg-gray-50 px-1 rounded">{search.query_text}</span></div>
             )}
             {search.filters && Object.keys(search.filters).length > 0 && (
               <div className="flex flex-wrap gap-1">
-                Filters: 
+                Filters:
                 {Object.entries(search.filters).map(([key, value]) => value && (
-                  <span key={key} className="bg-gray-100 px-2 py-0.5 rounded text-xs">
+                  <span key={key} className="bg-gray-50 px-2 py-0.5 rounded text-xs">
                     {key}: {value}
                   </span>
                 ))}
@@ -259,11 +258,10 @@ const SavedSearchItem = ({ search, onEdit, onDelete }) => {
           <button
             onClick={() => toggleMutation.mutate()}
             disabled={toggleMutation.isPending}
-            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-              search.is_active
-                ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                : 'bg-green-100 text-green-800 hover:bg-green-200'
-            }`}
+            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${search.is_active
+              ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+              : 'bg-green-100 text-green-800 hover:bg-green-200'
+              }`}
           >
             {search.is_active ? 'Pause' : 'Resume'}
           </button>

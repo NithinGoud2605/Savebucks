@@ -12,20 +12,20 @@ export function ModActions({ thread, post = null, compact = false }) {
   const [showMoveModal, setShowMoveModal] = useState(false)
   const [showBanModal, setShowBanModal] = useState(false)
   const [moderationReason, setModerationReason] = useState('')
-  
+
   const queryClient = useQueryClient()
   const toast = useToast()
   const confirm = useConfirm()
-  
+
   // Enhanced permission checking
   const { data: userPermissions } = useQuery({
     queryKey: ['user-permissions'],
     queryFn: () => api.getUserPermissions(),
   })
-  
+
   const isMod = userPermissions?.can_moderate || localStorage.getItem('demo_user') === 'demo'
   const isAdmin = userPermissions?.is_admin || false
-  
+
   // Enhanced mutations
   const pinMutation = useMutation({
     mutationFn: () => forumService.pinThread(thread.id),
@@ -37,7 +37,7 @@ export function ModActions({ thread, post = null, compact = false }) {
     },
     onError: () => toast.error('Failed to update thread')
   })
-  
+
   const lockMutation = useMutation({
     mutationFn: ({ reason }) => forumService.lockThread(thread.id, reason),
     onSuccess: () => {
@@ -48,7 +48,7 @@ export function ModActions({ thread, post = null, compact = false }) {
     },
     onError: () => toast.error('Failed to update thread')
   })
-  
+
   const deleteMutation = useMutation({
     mutationFn: ({ reason }) => forumService.deleteThread(thread.id, reason),
     onSuccess: () => {
@@ -97,7 +97,7 @@ export function ModActions({ thread, post = null, compact = false }) {
       target_id: post?.id || thread.id,
       reason: moderationReason,
       thread_id: thread.id
-    }).catch(() => {})
+    }).catch(() => { })
   }
 
   const handleAction = async (actionType, requiresReason = false) => {
@@ -118,19 +118,19 @@ export function ModActions({ thread, post = null, compact = false }) {
           </div>
         `
         document.body.appendChild(modal)
-        
+
         modal.querySelector('#cancel-btn').onclick = () => {
           document.body.removeChild(modal)
           resolve(null)
         }
-        
+
         modal.querySelector('#confirm-btn').onclick = () => {
           const reasonValue = modal.querySelector('#reason-input').value
           document.body.removeChild(modal)
           resolve(reasonValue)
         }
       })
-      
+
       if (reason === null) return
     }
 
@@ -156,9 +156,9 @@ export function ModActions({ thread, post = null, compact = false }) {
         break
       case 'warn':
         if (reason.trim()) {
-          warnUserMutation.mutate({ 
-            userId: post?.author_id || thread.author_id, 
-            reason 
+          warnUserMutation.mutate({
+            userId: post?.author_id || thread.author_id,
+            reason
           })
         }
         break
@@ -218,7 +218,7 @@ export function ModActions({ thread, post = null, compact = false }) {
       {/* Main Actions */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-gray-500 font-medium">MOD:</span>
-        
+
         <button
           onClick={() => handleAction('pin')}
           disabled={pinMutation.isPending}
@@ -226,7 +226,7 @@ export function ModActions({ thread, post = null, compact = false }) {
             'flex items-center space-x-1 text-sm px-3 py-1.5 rounded-lg transition-colors',
             thread.pinned
               ? 'bg-green-100 text-green-800'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
           )}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,7 +242,7 @@ export function ModActions({ thread, post = null, compact = false }) {
             'flex items-center space-x-1 text-sm px-3 py-1.5 rounded-lg transition-colors',
             thread.locked
               ? 'bg-red-100 text-red-800'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
           )}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -267,7 +267,7 @@ export function ModActions({ thread, post = null, compact = false }) {
 
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+          className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -318,7 +318,7 @@ export function ModActions({ thread, post = null, compact = false }) {
 
       {/* Move Thread Modal */}
       {showMoveModal && (
-        <MoveThreadModal 
+        <MoveThreadModal
           threadId={thread.id}
           onClose={() => setShowMoveModal(false)}
           onMove={(forumId, reason) => moveThreadMutation.mutate({ forumId, reason })}
@@ -331,10 +331,10 @@ export function ModActions({ thread, post = null, compact = false }) {
           userId={post?.author_id || thread.author_id}
           userName={post?.author || thread.author}
           onClose={() => setShowBanModal(false)}
-          onBan={(reason, duration) => banUserMutation.mutate({ 
-            userId: post?.author_id || thread.author_id, 
-            reason, 
-            duration 
+          onBan={(reason, duration) => banUserMutation.mutate({
+            userId: post?.author_id || thread.author_id,
+            reason,
+            duration
           })}
         />
       )}
@@ -346,7 +346,7 @@ export function ModActions({ thread, post = null, compact = false }) {
 function MoveThreadModal({ threadId, onClose, onMove }) {
   const [selectedForum, setSelectedForum] = useState('')
   const [reason, setReason] = useState('')
-  
+
   const { data: forums = [] } = useQuery({
     queryKey: ['forums'],
     queryFn: () => api.getForums(),
@@ -356,11 +356,11 @@ function MoveThreadModal({ threadId, onClose, onMove }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
         <h3 className="text-lg font-semibold mb-4">Move Thread</h3>
-        
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">Destination Forum</label>
-            <select 
+            <select
               value={selectedForum}
               onChange={(e) => setSelectedForum(e.target.value)}
               className="w-full p-3 border rounded-lg"
@@ -374,7 +374,7 @@ function MoveThreadModal({ threadId, onClose, onMove }) {
 
           <div>
             <label className="block text-sm font-medium mb-2">Reason (optional)</label>
-            <textarea 
+            <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="w-full p-3 border rounded-lg h-24 resize-none"
@@ -387,7 +387,7 @@ function MoveThreadModal({ threadId, onClose, onMove }) {
           <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800">
             Cancel
           </button>
-          <button 
+          <button
             onClick={() => selectedForum && onMove(selectedForum, reason)}
             disabled={!selectedForum}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
@@ -404,7 +404,7 @@ function MoveThreadModal({ threadId, onClose, onMove }) {
 function BanUserModal({ userId, userName, onClose, onBan }) {
   const [reason, setReason] = useState('')
   const [duration, setDuration] = useState('7d')
-  
+
   const banDurations = [
     { value: '1h', label: '1 Hour' },
     { value: '1d', label: '1 Day' },
@@ -417,11 +417,11 @@ function BanUserModal({ userId, userName, onClose, onBan }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
         <h3 className="text-lg font-semibold mb-4 text-red-600">Ban User: {userName}</h3>
-        
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">Duration</label>
-            <select 
+            <select
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
               className="w-full p-3 border rounded-lg"
@@ -434,7 +434,7 @@ function BanUserModal({ userId, userName, onClose, onBan }) {
 
           <div>
             <label className="block text-sm font-medium mb-2">Reason *</label>
-            <textarea 
+            <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="w-full p-3 border rounded-lg h-24 resize-none"
@@ -448,7 +448,7 @@ function BanUserModal({ userId, userName, onClose, onBan }) {
           <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800">
             Cancel
           </button>
-          <button 
+          <button
             onClick={() => reason.trim() && onBan(reason, duration)}
             disabled={!reason.trim()}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"

@@ -14,7 +14,7 @@ export function VoteButton({ dealId, votes = 0, userVote, className }) {
       // Optimistic update
       const queryKey = ['deal', dealId]
       await queryClient.cancelQueries({ queryKey })
-      
+
       const previousData = queryClient.getQueryData(queryKey)
       if (previousData) {
         queryClient.setQueryData(queryKey, (old) => ({
@@ -23,7 +23,7 @@ export function VoteButton({ dealId, votes = 0, userVote, className }) {
           downs: old.downs + (value === -1 ? 1 : 0) - (userVote === -1 ? 1 : 0),
         }))
       }
-      
+
       return { previousData }
     },
     onError: (error, variables, context) => {
@@ -46,7 +46,7 @@ export function VoteButton({ dealId, votes = 0, userVote, className }) {
       toast.error('Please sign in to vote')
       return
     }
-    
+
     // Toggle vote if same value, otherwise set new value
     const newValue = userVote === value ? 0 : value
     voteMutation.mutate({ value: newValue })
@@ -73,16 +73,16 @@ export function VoteButton({ dealId, votes = 0, userVote, className }) {
             <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L10 4.414 4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
           </svg>
         </button>
-        
+
         <span className={clsx(
           'text-sm font-medium py-1 min-w-[2rem] text-center',
-          score > 0 ? 'text-green-600' : 
-          score < 0 ? 'text-red-600' : 
-          'text-gray-600'
+          score > 0 ? 'text-green-600' :
+            score < 0 ? 'text-red-600' :
+              'text-gray-600'
         )}>
           {score > 0 ? `+${score}` : score}
         </span>
-        
+
         <button
           onClick={() => handleVote(-1)}
           disabled={voteMutation.isPending}

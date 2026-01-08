@@ -110,7 +110,7 @@ export function CommentThread({ dealId, comments = [] }) {
         {replyingTo === comment.id && (
           <div className="mt-4 ml-10">
             <div className="flex space-x-3">
-              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-medium text-gray-600">
+              <div className="w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center text-sm font-medium text-gray-600">
                 D
               </div>
               <div className="flex-1">
@@ -156,7 +156,7 @@ export function CommentThread({ dealId, comments = [] }) {
       {/* New Comment Form */}
       <form onSubmit={handleSubmit} className="card p-6">
         <div className="flex space-x-4">
-          <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-sm font-medium text-gray-600">
+          <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-sm font-medium text-gray-600">
             D
           </div>
           <div className="flex-1">

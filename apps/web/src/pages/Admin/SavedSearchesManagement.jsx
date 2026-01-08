@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { apiRequest } from '../../lib/api'
-import { Skeleton } from '../../components/Loader/Skeleton'
+import { Skeleton } from '../../components/ui/Skeleton'
 import {
   MagnifyingGlassIcon,
   ChartBarIcon,
@@ -65,9 +65,9 @@ const SavedSearchesManagement = () => {
       case 'failed':
         return 'bg-red-100 text-red-800'
       case 'cancelled':
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-50 text-gray-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-50 text-gray-800'
     }
   }
 
@@ -249,7 +249,7 @@ const SavedSearchesManagement = () => {
       {activeTab === 'searches' && (
         <div className="space-y-6">
           <h2 className="text-lg font-medium text-secondary-900">All Saved Searches</h2>
-          
+
           {searchesLoading ? (
             <div className="space-y-4">
               {[1, 2, 3, 4, 5].map((i) => (
@@ -307,25 +307,23 @@ const SavedSearchesManagement = () => {
                         {search.profiles?.handle}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          search.alert_frequency === 'immediate' ? 'bg-green-100 text-green-800' :
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${search.alert_frequency === 'immediate' ? 'bg-green-100 text-green-800' :
                           search.alert_frequency === 'daily' ? 'bg-blue-100 text-blue-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
                           {search.alert_frequency}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          search.alert_enabled 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${search.alert_enabled
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                          }`}>
                           {search.alert_enabled ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
-                        {search.last_triggered_at 
+                        {search.last_triggered_at
                           ? new Date(search.last_triggered_at).toLocaleDateString()
                           : 'Never'
                         }
@@ -346,7 +344,7 @@ const SavedSearchesManagement = () => {
       {activeTab === 'notifications' && (
         <div className="space-y-6">
           <h2 className="text-lg font-medium text-secondary-900">Notification Queue</h2>
-          
+
           {notificationsLoading ? (
             <div className="space-y-4">
               {[1, 2, 3, 4, 5].map((i) => (
@@ -406,11 +404,10 @@ const SavedSearchesManagement = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          notification.priority >= 4 ? 'bg-red-100 text-red-800' :
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${notification.priority >= 4 ? 'bg-red-100 text-red-800' :
                           notification.priority >= 3 ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
+                            'bg-green-100 text-green-800'
+                          }`}>
                           {notification.priority}
                         </span>
                       </td>

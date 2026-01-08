@@ -13,17 +13,17 @@ class MockWebSocket {
     this.onmessage = null
     this.onclose = null
     this.onerror = null
-    
+
     // Simulate connection
     setTimeout(() => {
       this.readyState = WebSocket.OPEN
       this.onopen?.(new Event('open'))
-      
+
       // Start sending mock updates
       this.startMockUpdates()
     }, 1000)
   }
-  
+
   startMockUpdates() {
     // Send periodic updates for demo
     this.updateInterval = setInterval(() => {
@@ -54,17 +54,17 @@ class MockWebSocket {
             changes: ['title', 'tags']
           }
         ]
-        
+
         const update = updates[Math.floor(Math.random() * updates.length)]
         this.onmessage?.(new MessageEvent('message', { data: JSON.stringify(update) }))
       }
     }, 5000)
   }
-  
+
   send(data) {
     console.log('WebSocket send:', data)
   }
-  
+
   close() {
     this.readyState = WebSocket.CLOSED
     clearInterval(this.updateInterval)
@@ -83,13 +83,13 @@ export function RealTimeProvider({ children }) {
     // Initialize WebSocket connection
     const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:4001'
     wsRef.current = new MockWebSocket(wsUrl)
-    
+
     wsRef.current.onopen = () => {
       setIsConnected(true)
       setConnectionStatus('connected')
       console.log('Real-time connection established')
     }
-    
+
     wsRef.current.onmessage = (event) => {
       try {
         const update = JSON.parse(event.data)
@@ -98,24 +98,24 @@ export function RealTimeProvider({ children }) {
         console.error('Failed to parse WebSocket message:', error)
       }
     }
-    
+
     wsRef.current.onclose = () => {
       setIsConnected(false)
       setConnectionStatus('disconnected')
       console.log('Real-time connection closed')
-      
+
       // Attempt to reconnect after delay
       setTimeout(() => {
         setConnectionStatus('reconnecting')
         // In a real app, you'd reconnect here
       }, 3000)
     }
-    
+
     wsRef.current.onerror = (error) => {
       console.error('WebSocket error:', error)
       setConnectionStatus('error')
     }
-    
+
     return () => {
       if (wsRef.current) {
         wsRef.current.close()
@@ -138,16 +138,16 @@ export function RealTimeProvider({ children }) {
           }
           return old
         })
-        
+
         // Invalidate thread list to show updated timestamps
         queryClient.invalidateQueries(['threads'])
-        
+
         // Show notification if user is subscribed
         if (update.notify_user) {
           toast.info(`New reply in "${update.thread_title}" by ${update.author}`)
         }
         break
-        
+
       case 'thread_vote':
         // Update thread vote count
         queryClient.setQueryData(['thread', update.thread_id], (old) => {
@@ -160,12 +160,12 @@ export function RealTimeProvider({ children }) {
           return old
         })
         break
-        
+
       case 'thread_updated':
         // Invalidate and refetch thread data
         queryClient.invalidateQueries(['thread', update.thread_id])
         break
-        
+
       case 'user_mention':
         // Show notification for mentions
         toast.info(`${update.author} mentioned you in "${update.thread_title}"`, {
@@ -175,7 +175,7 @@ export function RealTimeProvider({ children }) {
           }
         })
         break
-        
+
       default:
         console.log('Unknown update type:', update.type)
     }
@@ -207,7 +207,7 @@ export function useRealTime() {
 // Connection status indicator
 export function ConnectionStatus({ className = '' }) {
   const { isConnected, connectionStatus } = useRealTime()
-  
+
   const statusConfig = {
     connecting: { color: 'text-yellow-500', icon: 'CONN', label: 'Connecting...' },
     connected: { color: 'text-green-500', icon: 'LIVE', label: 'Live' },
@@ -215,9 +215,9 @@ export function ConnectionStatus({ className = '' }) {
     reconnecting: { color: 'text-yellow-500', icon: 'RETRY', label: 'Reconnecting...' },
     error: { color: 'text-red-500', icon: 'ERR', label: 'Error' }
   }
-  
+
   const status = statusConfig[connectionStatus] || statusConfig.disconnected
-  
+
   return (
     <div className={clsx('flex items-center space-x-2 text-sm', status.color, className)}>
       <span className="text-xs">{status.icon}</span>
@@ -230,10 +230,10 @@ export function ConnectionStatus({ className = '' }) {
 export function TypingIndicator({ threadId, className = '' }) {
   const [typingUsers, setTypingUsers] = useState([])
   const { ws, isConnected } = useRealTime()
-  
+
   useEffect(() => {
     if (!isConnected || !ws) return
-    
+
     const handleMessage = (event) => {
       try {
         const update = JSON.parse(event.data)
@@ -248,7 +248,7 @@ export function TypingIndicator({ threadId, className = '' }) {
             }
             return prev
           })
-          
+
           // Auto-remove typing indicators after 5 seconds
           setTimeout(() => {
             setTypingUsers(prev => prev.filter(u => Date.now() - u.timestamp < 5000))
@@ -258,86 +258,86 @@ export function TypingIndicator({ threadId, className = '' }) {
         console.error('Failed to parse typing message:', error)
       }
     }
-    
+
     ws.addEventListener('message', handleMessage)
     return () => ws.removeEventListener('message', handleMessage)
   }, [ws, isConnected, threadId])
-  
+
   if (typingUsers.length === 0) return null
-  
+
   return (
     <div className={clsx('flex items-center space-x-2 text-sm text-gray-500 className)}>
-      <div className="flex space-x-1">
+      < div className = "flex space-x-1" >
         <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
         <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
         <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-      </div>
+      </div >
       <span>
-        {typingUsers.length === 1 
+        {typingUsers.length === 1
           ? `${typingUsers[0].user} is typing...`
           : `${typingUsers.length} people are typing...`
         }
       </span>
-    </div>
+    </div >
   )
-}
-
-// Live activity feed
-export function LiveActivityFeed({ forumSlug, limit = 10, className = '' }) {
-  const [activities, setActivities] = useState([])
-  const [isVisible, setIsVisible] = useState(true)
-  const { ws, isConnected } = useRealTime()
-  
-  useEffect(() => {
-    if (!isConnected || !ws) return
-    
-    const handleMessage = (event) => {
-      try {
-        const update = JSON.parse(event.data)
-        if (update.forum_slug === forumSlug || !forumSlug) {
-          setActivities(prev => {
-            const newActivity = {
-              id: Date.now(),
-              ...update,
-              timestamp: new Date().toISOString()
-            }
-            return [newActivity, ...prev.slice(0, limit - 1)]
-          })
-        }
-      } catch (error) {
-        console.error('Failed to parse activity message:', error)
-      }
     }
-    
-    ws.addEventListener('message', handleMessage)
-    return () => ws.removeEventListener('message', handleMessage)
-  }, [ws, isConnected, forumSlug, limit])
-  
-  if (!isVisible) {
+
+      // Live activity feed
+      export function LiveActivityFeed({ forumSlug, limit = 10, className = '' }) {
+    const [activities, setActivities] = useState([])
+    const [isVisible, setIsVisible] = useState(true)
+    const { ws, isConnected } = useRealTime()
+
+    useEffect(() => {
+      if (!isConnected || !ws) return
+
+      const handleMessage = (event) => {
+        try {
+          const update = JSON.parse(event.data)
+          if (update.forum_slug === forumSlug || !forumSlug) {
+            setActivities(prev => {
+              const newActivity = {
+                id: Date.now(),
+                ...update,
+                timestamp: new Date().toISOString()
+              }
+              return [newActivity, ...prev.slice(0, limit - 1)]
+            })
+          }
+        } catch (error) {
+          console.error('Failed to parse activity message:', error)
+        }
+      }
+
+      ws.addEventListener('message', handleMessage)
+      return () => ws.removeEventListener('message', handleMessage)
+    }, [ws, isConnected, forumSlug, limit])
+
+    if (!isVisible) {
+      return (
+        <button
+          onClick={() => setIsVisible(true)}
+          className="fixed bottom-4 right-4 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span className="sr-only">Show live activity</span>
+        </button>
+      )
+    }
+
     return (
-      <button
-        onClick={() => setIsVisible(true)}
-        className="fixed bottom-4 right-4 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-        <span className="sr-only">Show live activity</span>
-      </button>
-    )
-  }
-  
-  return (
-    <div className={clsx('fixed bottom-4 right-4 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50', className)}>
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200"
+      <div className={clsx('fixed bottom-4 right-4 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50', className)}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200"
         <div className="flex items-center space-x-2">
           <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
           <h3 className="font-semibold text-gray-900 Activity</h3>"
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <ConnectionStatus />
           <button
@@ -351,11 +351,11 @@ export function LiveActivityFeed({ forumSlug, limit = 10, className = '' }) {
         </div>
       </div>
       
-      {/* Activity List */}
-      <div className="max-h-64 overflow-y-auto">
-        {activities.length > 0 ? (
-          <div className="divide-y divide-gray-200"
-            {activities.map(activity => (
+      {/* Activity List */ }
+    <div className="max-h-64 overflow-y-auto">
+      {activities.length > 0 ? (
+        <div className="divide-y divide-gray-200"
+          {activities.map(activity => (
               <div key={activity.id} className="p-3 hover:bg-gray-50"
                 <div className="flex items-start space-x-3">
                   <div className="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full mt-2" />
@@ -367,21 +367,23 @@ export function LiveActivityFeed({ forumSlug, limit = 10, className = '' }) {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+            ))
+  }
+          </div >
         ) : (
           <div className="p-8 text-center text-gray-500"
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
             <div className="text-sm">No live activity yet</div>
             <div className="text-xs">Activity will appear here in real-time</div>
-          </div>
-        )}
-      </div>
-    </div>
+          </div >
+        )
+}
+      </div >
+    </div >
   )
 }
 
@@ -399,20 +401,20 @@ function ActivityItem({ activity }) {
       return (
         <div className="text-sm text-gray-600"
           Thread received {activity.vote_change > 0 ? 'an upvote' : 'a downvote'}
-        </div>
-      )
-    case 'user_mention':
-      return (
-        <div className="text-sm">
-          <span className="font-medium text-gray-900"
+        </ div>
+          )
+          case 'user_mention':
+          return (
+          <div className="text-sm">
+            <span className="font-medium text-gray-900"
           <span className="text-gray-600 mentioned you in </span>"
           <span className="font-medium text-blue-600"
         </div>
-      )
-    default:
-      return (
-        <div className="text-sm text-gray-600"
-          {activity.type.replace('_', ' ')}
+          )
+          default:
+          return (
+          <div className="text-sm text-gray-600"
+            {activity.type.replace('_', ' ')}
         </div>
       )
   }
@@ -422,7 +424,7 @@ function ActivityItem({ activity }) {
 export function useTypingIndicator(threadId) {
   const { sendMessage } = useRealTime()
   const typingTimeoutRef = useRef(null)
-  
+
   const sendTyping = (isTyping) => {
     if (sendMessage) {
       sendMessage({
@@ -432,28 +434,28 @@ export function useTypingIndicator(threadId) {
       })
     }
   }
-  
+
   const startTyping = () => {
     sendTyping(true)
-    
+
     // Clear existing timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current)
     }
-    
+
     // Stop typing after 3 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
       sendTyping(false)
     }, 3000)
   }
-  
+
   const stopTyping = () => {
     sendTyping(false)
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current)
     }
   }
-  
+
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
@@ -461,6 +463,6 @@ export function useTypingIndicator(threadId) {
       }
     }
   }, [])
-  
+
   return { startTyping, stopTyping }
 }

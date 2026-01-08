@@ -15,12 +15,12 @@ import {
   MagnifyingGlassIcon
 } from '@heroicons/react/24/outline'
 
-export default function AdminEditModal({ 
-  isOpen, 
-  onClose, 
-  item, 
-  type, 
-  onSuccess 
+export default function AdminEditModal({
+  isOpen,
+  onClose,
+  item,
+  type,
+  onSuccess
 }) {
   const [formData, setFormData] = useState({
     title: '',
@@ -120,7 +120,7 @@ export default function AdminEditModal({
         maximum_discount_amount: item.maximum_discount_amount || '',
         usage_limit: item.usage_limit || ''
       }))
-      
+
       // Initialize selected tags - handle both direct tags array and nested deal_tags/coupon_tags structure
       let itemTags = []
       if (item.tags && Array.isArray(item.tags)) {
@@ -145,13 +145,13 @@ export default function AdminEditModal({
         setShowTagDropdown(false)
       }
     }
-    
+
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showTagDropdown])
 
   // Tag management functions
-  const filteredTags = availableTags.filter(tag => 
+  const filteredTags = availableTags.filter(tag =>
     tag.name.toLowerCase().includes(tagSearch.toLowerCase()) &&
     !selectedTags.some(selected => selected.id === tag.id)
   )
@@ -275,15 +275,15 @@ export default function AdminEditModal({
     try {
       // Validate required fields
       const newErrors = {}
-      
+
       if (!formData.title.trim()) {
         newErrors.title = 'Title is required'
       }
-      
+
       if (isDeal && !formData.url.trim()) {
         newErrors.url = 'URL is required'
       }
-      
+
       if (isCoupon && !formData.coupon_code.trim()) {
         newErrors.coupon_code = 'Coupon code is required'
       }
@@ -333,7 +333,7 @@ export default function AdminEditModal({
       }
 
       const result = await editMutation.mutateAsync(updates)
-      
+
       toast.success(`${type === 'deals' ? 'Deal' : 'Coupon'} updated successfully!`)
       onSuccess?.(result.deal || result.coupon)
       onClose()
@@ -387,9 +387,8 @@ export default function AdminEditModal({
                   type="text"
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.title ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.title ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Enter title"
                 />
                 {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
@@ -420,9 +419,8 @@ export default function AdminEditModal({
                     type="url"
                     value={formData.url}
                     onChange={(e) => handleInputChange('url', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.url ? 'border-red-300' : 'border-gray-300'
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.url ? 'border-red-300' : 'border-gray-300'
+                      }`}
                     placeholder="https://example.com/deal"
                   />
                   {errors.url && <p className="text-red-500 text-sm mt-1">{errors.url}</p>}
@@ -439,9 +437,8 @@ export default function AdminEditModal({
                     type="text"
                     value={formData.coupon_code}
                     onChange={(e) => handleInputChange('coupon_code', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.coupon_code ? 'border-red-300' : 'border-gray-300'
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.coupon_code ? 'border-red-300' : 'border-gray-300'
+                      }`}
                     placeholder="SAVE20"
                   />
                   {errors.coupon_code && <p className="text-red-500 text-sm mt-1">{errors.coupon_code}</p>}
@@ -779,7 +776,7 @@ export default function AdminEditModal({
                 <TagIcon className="w-4 h-4 inline mr-1" />
                 Tags
               </label>
-              
+
               {/* Selected Tags */}
               {selectedTags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-3">
@@ -836,7 +833,7 @@ export default function AdminEditModal({
                           key={tag.id}
                           type="button"
                           onClick={() => handleTagAdd(tag)}
-                          className="w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center justify-between"
+                          className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center justify-between"
                         >
                           <span>{tag.name}</span>
                           <span className="text-xs text-gray-500">#{tag.slug}</span>
@@ -862,7 +859,7 @@ export default function AdminEditModal({
                 <PhotoIcon className="w-4 h-4 inline mr-1" />
                 Images
               </label>
-              
+
               {/* Current Images */}
               {(formData.deal_images?.length > 0 || formData.featured_image) && (
                 <div className="mb-4">
@@ -891,7 +888,7 @@ export default function AdminEditModal({
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Deal Images */}
                     {formData.deal_images?.map((image, index) => (
                       <div key={index} className="relative group">
@@ -994,12 +991,12 @@ export default function AdminEditModal({
                     <PlusIcon className="w-4 h-4" />
                   </button>
                 </div>
-                
+
                 {/* Featured Image Section */}
                 {!formData.featured_image && (
                   <div className="space-y-3">
                     <h4 className="text-sm font-medium text-gray-700">Set Featured Image</h4>
-                    
+
                     {/* Featured Image Upload */}
                     <div className="border-2 border-dashed border-green-300 rounded-lg p-3">
                       <div className="text-center">

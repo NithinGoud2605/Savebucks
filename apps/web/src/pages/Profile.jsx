@@ -8,7 +8,7 @@ import { FollowButton } from '../components/User/FollowButton'
 import { MessageButton } from '../components/User/MessageButton'
 import { UserStats } from '../components/User/UserStats'
 import { ReputationBadges } from '../components/User/ReputationBadges'
-import { Skeleton } from '../components/Loader/Skeleton'
+import { Skeleton } from '../components/ui/Skeleton'
 import { api } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
 import { setPageMeta } from '../lib/head'
@@ -128,7 +128,7 @@ export default function Profile() {
               </div>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
             <div className="xl:col-span-3 space-y-6">
               <Skeleton className="h-64" />
@@ -171,7 +171,7 @@ export default function Profile() {
                     {profile.handle[0].toUpperCase()}
                   </div>
                 )}
-                
+
                 {/* Online status indicator */}
                 {profile.is_online && (
                   <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
@@ -189,7 +189,7 @@ export default function Profile() {
                     </svg>
                   )}
                 </div>
-                
+
                 <div className="text-gray-600 mb-1">
                   @{profile.handle}
                 </div>
@@ -208,21 +208,21 @@ export default function Profile() {
                     </span>
                     <span className="text-sm">karma</span>
                   </div>
-                  
+
                   <div className="flex items-center space-x-1">
                     <span className="text-lg font-semibold text-blue-600">
                       {formatCompactNumber(profile.stats?.deals_posted || 0)}
                     </span>
                     <span className="text-sm">{pluralize(profile.stats?.deals_posted || 0, 'deal')}</span>
                   </div>
-                  
+
                   <div className="flex items-center space-x-1">
                     <span className="text-lg font-semibold text-purple-600">
                       {formatCompactNumber(profile.stats?.comments_made || 0)}
                     </span>
                     <span className="text-sm">{pluralize(profile.stats?.comments_made || 0, 'comment')}</span>
                   </div>
-                  
+
                   {profile.stats?.followers && (
                     <div className="flex items-center space-x-1">
                       <span className="text-lg font-semibold text-indigo-600">
@@ -231,14 +231,14 @@ export default function Profile() {
                       <span className="text-sm">{pluralize(profile.stats.followers, 'follower')}</span>
                     </div>
                   )}
-                  
+
                   <div className="text-sm">
                     <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     Member since {dateAgo(profile.created_at)}
                   </div>
-                  
+
                   {profile.location && (
                     <div className="text-sm">
                       <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -248,13 +248,13 @@ export default function Profile() {
                       {profile.location}
                     </div>
                   )}
-                  
+
                   {profile.website && (
                     <div className="text-sm">
                       <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                       </svg>
-                      <a 
+                      <a
                         href={profile.website}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -275,13 +275,13 @@ export default function Profile() {
             <div className="flex flex-col space-y-3 lg:min-w-[200px]">
               {!isOwnProfile && (
                 <>
-                  <FollowButton 
+                  <FollowButton
                     userId={profile.handle}
-                    size="lg" 
+                    size="lg"
                     showFollowerCount={true}
                     className="w-full"
                   />
-                  <MessageButton 
+                  <MessageButton
                     userId={profile.id}
                     userName={profile.handle}
                     size="lg"
@@ -290,7 +290,7 @@ export default function Profile() {
                   />
                 </>
               )}
-              
+
               {isOwnProfile && (
                 <Link
                   to="/settings/profile"
@@ -302,7 +302,7 @@ export default function Profile() {
                   Edit Profile
                 </Link>
               )}
-              
+
               <button className="btn-ghost text-sm">
                 <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
@@ -402,50 +402,46 @@ export default function Profile() {
                 </div>
                 {/* Deal Status Tabs */}
                 {isOwnProfile && (
-                  <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6">
+                  <div className="flex space-x-1 bg-gray-50 p-1 rounded-lg mb-6">
                     <button
                       onClick={() => setDealStatusFilter('all')}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                        dealStatusFilter === 'all'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${dealStatusFilter === 'all'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                        }`}
                     >
                       All
                     </button>
                     <button
                       onClick={() => setDealStatusFilter('pending')}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                        dealStatusFilter === 'pending'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${dealStatusFilter === 'pending'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                        }`}
                     >
                       Pending Review
                     </button>
                     <button
                       onClick={() => setDealStatusFilter('approved')}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                        dealStatusFilter === 'approved'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${dealStatusFilter === 'approved'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                        }`}
                     >
                       Approved
                     </button>
                     <button
                       onClick={() => setDealStatusFilter('rejected')}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                        dealStatusFilter === 'rejected'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${dealStatusFilter === 'rejected'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                        }`}
                     >
                       Rejected
                     </button>
                   </div>
                 )}
-                
+
                 {/* Would implement deal filtering and pagination here */}
                 {/* Loading State */}
                 {dealsLoading && (
@@ -457,7 +453,7 @@ export default function Profile() {
                     ))}
                   </div>
                 )}
-                
+
                 {/* Deals Grid */}
                 {!dealsLoading && userDeals && userDeals.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -466,7 +462,7 @@ export default function Profile() {
                     ))}
                   </div>
                 )}
-                
+
                 {/* Fallback to profile deals if no filtered deals */}
                 {!dealsLoading && (!userDeals || userDeals.length === 0) && (profile.deals || []).length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -478,7 +474,7 @@ export default function Profile() {
                 {/* TODO: Update this to handle filtered deals properly */}
                 {(!profile.deals || profile.deals.length === 0) && (
                   <div className="card p-12 text-center">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                       <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 0a.5.5 0 11-1 0 .5.5 0 011 0z" />
                       </svg>
@@ -487,7 +483,7 @@ export default function Profile() {
                       No Deals Posted Yet
                     </h3>
                     <p className="text-gray-500 mb-6">
-                      {isOwnProfile 
+                      {isOwnProfile
                         ? "You haven't posted any deals yet. Share your first deal with the community!"
                         : `${profile.handle} hasn't posted any deals yet.`}
                     </p>

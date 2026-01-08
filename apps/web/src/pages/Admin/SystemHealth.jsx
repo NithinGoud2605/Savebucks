@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { apiRequest } from '../../lib/api'
-import { Skeleton } from '../../components/Loader/Skeleton'
+import { Skeleton } from '../../components/ui/Skeleton'
 import {
   HeartIcon,
   ChartBarIcon,
@@ -39,7 +39,7 @@ const SystemHealth = () => {
       case 'critical':
         return 'bg-red-100 text-red-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-50 text-gray-800'
     }
   }
 
@@ -240,7 +240,7 @@ const SystemHealth = () => {
       {activeTab === 'metrics' && (
         <div className="space-y-6">
           <h2 className="text-lg font-medium text-secondary-900">System Metrics</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Content Metrics */}
             <div className="bg-white rounded-lg shadow p-6">
@@ -324,7 +324,7 @@ const SystemHealth = () => {
       {activeTab === 'activity' && (
         <div className="space-y-6">
           <h2 className="text-lg font-medium text-secondary-900">Recent Activity</h2>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-medium text-secondary-900 mb-4">Last 24 Hours</h3>
             <div className="space-y-4">
@@ -373,7 +373,7 @@ const SystemHealth = () => {
                   </div>
                 </div>
               )}
-              
+
               {healthData?.stats?.pendingCoupons > 0 && (
                 <div className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
                   <ExclamationTriangleIcon className="w-5 h-5 text-yellow-500" />

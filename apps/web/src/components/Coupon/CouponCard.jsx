@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Tag, 
-  Building2, 
-  Clock, 
-  Eye, 
-  ExternalLink, 
-  Bookmark, 
+import {
+  Tag,
+  Building2,
+  Clock,
+  Eye,
+  ExternalLink,
+  Bookmark,
   BookmarkCheck,
   Percent,
   DollarSign,
@@ -23,8 +23,8 @@ import {
 import { CouponCode } from '../Deal/CouponCode'
 import { dateAgo } from '../../lib/format'
 
-const CouponCard = ({ 
-  coupon, 
+const CouponCard = ({
+  coupon,
   variant = 'default', // 'default', 'compact', 'modern'
   onSave = null,
   onVote = null,
@@ -38,7 +38,7 @@ const CouponCard = ({
   // Handle save functionality
   const handleSave = async () => {
     if (!onSave) return
-    
+
     setIsSaving(true)
     try {
       await onSave(coupon.id)
@@ -53,7 +53,7 @@ const CouponCard = ({
   // Handle copy coupon code
   const handleCopyCode = async () => {
     if (!coupon.coupon_code) return
-    
+
     try {
       await navigator.clipboard.writeText(coupon.coupon_code)
       setIsCopied(true)
@@ -65,17 +65,17 @@ const CouponCard = ({
 
   // Get company name
   const companyName = coupon.companies?.name || coupon.company_name || 'Unknown Store'
-  
+
   // Get submitter name
   const submitterName = coupon.profiles?.handle || coupon.submitter_name || 'Anonymous'
-  
+
   // Get category name
   const categoryName = coupon.categories?.name || coupon.category_name
 
   // Format discount value
   const formatDiscount = () => {
     if (!coupon.discount_value) return null
-    
+
     if (coupon.coupon_type === 'percentage') {
       return `${coupon.discount_value}%`
     } else if (coupon.coupon_type === 'fixed_amount') {
@@ -165,7 +165,7 @@ const CouponCard = ({
                 {coupon.description}
               </p>
             )}
-            
+
             {/* Stats */}
             <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
               <div className="flex items-center gap-1">
@@ -213,7 +213,7 @@ const CouponCard = ({
                     </motion.div>
                   )}
                 </AnimatePresence>
-                
+
                 {/* Peeled corner effect */}
                 <motion.div
                   className="absolute -bottom-1 -right-1 w-7 h-7 bg-blue-500 transform rotate-45 origin-bottom-right rounded-sm"
@@ -247,7 +247,7 @@ const CouponCard = ({
                     <motion.span
                       key={i}
                       className="absolute w-1.5 h-1.5 rounded-full"
-                      style={{ backgroundColor: ['#60a5fa','#34d399','#f472b6','#f59e0b','#a78bfa'][i%5] }}
+                      style={{ backgroundColor: ['#60a5fa', '#34d399', '#f472b6', '#f59e0b', '#a78bfa'][i % 5] }}
                       initial={{ opacity: 1, x: 0, y: 0, scale: 1 }}
                       animate={{
                         opacity: 0,
@@ -277,10 +277,10 @@ const CouponCard = ({
       >
         <div className="flex p-3">
           {/* Company Logo/Icon */}
-          <div className="w-12 h-12 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden flex items-center justify-center">
+          <div className="w-12 h-12 flex-shrink-0 bg-gray-50 rounded-md overflow-hidden flex items-center justify-center">
             {coupon.companies?.logo_url ? (
-              <img 
-                src={coupon.companies.logo_url} 
+              <img
+                src={coupon.companies.logo_url}
                 alt={companyName}
                 className="w-full h-full object-cover"
               />
@@ -304,7 +304,7 @@ const CouponCard = ({
                 </div>
               </div>
             </div>
-            
+
             {/* Discount and Stats */}
             <div className="flex items-center justify-between mt-1">
               <div className="flex items-center gap-1">
@@ -319,7 +319,7 @@ const CouponCard = ({
                   </span>
                 )}
               </div>
-              
+
               <div className="flex items-center gap-2 text-gray-400">
                 <div className="flex items-center gap-0.5">
                   <Eye className="w-3 h-3" />
@@ -380,7 +380,7 @@ const CouponCard = ({
               {coupon.description}
             </p>
           )}
-          
+
           {/* Stats */}
           <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
             <div className="flex items-center gap-1">
@@ -428,7 +428,7 @@ const CouponCard = ({
                   </motion.div>
                 )}
               </AnimatePresence>
-              
+
               {/* Peeled corner effect */}
               <motion.div
                 className="absolute -bottom-1 -right-1 w-7 h-7 bg-blue-500 transform rotate-45 origin-bottom-right rounded-sm"
@@ -462,7 +462,7 @@ const CouponCard = ({
                   <motion.span
                     key={i}
                     className="absolute w-1.5 h-1.5 rounded-full"
-                    style={{ backgroundColor: ['#60a5fa','#34d399','#f472b6','#f59e0b','#a78bfa'][i%5] }}
+                    style={{ backgroundColor: ['#60a5fa', '#34d399', '#f472b6', '#f59e0b', '#a78bfa'][i % 5] }}
                     initial={{ opacity: 1, x: 0, y: 0, scale: 1 }}
                     animate={{
                       opacity: 0,

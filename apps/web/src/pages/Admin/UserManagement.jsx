@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
-import { Skeleton } from '../../components/Loader/Skeleton'
+import { Skeleton } from '../../components/ui/Skeleton'
 import {
   MagnifyingGlassIcon,
   UserIcon,
@@ -63,7 +63,7 @@ const UserManagement = () => {
     const colorClasses = {
       red: 'bg-red-100 text-red-800',
       blue: 'bg-blue-100 text-blue-800',
-      gray: 'bg-gray-100 text-gray-800'
+      gray: 'bg-gray-50 text-gray-800'
     }
 
     return (
@@ -272,7 +272,7 @@ const UserManagement = () => {
                 Change User Role
               </h3>
             </div>
-            
+
             <p className="text-secondary-600 mb-6">
               Are you sure you want to change <strong>{selectedUser.handle}</strong>'s role to{' '}
               <strong>{selectedUser.newRole}</strong>?

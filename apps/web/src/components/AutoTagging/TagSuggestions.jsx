@@ -7,11 +7,10 @@ const TagSuggestionChip = ({ tag, isSelected, onToggle, isAI = false }) => {
     <button
       type="button"
       onClick={() => onToggle(tag)}
-      className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-        isSelected
-          ? 'bg-blue-100 text-blue-800 border-2 border-blue-300'
-          : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200'
-      }`}
+      className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${isSelected
+        ? 'bg-blue-100 text-blue-800 border-2 border-blue-300'
+        : 'bg-gray-50 text-gray-700 border-2 border-transparent hover:bg-gray-200'
+        }`}
     >
       {isAI && <span className="mr-1">🤖</span>}
       <span style={{ color: tag.color }}>#</span>
@@ -76,9 +75,9 @@ const AutoTagSuggestions = ({ title, description, url, selectedTags = [], onTags
 
   const handleTagToggle = (tag) => {
     if (!tag || !tag.id) return
-    
+
     const isSelected = selectedTags.some(t => t.id === tag.id)
-    
+
     if (isSelected) {
       onTagsChange(selectedTags.filter(t => t.id !== tag.id))
     } else {
@@ -86,18 +85,18 @@ const AutoTagSuggestions = ({ title, description, url, selectedTags = [], onTags
     }
   }
 
-  const aiSuggestions = (suggestions || []).filter(tag => 
+  const aiSuggestions = (suggestions || []).filter(tag =>
     tag && tag.id && !selectedTags.some(selected => selected.id === tag.id)
   ).slice(0, 5)
 
-  const remainingPopularTags = (popularTags || []).filter(tag => 
-    tag && tag.id && 
+  const remainingPopularTags = (popularTags || []).filter(tag =>
+    tag && tag.id &&
     !selectedTags.some(selected => selected.id === tag.id) &&
     !(suggestions || []).some(suggested => suggested.id === tag.id)
   )
 
-  const displayedPopularTags = showAllTags 
-    ? remainingPopularTags 
+  const displayedPopularTags = showAllTags
+    ? remainingPopularTags
     : remainingPopularTags.slice(0, 10)
 
   return (
@@ -205,7 +204,7 @@ const AutoTagSuggestions = ({ title, description, url, selectedTags = [], onTags
           />
           <button
             type="button"
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm"
+            className="px-4 py-2 bg-gray-50 text-gray-700 rounded-md hover:bg-gray-200 text-sm"
             onClick={(e) => {
               const input = e.target.previousElementSibling
               const value = input.value.trim()

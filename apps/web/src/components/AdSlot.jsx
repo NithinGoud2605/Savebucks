@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { isAdsEnabled, shouldShowAdsPlaceholder } from '../lib/affFlags'
 import { clsx } from 'clsx'
 
-export function AdSlot({ 
+export function AdSlot({
   className,
   size = 'banner', // banner, rectangle, leaderboard
   label = 'Sponsored',
@@ -41,7 +41,7 @@ export function AdSlot({
       <span className="text-xs text-gray-500 mb-2 uppercase tracking-wide">
         {label}
       </span>
-      
+
       {adsEnabled ? (
         <ins
           ref={adRef}
@@ -53,8 +53,8 @@ export function AdSlot({
           data-full-width-responsive="true"
         />
       ) : (
-        <div 
-          className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-100 flex items-center justify-center"
+        <div
+          className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 flex items-center justify-center"
           style={{ width: `${config.width}px`, height: `${config.height}px`, maxWidth: '100%' }}
         >
           <div className="text-center text-gray-500">

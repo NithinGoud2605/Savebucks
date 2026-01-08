@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  ExternalLink, 
-  Eye, 
-  Clock, 
+import {
+  ExternalLink,
+  Eye,
+  Clock,
   Star,
   Gift,
   Zap,
@@ -19,7 +19,7 @@ import SubmitterBadge from './SubmitterBadge'
 export function NewDealCard({ deal, index = 0, variant = 'default' }) {
   const { user } = useAuth()
   const qc = useQueryClient()
-  
+
   // State for image navigation
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isSaved, setIsSaved] = useState(false)
@@ -34,7 +34,7 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
     })
   }
   if (deal.image_url && !allImages.includes(deal.image_url)) allImages.push(deal.image_url)
-  
+
   const images = allImages
   const currentImage = images[selectedImageIndex] || deal.featured_image || deal.image_url
 
@@ -60,7 +60,7 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
 
 
   // Calculate discount percentage
-  const discountPercentage = deal.discount_percentage || 
+  const discountPercentage = deal.discount_percentage ||
     (deal.price && deal.original_price && deal.original_price > deal.price
       ? Math.round(((deal.original_price - deal.price) / deal.original_price) * 100)
       : 0)
@@ -91,7 +91,7 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
 
   const handleSave = async () => {
     if (!user || isSaving) return
-    
+
     setIsSaving(true)
     try {
       if (isSaved) {
@@ -125,8 +125,8 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
         whileHover={{ y: -2 }}
         className="group bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200 overflow-hidden"
       >
-        <div 
-          className="block cursor-pointer" 
+        <div
+          className="block cursor-pointer"
           onClick={() => {
             handleDealClick('deal_card_compact')
             window.location.href = `/deal/${deal.id}`
@@ -134,7 +134,7 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
         >
           <div className="flex p-2">
             {/* Image */}
-            <div className="w-12 h-12 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden">
+            <div className="w-12 h-12 flex-shrink-0 bg-gray-50 rounded-md overflow-hidden">
               <ImageWithFallback
                 src={currentImage}
                 alt={deal.title}
@@ -158,7 +158,7 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
                   </div>
                 </div>
               </div>
-              
+
               {/* Price and Stats */}
               <div className="flex items-center justify-between mt-1">
                 <div className="flex items-center gap-1">
@@ -173,7 +173,7 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
                     </span>
                   )}
                 </div>
-                
+
                 <div className="flex items-center gap-2 text-gray-400">
                   <div className="flex items-center gap-0.5">
                     <Eye className="w-3 h-3" />
@@ -203,22 +203,22 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
       whileHover={{ y: -4 }}
       className="group bg-white rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-300 overflow-hidden"
     >
-      <div 
-        className="block cursor-pointer" 
+      <div
+        className="block cursor-pointer"
         onClick={() => {
           handleDealClick('deal_card_default')
           window.location.href = `/deal/${deal.id}`
         }}
       >
         {/* Image Section */}
-        <div className="relative aspect-[3/2] overflow-hidden bg-gray-100">
+        <div className="relative aspect-[3/2] overflow-hidden bg-gray-50">
           <ImageWithFallback
             src={currentImage}
             alt={deal.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             fallbackClassName="w-full h-full"
           />
-          
+
           {/* Image Navigation for multiple images */}
           {images.length > 1 && (
             <>
@@ -235,7 +235,7 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              
+
               <button
                 onClick={(e) => {
                   e.preventDefault()
@@ -249,7 +249,7 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
-              
+
               <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-1.5 py-0.5 rounded z-10">
                 {selectedImageIndex + 1}/{images.length}
               </div>
@@ -323,7 +323,7 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
             ) : (
               <span className="text-sm text-gray-500">Price not available</span>
             )}
-            
+
             {deal.discount_amount && (
               <div className="text-xs text-green-600 font-medium mt-0.5">
                 Save ${Number(deal.discount_amount).toFixed(2)}
@@ -356,11 +356,10 @@ export function NewDealCard({ deal, index = 0, variant = 'default' }) {
                   handleSave()
                 }}
                 disabled={isSaving}
-                className={`p-1.5 rounded-md border transition-all ${
-                  isSaved 
-                    ? 'bg-primary-50 border-primary-200 text-primary-600' 
-                    : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-                } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`p-1.5 rounded-md border transition-all ${isSaved
+                  ? 'bg-primary-50 border-primary-200 text-primary-600'
+                  : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                  } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                 title={isSaved ? 'Remove from saved items' : 'Save deal'}
               >
                 {isSaved ? (

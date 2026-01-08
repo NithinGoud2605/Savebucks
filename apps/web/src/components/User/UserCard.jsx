@@ -1,12 +1,12 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { 
-  User, 
-  MapPin, 
-  Globe, 
-  Star, 
-  TrendingUp, 
+import {
+  User,
+  MapPin,
+  Globe,
+  Star,
+  TrendingUp,
   Tag,
   Calendar,
   Award
@@ -20,9 +20,8 @@ const UserCard = ({ user, variant = 'default' }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-white rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200 ${
-        isCompact ? 'p-3' : 'p-4'
-      }`}
+      className={`bg-white rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200 ${isCompact ? 'p-3' : 'p-4'
+        }`}
     >
       {/* User Header */}
       <div className="flex items-start gap-3">
@@ -46,22 +45,20 @@ const UserCard = ({ user, variant = 'default' }) => {
           <div className="flex items-center gap-2 mb-1">
             <Link
               to={`/user/${user.handle}`}
-              className={`font-semibold text-gray-900 hover:text-primary-600 transition-colors ${
-                isCompact ? 'text-sm' : 'text-base'
-              }`}
+              className={`font-semibold text-gray-900 hover:text-primary-600 transition-colors ${isCompact ? 'text-sm' : 'text-base'
+                }`}
             >
               @{user.handle}
             </Link>
-            
+
             {/* Role Badge */}
             {user.role && user.role !== 'user' && (
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                user.role === 'admin' 
-                  ? 'bg-red-100 text-red-700'
-                  : user.role === 'moderator'
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin'
+                ? 'bg-red-100 text-red-700'
+                : user.role === 'moderator'
                   ? 'bg-blue-100 text-blue-700'
-                  : 'bg-gray-100 text-gray-700'
-              }`}>
+                  : 'bg-gray-50 text-gray-700'
+                }`}>
                 {user.role}
               </span>
             )}
@@ -107,7 +104,7 @@ const UserCard = ({ user, variant = 'default' }) => {
                 <span>{user.location}</span>
               </div>
             )}
-            
+
             {user.website && (
               <div className="flex items-center gap-1">
                 <Globe className="w-3 h-3" />
@@ -121,7 +118,7 @@ const UserCard = ({ user, variant = 'default' }) => {
                 </a>
               </div>
             )}
-            
+
             <div className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               <span>Joined {dateAgo(user.created_at)}</span>
@@ -137,7 +134,7 @@ const UserCard = ({ user, variant = 'default' }) => {
             <Award className="w-4 h-4" />
             Recent Activity
           </h4>
-          
+
           <div className="space-y-1">
             {/* Recent Deals */}
             {user.recent_deals?.slice(0, 2).map((deal) => (
@@ -156,7 +153,7 @@ const UserCard = ({ user, variant = 'default' }) => {
                 )}
               </div>
             ))}
-            
+
             {/* Recent Coupons */}
             {user.recent_coupons?.slice(0, 2).map((coupon) => (
               <div key={coupon.id} className="flex items-center gap-2 text-xs text-gray-600">

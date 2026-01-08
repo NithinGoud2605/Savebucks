@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
-import { Skeleton } from '../../components/Loader/Skeleton'
+import { Skeleton } from '../../components/ui/Skeleton'
 import EnhancedPendingItem from '../../components/Admin/EnhancedPendingItem'
 import AdminEditModal from '../../components/Admin/AdminEditModal'
 import {

@@ -17,7 +17,7 @@ export function TagChips({ tags = [], onTagClick, selectedTags = [], className }
               onTagClick ? 'cursor-pointer' : 'cursor-default',
               isSelected
                 ? 'bg-blue-100 text-blue-800'
-                : 'bg-gray-100 text-gray-700',
+                : 'bg-gray-50 text-gray-700',
               onTagClick && !isSelected && 'hover:bg-gray-200'
             )}
             disabled={!onTagClick}

@@ -13,10 +13,10 @@ const supaAdmin = makeAdminClient();
 function calculateKarmaPoints(submissionType, submissionData) {
   let fieldCount = 0;
   let totalPossibleFields;
-  
+
   if (submissionType === 'deal') {
     totalPossibleFields = 15; // Total optional fields for deals
-    
+
     // Check each optional field
     if (submissionData.original_price) fieldCount++;
     if (submissionData.discount_percentage) fieldCount++;
@@ -33,10 +33,10 @@ function calculateKarmaPoints(submissionType, submissionData) {
     if (submissionData.image_url) fieldCount++;
     if (submissionData.description) fieldCount++;
     if (submissionData.terms_conditions) fieldCount++;
-    
+
   } else if (submissionType === 'coupon') {
     totalPossibleFields = 10; // Total optional fields for coupons
-    
+
     if (submissionData.minimum_order_amount) fieldCount++;
     if (submissionData.maximum_discount_amount) fieldCount++;
     if (submissionData.usage_limit) fieldCount++;
@@ -48,7 +48,7 @@ function calculateKarmaPoints(submissionType, submissionData) {
     if (submissionData.description) fieldCount++;
     if (submissionData.terms_conditions) fieldCount++;
   }
-  
+
   // Calculate karma based on field completion percentage
   if (fieldCount === 0) {
     return 3; // Only required fields
@@ -134,33 +134,33 @@ async function listDeals(tab, filters = {}) {
       profiles!submitter_id(id, handle, avatar_url, karma, role),
       deal_tags(tags(id, name, slug, color, category))
     `)
-    .eq('status','approved');
-    
+    .eq('status', 'approved');
+
   // Apply filters
   if (filters.category_id) {
     query = query.eq('category_id', filters.category_id);
   }
-  
+
   if (filters.merchant) {
     query = query.ilike('merchant', `%${filters.merchant}%`);
   }
-  
+
   if (filters.min_discount) {
     query = query.gte('discount_percentage', filters.min_discount);
   }
-  
+
   if (filters.max_price) {
     query = query.lte('price', filters.max_price);
   }
-  
+
   if (filters.has_coupon) {
     query = query.not('coupon_code', 'is', null);
   }
-  
+
   if (filters.search) {
     query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,merchant.ilike.%${filters.search}%`);
   }
-  
+
   if (filters.tags && filters.tags.length > 0) {
     // Filter deals that have any of the specified tags
     const tagIds = Array.isArray(filters.tags) ? filters.tags : [filters.tags];
@@ -184,9 +184,9 @@ async function listDeals(tab, filters = {}) {
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     query = query.gte('approved_at', oneWeekAgo);
   }
-    
+
   query = query.order('approved_at', { ascending: false }).limit(200);
-  
+
   const { data, error } = await query;
   if (error) throw error;
 
@@ -196,16 +196,16 @@ async function listDeals(tab, filters = {}) {
   try {
     const { data: votesAgg } = await supaAdmin.rpc('get_votes_agg');
     (votesAgg || []).forEach(v => voteMap.set(v.deal_id, v));
-  } catch (_) {}
+  } catch (_) { }
 
   const enriched = data.map(d => {
     const createdSec = Math.floor(new Date(d.created_at).getTime() / 1000);
     const v = voteMap.get(d.id) || { ups: 0, downs: 0 };
-    
+
     // Calculate savings and discount info
     let savings = null;
     let discountText = null;
-    
+
     if (d.original_price && d.price) {
       savings = d.original_price - d.price;
       const discountPercent = Math.round((savings / d.original_price) * 100);
@@ -215,7 +215,7 @@ async function listDeals(tab, filters = {}) {
     } else if (d.discount_amount) {
       discountText = `$${d.discount_amount} OFF`;
     }
-    
+
     return {
       id: d.id,
       title: d.title,
@@ -257,89 +257,89 @@ async function listDeals(tab, filters = {}) {
   switch (tab) {
     case 'new':
     case 'newest':
-      return enriched.sort((a,b) => b.created - a.created);
-    
+      return enriched.sort((a, b) => b.created - a.created);
+
     case 'trending':
       // For trending, prioritize recent deals with high engagement
       const oneDayAgo = Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
       return enriched
         .filter(deal => deal.created > oneDayAgo)
-        .sort((a,b) => {
+        .sort((a, b) => {
           const aScore = (a.vote_score * 2) + (a.view_count * 0.1) + (a.clicks_count * 0.5);
           const bScore = (b.vote_score * 2) + (b.view_count * 0.1) + (b.clicks_count * 0.5);
           return bScore - aScore;
         });
-    
+
     case 'popular':
       // For popular (top deals this week), use votes + clicks from this week
       const oneWeekAgo = Math.floor((Date.now() - 7 * 24 * 60 * 60 * 1000) / 1000);
       return enriched
         .filter(deal => deal.created > oneWeekAgo)
-        .sort((a,b) => {
+        .sort((a, b) => {
           const aScore = (a.vote_score * 3) + (a.clicks_count * 1) + (a.view_count * 0.2);
           const bScore = (b.vote_score * 3) + (b.clicks_count * 1) + (b.view_count * 0.2);
           return bScore - aScore;
         });
-    
+
     case 'personalized':
       // For personalized, mix featured deals with high-rated ones
       return enriched
-        .sort((a,b) => {
+        .sort((a, b) => {
           const aScore = (a.is_featured ? 100 : 0) + (a.vote_score * 2) + (a.view_count * 0.1);
           const bScore = (b.is_featured ? 100 : 0) + (b.vote_score * 2) + (b.view_count * 0.1);
           return bScore - aScore;
         });
-    
+
     case 'discount':
       // Sort by discount percentage
       return enriched
         .filter(deal => deal.discount_percentage && deal.discount_percentage > 0)
-        .sort((a,b) => (b.discount_percentage || 0) - (a.discount_percentage || 0));
-    
+        .sort((a, b) => (b.discount_percentage || 0) - (a.discount_percentage || 0));
+
     case 'under-20':
       return enriched
         .filter(deal => deal.price && deal.price <= 20)
-        .sort((a,b) => b.hot - a.hot);
-    
+        .sort((a, b) => b.hot - a.hot);
+
     case '50-percent-off':
       return enriched
         .filter(deal => deal.discount_percentage && deal.discount_percentage >= 50)
-        .sort((a,b) => b.hot - a.hot);
-    
+        .sort((a, b) => b.hot - a.hot);
+
     case 'free-shipping':
       return enriched
-        .filter(deal => deal.free_shipping || 
-                       deal.title.toLowerCase().includes('free shipping') || 
-                       deal.description?.toLowerCase().includes('free shipping'))
-        .sort((a,b) => b.hot - a.hot);
-    
+        .filter(deal => deal.free_shipping ||
+          deal.title.toLowerCase().includes('free shipping') ||
+          deal.description?.toLowerCase().includes('free shipping'))
+        .sort((a, b) => b.hot - a.hot);
+
     case 'new-arrivals':
       const newArrivalWeek = Math.floor((Date.now() - 7 * 24 * 60 * 60 * 1000) / 1000);
       return enriched
         .filter(deal => deal.created > newArrivalWeek)
-        .sort((a,b) => b.created - a.created);
-    
+        .sort((a, b) => b.created - a.created);
+
     case 'hot-deals':
       return enriched
         .filter(deal => deal.vote_score >= 5) // Popular deals
-        .sort((a,b) => b.hot - a.hot);
-    
+        .sort((a, b) => b.hot - a.hot);
+
     case 'ending-soon':
       const nowSec = Math.floor(Date.now() / 1000);
       const threeDaysFromNow = nowSec + (3 * 24 * 60 * 60);
       return enriched
         .filter(deal => deal.expires_at && new Date(deal.expires_at).getTime() / 1000 < threeDaysFromNow)
-        .sort((a,b) => new Date(a.expires_at).getTime() - new Date(b.expires_at).getTime());
-    
+        .sort((a, b) => new Date(a.expires_at).getTime() - new Date(b.expires_at).getTime());
+
     default: // 'hot'
-      return enriched.sort((a,b) => b.hot - a.hot);
+      return enriched.sort((a, b) => b.hot - a.hot);
   }
 }
 
 r.get('/', async (req, res) => {
   try {
     // Support both tab= and sort= aliases from frontend
-    const tab = (req.query.tab || req.query.sort_by || 'hot').toString().replace('newest','new').replace('top_rated','hot');
+    const tab = (req.query.tab || req.query.sort_by || 'hot').toString().replace('newest', 'new').replace('top_rated', 'hot');
     const filters = {
       category_id: req.query.category_id ? parseInt(req.query.category_id) : null,
       merchant: req.query.merchant,
@@ -360,9 +360,9 @@ r.get('/', async (req, res) => {
     if (tagIdsFromSearch.length > 0) {
       filters.tags = tagIdsFromSearch;
     }
-    
+
     const items = await listDeals(tab, filters);
-    
+
     // Ensure all deals have company data and proper field mapping
     const enrichedItems = items.map(deal => {
       if (!deal.company) {
@@ -375,7 +375,7 @@ r.get('/', async (req, res) => {
           is_verified: false
         }
       }
-      
+
       // Ensure submitter information is properly formatted
       if (deal.submitter_id && !deal.submitter) {
         // If no profile found but submitter_id exists, create a basic submitter object
@@ -387,10 +387,10 @@ r.get('/', async (req, res) => {
           karma: 0
         }
       }
-      
+
       return deal
     })
-    
+
     // Featured filter if requested
     let out = enrichedItems;
     if (req.query.featured === 'true') {
@@ -399,15 +399,15 @@ r.get('/', async (req, res) => {
         .select('id')
         .eq('is_featured', true)
         .eq('status', 'approved');
-      const set = new Set((featuredIds||[]).map(d=>d.id));
+      const set = new Set((featuredIds || []).map(d => d.id));
       out = enrichedItems.filter(d => set.has(d.id));
     }
     const limit = req.query.limit ? parseInt(req.query.limit) : null;
     let finalResult = limit ? out.slice(0, Math.max(0, limit)) : out;
-    
+
     // Return only real deals, no duplication
     console.log(`🔍 Deals API Debug: limit=${limit}, finalResult.length=${finalResult.length}`);
-    
+
     res.json(finalResult);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -434,7 +434,7 @@ r.get('/:id', async (req, res) => {
     if (dErr) return res.status(404).json({ error: 'not found' });
 
     // Increment view counter best-effort
-    try { await supaAdmin.rpc('increment_deal_views', { deal_id: id }); } catch (_) {}
+    try { await supaAdmin.rpc('increment_deal_views', { deal_id: id }); } catch (_) { }
 
     const { data: comments = [] } = await supaAdmin
       .from('comments')
@@ -448,7 +448,7 @@ r.get('/:id', async (req, res) => {
         .from('votes')
         .select('value')
         .eq('deal_id', id);
-      
+
       if (votesError) {
         console.error('Error getting votes for deal:', votesError);
       } else if (votesData) {
@@ -459,8 +459,8 @@ r.get('/:id', async (req, res) => {
     } catch (error) {
       console.error('Error calculating vote counts:', error);
     }
-    const created = Math.floor(new Date(d.created_at).getTime()/1000);
-    const now = Math.floor(Date.now()/1000);
+    const created = Math.floor(new Date(d.created_at).getTime() / 1000);
+    const now = Math.floor(Date.now() / 1000);
 
     // Get user's current vote if authenticated
     let userVote = null;
@@ -486,7 +486,7 @@ r.get('/:id', async (req, res) => {
         .select('tags(id,name,slug,color,category)')
         .eq('deal_id', id);
       tags = (tagRows || []).map(r => r.tags).filter(Boolean);
-    } catch (_) {}
+    } catch (_) { }
 
     res.json({
       id: d.id, title: d.title, url: d.url, price: d.price, merchant: d.merchant,
@@ -514,15 +514,15 @@ r.post('/', async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { 
-      title, 
-      url, 
-      price = null, 
+    const {
+      title,
+      url,
+      price = null,
       original_price = null,
-      merchant = null, 
-      description = null, 
-      image_url = null, 
-      deal_images = null, 
+      merchant = null,
+      description = null,
+      image_url = null,
+      deal_images = null,
       featured_image = null,
       category_id = null,
       company_id = null,
@@ -542,20 +542,20 @@ r.post('/', async (req, res) => {
       stock_status = 'unknown',
       stock_quantity = null,
     } = req.body || {};
-    
+
     if (!title || !url) return res.status(400).json({ error: 'title and url required' });
 
     const { data, error } = await supaAdmin
       .from('deals')
-      .insert([{ 
-        title: title.trim(), 
-        url: normalizeUrl(url), 
+      .insert([{
+        title: title.trim(),
+        url: normalizeUrl(url),
         price: price ? parseFloat(price) : null,
         original_price: original_price ? parseFloat(original_price) : null,
-        merchant: merchant?.trim() || null, 
-        description: description?.trim() || null, 
-        image_url: image_url?.trim() || null, 
-        deal_images: deal_images || null, 
+        merchant: merchant?.trim() || null,
+        description: description?.trim() || null,
+        image_url: image_url?.trim() || null,
+        deal_images: deal_images || null,
         featured_image: featured_image || null,
         category_id: category_id ? parseInt(category_id) : null,
         company_id: company_id ? parseInt(company_id) : null,
@@ -583,19 +583,19 @@ r.post('/', async (req, res) => {
     // Handle tags - use provided tags or parse from title/description
     try {
       let tagSlugs = [];
-      
+
       // Use provided tags if available
       if (tags && Array.isArray(tags)) {
         tagSlugs = tags.map(tag => tag.trim().toLowerCase().replace(/[^a-z0-9]/g, '-')).filter(tag => tag);
       } else if (typeof tags === 'string' && tags.trim()) {
         tagSlugs = tags.split(',').map(tag => tag.trim().toLowerCase().replace(/[^a-z0-9]/g, '-')).filter(tag => tag);
       }
-      
+
       // If no tags provided, parse from title/description
       if (tagSlugs.length === 0) {
         tagSlugs = parseHashtags(title, description);
       }
-      
+
       if (tagSlugs.length > 0) {
         const tagIds = await ensureTagsReturnIds(tagSlugs);
         if (tagIds.length > 0) {
@@ -609,7 +609,7 @@ r.post('/', async (req, res) => {
 
     res.status(201).json({
       id: data.id, title: data.title, url: data.url, price: data.price,
-      merchant: data.merchant, created: Math.floor(new Date(data.created_at).getTime()/1000),
+      merchant: data.merchant, created: Math.floor(new Date(data.created_at).getTime() / 1000),
       ups: 0, downs: 0, deal_images: data.deal_images, featured_image: data.featured_image,
       karma_points: calculateKarmaPoints('deal', req.body)
     });
@@ -623,13 +623,13 @@ r.get('/related/:id', async (req, res) => {
   try {
     const dealId = parseInt(req.params.id);
     const limit = parseInt(req.query.limit) || 8;
-    
+
     if (isNaN(dealId)) {
       return res.status(400).json({ error: 'Invalid deal ID' });
     }
 
     // First get the current deal to find related deals
-    const { data: currentDeal, error: dealError } = await supabase
+    const { data: currentDeal, error: dealError } = await supaAdmin
       .from('deals')
       .select('category_id, company_id, merchant, tags')
       .eq('id', dealId)
@@ -640,7 +640,7 @@ r.get('/related/:id', async (req, res) => {
       return res.status(404).json({ error: 'Deal not found' });
     }
 
-    let query = supabase
+    let query = supaAdmin
       .from('deals')
       .select(`
         id, title, url, price, original_price, merchant, description, 
@@ -678,8 +678,8 @@ r.get('/related/:id', async (req, res) => {
     if (relatedDeals.length < limit && currentDeal.company_id) {
       const remainingLimit = limit - relatedDeals.length;
       const existingIds = relatedDeals.map(deal => deal.id);
-      
-      let companyQuery = supabase
+
+      let companyQuery = supaAdmin
         .from('deals')
         .select(`
           id, title, url, price, original_price, merchant, description, 
@@ -716,8 +716,8 @@ r.get('/related/:id', async (req, res) => {
     if (relatedDeals.length < limit) {
       const remainingLimit = limit - relatedDeals.length;
       const existingIds = relatedDeals.map(deal => deal.id);
-      
-      let popularQuery = supabase
+
+      let popularQuery = supaAdmin
         .from('deals')
         .select(`
           id, title, url, price, original_price, merchant, description, 
@@ -766,7 +766,7 @@ r.post('/:id/vote', async (req, res) => {
 
     const id = Number(req.params.id);
     const { value } = req.body || {};
-    
+
     // Handle vote removal (null value)
     if (value === null) {
       // Remove existing vote
@@ -775,29 +775,29 @@ r.post('/:id/vote', async (req, res) => {
         .delete()
         .eq('deal_id', id)
         .eq('user_id', req.user.id);
-      
+
       if (deleteError) {
         return res.status(500).json({ error: 'Failed to remove vote: ' + deleteError.message });
       }
-      
+
       // Return fresh aggregation after vote removal
       const { data: votesData, error: votesError } = await supaAdmin
         .from('votes')
         .select('value')
         .eq('deal_id', id);
-      
+
       let ups = 0, downs = 0;
       if (!votesError && votesData) {
         ups = votesData.filter(v => v.value === 1).length;
         downs = votesData.filter(v => v.value === -1).length;
       }
-      
+
       const { data: d, error: dErr } = await supaAdmin
         .from('deals')
         .select('id,title,url,price,merchant,created_at').eq('id', id).single();
       if (dErr) throw dErr;
 
-      const created = Math.floor(new Date(d.created_at).getTime()/1000);
+      const created = Math.floor(new Date(d.created_at).getTime() / 1000);
       return res.json({
         success: true,
         vote_score: ups - downs,
@@ -806,12 +806,12 @@ r.post('/:id/vote', async (req, res) => {
         created_at: created
       });
     }
-    
+
     if (![1, -1].includes(value)) return res.status(400).json({ error: 'value must be 1 or -1' });
 
     // Use upsert to handle existing votes (update if exists, insert if not)
-    const { error } = await supaAdmin.from('votes').upsert([{ 
-      deal_id: id, 
+    const { error } = await supaAdmin.from('votes').upsert([{
+      deal_id: id,
       value,
       user_id: req.user.id,
       created_at: new Date().toISOString()
@@ -827,20 +827,20 @@ r.post('/:id/vote', async (req, res) => {
       .from('votes')
       .select('value')
       .eq('deal_id', id);
-    
+
     let ups = 0, downs = 0;
     if (!votesError && votesData) {
       ups = votesData.filter(v => v.value === 1).length;
       downs = votesData.filter(v => v.value === -1).length;
     }
-    
+
     const { data: d, error: dErr } = await supaAdmin
       .from('deals')
       .select('id,title,url,price,merchant,created_at').eq('id', id).single();
     if (dErr) throw dErr;
 
-    const created = Math.floor(new Date(d.created_at).getTime()/1000);
-    const now = Math.floor(Date.now()/1000);
+    const created = Math.floor(new Date(d.created_at).getTime() / 1000);
+    const now = Math.floor(Date.now() / 1000);
 
     res.json({ id: d.id, title: d.title, url: d.url, price: d.price, merchant: d.merchant, created, ups, downs, hot: hotScore(ups, downs, created, now) });
   } catch (e) {
@@ -872,139 +872,139 @@ r.post('/:id/comment', async (req, res) => {
   }
 });
 
-  /** Report deal (JWT required) */
-  r.post('/:id/report', async (req, res) => {
-    try {
-      if (!req.user || !req.user.id) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-
-      const id = Number(req.params.id);
-      const { reason, note = null } = req.body || {};
-      if (!reason || !reason.trim()) return res.status(400).json({ error: 'reason required' });
-      if (reason.length < 3 || reason.length > 500) return res.status(400).json({ error: 'reason must be 3-500 characters' });
-
-      const { data, error } = await supaAdmin
-        .from('reports')
-        .insert([{ 
-          deal_id: id, 
-          reason: reason.trim(), 
-          note: note?.trim() || null,
-          reporter_id: req.user.id
-        }])
-        .select('id,deal_id,reporter_id,reason,note,created_at')
-        .single();
-      if (error) throw error;
-
-      res.status(201).json(data);
-    } catch (e) {
-      res.status(500).json({ error: e.message });
+/** Report deal (JWT required) */
+r.post('/:id/report', async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required' });
     }
-  });
 
-  /** Upload deal images (JWT required) */
-  r.post('/:id/images', upload.array('images', 5), async (req, res) => {
-    try {
-      if (!req.user || !req.user.id) {
-        return res.status(401).json({ error: 'Authentication required' });
+    const id = Number(req.params.id);
+    const { reason, note = null } = req.body || {};
+    if (!reason || !reason.trim()) return res.status(400).json({ error: 'reason required' });
+    if (reason.length < 3 || reason.length > 500) return res.status(400).json({ error: 'reason must be 3-500 characters' });
+
+    const { data, error } = await supaAdmin
+      .from('reports')
+      .insert([{
+        deal_id: id,
+        reason: reason.trim(),
+        note: note?.trim() || null,
+        reporter_id: req.user.id
+      }])
+      .select('id,deal_id,reporter_id,reason,note,created_at')
+      .single();
+    if (error) throw error;
+
+    res.status(201).json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/** Upload deal images (JWT required) */
+r.post('/:id/images', upload.array('images', 5), async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const dealId = Number(req.params.id);
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No images uploaded' });
+    }
+
+    // Verify deal exists and user owns it
+    const { data: deal, error: dealError } = await supaAdmin
+      .from('deals')
+      .select('id, submitter_id')
+      .eq('id', dealId)
+      .single();
+
+    if (dealError || !deal) {
+      return res.status(404).json({ error: 'Deal not found' });
+    }
+
+    const uploadedImages = [];
+    const imageUrls = [];
+
+    // Upload each image
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+      const fileExt = path.extname(file.originalname);
+      const fileName = `${dealId}-${Date.now()}-${i}${fileExt}`;
+      const filePath = `deals/${fileName}`;
+
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supaAdmin.storage
+        .from('images')
+        .upload(filePath, file.buffer, {
+          contentType: file.mimetype,
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        continue; // Skip this file and continue with others
       }
 
-      const dealId = Number(req.params.id);
-      if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ error: 'No images uploaded' });
-      }
+      // Get public URL
+      const { data: { publicUrl } } = supaAdmin.storage
+        .from('images')
+        .getPublicUrl(filePath);
 
-      // Verify deal exists and user owns it
-      const { data: deal, error: dealError } = await supaAdmin
+      imageUrls.push(publicUrl);
+
+      // Save image record
+      const { data: imageRecord } = await supaAdmin
+        .from('images')
+        .insert({
+          user_id: deal.submitter_id,
+          filename: fileName,
+          original_name: file.originalname,
+          file_size: file.size,
+          mime_type: file.mimetype,
+          storage_path: filePath,
+          public_url: publicUrl,
+          entity_type: 'deal',
+          entity_id: dealId,
+          is_primary: i === 0 // First image is primary
+        })
+        .select()
+        .single();
+
+      if (imageRecord) {
+        uploadedImages.push(imageRecord);
+      }
+    }
+
+    // Update deal with image URLs
+    if (imageUrls.length > 0) {
+      const updateData = {
+        deal_images: imageUrls,
+        featured_image: imageUrls[0] // First image as featured
+      };
+
+      const { error: updateError } = await supaAdmin
         .from('deals')
-        .select('id, submitter_id')
-        .eq('id', dealId)
-        .single();
+        .update(updateData)
+        .eq('id', dealId);
 
-      if (dealError || !deal) {
-        return res.status(404).json({ error: 'Deal not found' });
+      if (updateError) {
+        console.error('Error updating deal with images:', updateError);
       }
-
-      const uploadedImages = [];
-      const imageUrls = [];
-
-      // Upload each image
-      for (let i = 0; i < req.files.length; i++) {
-        const file = req.files[i];
-        const fileExt = path.extname(file.originalname);
-        const fileName = `${dealId}-${Date.now()}-${i}${fileExt}`;
-        const filePath = `deals/${fileName}`;
-
-        // Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supaAdmin.storage
-          .from('images')
-          .upload(filePath, file.buffer, {
-            contentType: file.mimetype,
-            upsert: false
-          });
-
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          continue; // Skip this file and continue with others
-        }
-
-        // Get public URL
-        const { data: { publicUrl } } = supaAdmin.storage
-          .from('images')
-          .getPublicUrl(filePath);
-
-        imageUrls.push(publicUrl);
-
-        // Save image record
-        const { data: imageRecord } = await supaAdmin
-          .from('images')
-          .insert({
-            user_id: deal.submitter_id,
-            filename: fileName,
-            original_name: file.originalname,
-            file_size: file.size,
-            mime_type: file.mimetype,
-            storage_path: filePath,
-            public_url: publicUrl,
-            entity_type: 'deal',
-            entity_id: dealId,
-            is_primary: i === 0 // First image is primary
-          })
-          .select()
-          .single();
-
-        if (imageRecord) {
-          uploadedImages.push(imageRecord);
-        }
-      }
-
-      // Update deal with image URLs
-      if (imageUrls.length > 0) {
-        const updateData = {
-          deal_images: imageUrls,
-          featured_image: imageUrls[0] // First image as featured
-        };
-
-        const { error: updateError } = await supaAdmin
-          .from('deals')
-          .update(updateData)
-          .eq('id', dealId);
-
-        if (updateError) {
-          console.error('Error updating deal with images:', updateError);
-        }
-      }
-
-      res.json({
-        uploaded_count: uploadedImages.length,
-        images: uploadedImages,
-        image_urls: imageUrls
-      });
-    } catch (e) {
-      console.error('Error uploading deal images:', e);
-      res.status(500).json({ error: e.message });
     }
-  });
+
+    res.json({
+      uploaded_count: uploadedImages.length,
+      images: uploadedImages,
+      image_urls: imageUrls
+    });
+  } catch (e) {
+    console.error('Error uploading deal images:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // Track deal click
 r.post('/:id/click', async (req, res) => {
@@ -1021,7 +1021,7 @@ r.post('/:id/click', async (req, res) => {
       // Fallback to direct update
       await supaAdmin
         .from('deals')
-        .update({ 
+        .update({
           clicks_count: supaAdmin.raw('COALESCE(clicks_count, 0) + 1')
         })
         .eq('id', dealId)

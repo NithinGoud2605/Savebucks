@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
+import {
   BuildingOfficeIcon,
   MagnifyingGlassIcon,
   AdjustmentsHorizontalIcon,
@@ -17,7 +17,7 @@ import {
   PlusIcon
 } from '@heroicons/react/24/outline'
 import { Container } from '../components/Layout/Container'
-import { Skeleton } from '../components/Loader/Skeleton'
+import { Skeleton } from '../components/ui/Skeleton'
 import { api } from '../lib/api'
 import { setPageMeta } from '../lib/head'
 import { formatCompactNumber, dateAgo } from '../lib/format'
@@ -70,7 +70,7 @@ const CompaniesPage = () => {
     })
   }
 
-  const hasActiveFilters = Object.entries(filters).some(([key, value]) => 
+  const hasActiveFilters = Object.entries(filters).some(([key, value]) =>
     key !== 'sort' && value !== '' && value !== false
   )
 
@@ -96,17 +96,17 @@ const CompaniesPage = () => {
           <div className="flex items-start space-x-4 mb-4">
             {/* Logo */}
             <div className="flex-shrink-0">
-                {company.logo_url ? (
-                  <img
-                    src={company.logo_url}
-                    alt={company.name}
-                    className="w-16 h-16 rounded-lg object-contain bg-white p-2 border border-gray-200"
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-mint-100 to-emerald-100 flex items-center justify-center border border-gray-200">
-                    <BuildingOfficeIcon className="w-8 h-8 text-mint-600" />
-                  </div>
-                )}
+              {company.logo_url ? (
+                <img
+                  src={company.logo_url}
+                  alt={company.name}
+                  className="w-16 h-16 rounded-lg object-contain bg-white p-2 border border-gray-200"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-mint-100 to-emerald-100 flex items-center justify-center border border-gray-200">
+                  <BuildingOfficeIcon className="w-8 h-8 text-mint-600" />
+                </div>
+              )}
             </div>
 
             {/* Company Info */}
@@ -119,9 +119,9 @@ const CompaniesPage = () => {
                   <CheckBadgeIcon className="w-5 h-5 text-blue-500 flex-shrink-0" />
                 )}
               </div>
-              
+
               {company.category_name && (
-                <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                <span className="inline-block px-2 py-1 bg-gray-50 text-gray-700 rounded-full text-xs font-medium">
                   {company.category_name}
                 </span>
               )}
@@ -171,7 +171,7 @@ const CompaniesPage = () => {
                   </span>
                 )}
               </div>
-              
+
               <div className="text-xs text-gray-500">
                 {company.website_url && 'Visit Site →'}
               </div>
@@ -230,10 +230,10 @@ const CompaniesPage = () => {
               Companies & Merchants
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Discover verified companies and merchants offering the best deals, discounts, and coupons. 
+              Discover verified companies and merchants offering the best deals, discounts, and coupons.
               Save money on your purchases with trusted brands.
             </p>
-            
+
             {/* Add Company Button */}
             <div className="mt-6">
               <button
@@ -355,7 +355,7 @@ const CompaniesPage = () => {
                     </span>
                   )}
                 </div>
-                
+
                 <button
                   onClick={clearFilters}
                   className="text-sm text-secondary-600 hover:text-secondary-800 font-medium"
@@ -372,7 +372,7 @@ const CompaniesPage = () => {
               <h2 className="text-xl font-semibold text-secondary-900">
                 {companies?.length || 0} Companies Found
               </h2>
-              
+
               {companies && companies.length > 0 && (
                 <div className="text-sm text-secondary-600">
                   Showing {companies.length} companies
@@ -397,7 +397,7 @@ const CompaniesPage = () => {
                 No Companies Found
               </h3>
               <p className="text-secondary-600 mb-6">
-                {hasActiveFilters 
+                {hasActiveFilters
                   ? 'Try adjusting your filters to find more companies.'
                   : 'No companies are available at the moment.'
                 }

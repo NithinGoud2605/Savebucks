@@ -12,7 +12,7 @@ export function BookmarkButton({ dealId, size = 'sm' }) {
 
   const handleToggleBookmark = () => {
     const bookmarks = JSON.parse(localStorage.getItem('bookmarkedDeals') || '[]')
-    
+
     if (isBookmarked) {
       const updated = bookmarks.filter(id => id !== dealId)
       localStorage.setItem('bookmarkedDeals', JSON.stringify(updated))
@@ -31,11 +31,10 @@ export function BookmarkButton({ dealId, size = 'sm' }) {
   return (
     <button
       onClick={handleToggleBookmark}
-      className={`p-1.5 rounded-full hover:bg-gray-100 transition-colors ${
-        isBookmarked 
-          ? 'text-yellow-500' 
-          : 'text-gray-400 hover:text-yellow-500'
-      }`}
+      className={`p-1.5 rounded-full hover:bg-gray-50 transition-colors ${isBookmarked
+        ? 'text-yellow-500'
+        : 'text-gray-400 hover:text-yellow-500'
+        }`}
       title={isBookmarked ? 'Remove bookmark' : 'Bookmark this deal'}
     >
       <svg className={iconSize} fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">

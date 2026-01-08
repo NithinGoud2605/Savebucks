@@ -7,7 +7,7 @@ import { useLocation } from '../../context/LocationContext'
 import { useDebounce } from '../../hooks/useDebounce'
 import { api } from '../../lib/api'
 
-const LocationSearchBar = ({ 
+const LocationSearchBar = ({
   placeholder = "Search for deals",
   className = "",
   onSearch,
@@ -66,11 +66,11 @@ const LocationSearchBar = ({
     if (!searchQuery.trim()) return
 
     setIsSearching(true)
-    
+
     try {
       const searchParams = new URLSearchParams()
       searchParams.set('q', searchQuery.trim())
-      
+
       // Add location to search if available
       if (location) {
         searchParams.set('location', location.display)
@@ -83,7 +83,7 @@ const LocationSearchBar = ({
       } else {
         navigate(`/search?${searchParams.toString()}`)
       }
-      
+
       setQuery('')
     } finally {
       setIsSearching(false)
@@ -110,7 +110,7 @@ const LocationSearchBar = ({
       },
       timestamp: Date.now()
     }
-    
+
     setManualLocation(locationData)
     setShowLocationDropdown(false)
   }
@@ -132,7 +132,7 @@ const LocationSearchBar = ({
         setShowLocationDropdown(false)
       }
       if (suggestionsRef.current && !suggestionsRef.current.contains(event.target) &&
-          searchRef.current && !searchRef.current.contains(event.target)) {
+        searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSuggestionsDropdown(false)
         setSelectedSuggestionIndex(-1)
       }
@@ -154,7 +154,7 @@ const LocationSearchBar = ({
   const handleInputChange = (e) => {
     const value = e.target.value
     setQuery(value)
-    
+
     if (value.length >= 2) {
       setShowSuggestionsDropdown(true)
     } else {
@@ -168,7 +168,7 @@ const LocationSearchBar = ({
     if (showSuggestionsDropdown && suggestions.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault()
-        setSelectedSuggestionIndex(prev => 
+        setSelectedSuggestionIndex(prev =>
           prev < suggestions.length - 1 ? prev + 1 : prev
         )
       } else if (e.key === 'ArrowUp') {
@@ -201,7 +201,7 @@ const LocationSearchBar = ({
       <form onSubmit={handleSubmit} className="relative">
         {/* Main Search Container */}
         <div className="relative flex items-center bg-white border-2 border-gray-200 rounded-2xl shadow-sm hover:shadow-lg focus-within:shadow-xl focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-100 transition-all duration-300 overflow-visible backdrop-blur-sm">
-          
+
           {/* Location Selector */}
           {showLocationSelector && (
             <div className="relative" ref={locationRef}>
@@ -212,9 +212,9 @@ const LocationSearchBar = ({
               >
                 <MapPin className="w-4 h-4 text-primary-600 flex-shrink-0 group-hover:text-primary-700 transition-colors" />
                 <span className="text-sm font-semibold text-gray-800 max-w-32 truncate group-hover:text-gray-900 transition-colors">
-                  {isLoading ? 'Getting location...' : 
-                   location ? location.address.display : 
-                   'Select location'}
+                  {isLoading ? 'Getting location...' :
+                    location ? location.address.display :
+                      'Select location'}
                 </span>
                 <ChevronDown className="w-4 h-4 text-gray-600 flex-shrink-0 group-hover:text-primary-600 transition-colors" />
               </button>
@@ -244,7 +244,7 @@ const LocationSearchBar = ({
                           {isLoading ? 'Getting your location...' : 'Use current location'}
                         </span>
                       </button>
-                      
+
                       {error && (
                         <div className="px-3 py-2 text-xs text-red-600">
                           {error}
@@ -299,7 +299,7 @@ const LocationSearchBar = ({
                   setShowSuggestionsDropdown(false)
                   setSelectedSuggestionIndex(-1)
                 }}
-                className="ml-2 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-110"
+                className="ml-2 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-all duration-200 hover:scale-110"
                 title="Clear search"
               >
                 <X className="w-4 h-4" />

@@ -5,7 +5,7 @@ import { Container } from '../../components/Layout/Container'
 import { ThreadRow } from '../../components/Forums/ThreadRow'
 import { ForumSidebar } from '../../components/Forums/ForumSidebar'
 import { TagChips } from '../../components/Deal/TagChips'
-import { Skeleton } from '../../components/Loader/Skeleton'
+import { Skeleton } from '../../components/ui/Skeleton'
 import { EmptyState } from '../../components/EmptyState'
 import { useToast } from '../../components/Toast'
 import { forumService } from '../../forums/service'
@@ -34,14 +34,14 @@ export default function ForumThreads() {
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const toast = useToast()
-  
+
   // State management with URL sync
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || THREAD_SORT.NEW)
   const [timeFilter, setTimeFilter] = useState(searchParams.get('time') || 'all')
   const [selectedTag, setSelectedTag] = useState(searchParams.get('tag') || '')
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
   const [showSticky, setShowSticky] = useState(true)
-  
+
   // Advanced filters
   const [filters, setFilters] = useState({
     minVotes: parseInt(searchParams.get('minVotes')) || 0,
@@ -49,7 +49,7 @@ export default function ForumThreads() {
     authorOnly: searchParams.get('author') || '',
     unreadOnly: searchParams.get('unread') === 'true',
   })
-  
+
   // User preferences
   const [userPrefs, setUserPrefs] = useState(() => {
     try {
@@ -58,19 +58,19 @@ export default function ForumThreads() {
       return {}
     }
   })
-  
+
   // Fetch forum data
   const { data: forum, isLoading: forumLoading, error: forumError } = useQuery({
     queryKey: ['forum', slug],
     queryFn: () => forumService.getForum(slug),
   })
-  
+
   // Fetch threads with advanced filtering
   const { data: threads = [], isLoading: threadsLoading, error: threadsError, refetch } = useQuery({
     queryKey: ['threads', slug, sortBy, selectedTag, searchQuery, timeFilter, filters],
-    queryFn: () => forumService.getThreads(slug, { 
-      sort: sortBy, 
-      tag: selectedTag || null, 
+    queryFn: () => forumService.getThreads(slug, {
+      sort: sortBy,
+      tag: selectedTag || null,
       search: searchQuery || null,
       timeFilter,
       ...filters
@@ -78,7 +78,7 @@ export default function ForumThreads() {
     enabled: !!forum,
     staleTime: 2 * 60 * 1000, // 2 minutes
   })
-  
+
   // Get unique tags from threads
   const allTags = useMemo(() => {
     const tagCounts = new Map()
@@ -92,47 +92,47 @@ export default function ForumThreads() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 15)
   }, [threads])
-  
+
   // Filter threads based on current filters
   const filteredThreads = useMemo(() => {
     let filtered = threads
-    
+
     // Separate pinned/sticky threads
     const pinnedThreads = filtered.filter(t => t.pinned && showSticky)
     const regularThreads = filtered.filter(t => !t.pinned)
-    
+
     // Apply additional filters
     const applyFilters = (threadList) => {
       let result = threadList
-      
+
       if (filters.minVotes > 0) {
         result = result.filter(t => (t.votes || 0) >= filters.minVotes)
       }
-      
+
       if (filters.hasReplies) {
         result = result.filter(t => (t.postCount || 0) > 0)
       }
-      
+
       if (filters.authorOnly) {
         result = result.filter(t => t.author?.toLowerCase().includes(filters.authorOnly.toLowerCase()))
       }
-      
+
       if (filters.unreadOnly) {
         // Check localStorage for read threads
         const readThreads = JSON.parse(localStorage.getItem('readThreads') || '[]')
         result = result.filter(t => !readThreads.includes(t.id))
       }
-      
+
       return result
     }
-    
+
     return [...pinnedThreads, ...applyFilters(regularThreads)]
   }, [threads, showSticky, filters])
-  
+
   // Update URL when filters change
   React.useEffect(() => {
     const params = new URLSearchParams()
-    
+
     if (sortBy !== THREAD_SORT.NEW) params.set('sort', sortBy)
     if (timeFilter !== 'all') params.set('time', timeFilter)
     if (selectedTag) params.set('tag', selectedTag)
@@ -141,13 +141,13 @@ export default function ForumThreads() {
     if (filters.hasReplies) params.set('hasReplies', 'true')
     if (filters.authorOnly) params.set('author', filters.authorOnly)
     if (filters.unreadOnly) params.set('unread', 'true')
-    
+
     const newSearch = params.toString()
     if (newSearch !== searchParams.toString()) {
       navigate(`/forums/${slug}${newSearch ? '?' + newSearch : ''}`, { replace: true })
     }
   }, [sortBy, timeFilter, selectedTag, searchQuery, filters, slug, navigate, searchParams])
-  
+
   // Set page meta
   React.useEffect(() => {
     if (forum) {
@@ -157,16 +157,16 @@ export default function ForumThreads() {
       })
     }
   }, [forum])
-  
+
   // Handlers
   const handleSortChange = (newSort) => {
     setSortBy(newSort)
   }
-  
+
   const handleTagClick = (tag) => {
     setSelectedTag(selectedTag === tag ? '' : tag)
   }
-  
+
   const handleClearFilters = () => {
     setSelectedTag('')
     setSearchQuery('')
@@ -179,14 +179,14 @@ export default function ForumThreads() {
     })
     toast.success('Filters cleared')
   }
-  
+
   // Subscribe to forum
   const subscribeMutation = useMutation({
     mutationFn: () => {
       // Mock subscription
       const subscriptions = JSON.parse(localStorage.getItem('forumSubscriptions') || '[]')
       const isSubscribed = subscriptions.includes(slug)
-      
+
       if (isSubscribed) {
         const updated = subscriptions.filter(s => s !== slug)
         localStorage.setItem('forumSubscriptions', JSON.stringify(updated))
@@ -200,9 +200,9 @@ export default function ForumThreads() {
       toast.success(data.subscribed ? 'Subscribed to forum notifications' : 'Unsubscribed from forum')
     }
   })
-  
+
   const isSubscribed = JSON.parse(localStorage.getItem('forumSubscriptions') || '[]').includes(slug)
-  
+
   if (forumError) {
     return (
       <Container className="py-8">
@@ -220,7 +220,7 @@ export default function ForumThreads() {
       </Container>
     )
   }
-  
+
   if (forumLoading) {
     return (
       <Container className="py-8">
@@ -249,14 +249,14 @@ export default function ForumThreads() {
       </Container>
     )
   }
-  
+
   return (
     <Container className="py-8">
       <div className="max-w-6xl mx-auto">
         {/* Breadcrumb Navigation */}
         <nav className="mb-6 text-sm">
-          <Link 
-            to="/forums" 
+          <Link
+            to="/forums"
             className="text-blue-600 hover:text-blue-700"
           >
             Forums
@@ -266,7 +266,7 @@ export default function ForumThreads() {
             {forum.name}
           </span>
         </nav>
-        
+
         {/* Forum Header */}
         <div className="card p-6 mb-8">
           <div className="flex items-start justify-between">
@@ -277,7 +277,7 @@ export default function ForumThreads() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                 </div>
-                
+
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">
                     {forum.name}
@@ -287,11 +287,11 @@ export default function ForumThreads() {
                   </p>
                 </div>
               </div>
-              
+
               {forum.tags && forum.tags.length > 0 && (
                 <TagChips tags={forum.tags} className="mb-4" />
               )}
-              
+
               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                 <span>{threads.length} threads</span>
                 <span>•</span>
@@ -304,7 +304,7 @@ export default function ForumThreads() {
                 )}
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => subscribeMutation.mutate()}
@@ -319,7 +319,7 @@ export default function ForumThreads() {
                 </svg>
                 <span>{isSubscribed ? 'Unsubscribe' : 'Subscribe'}</span>
               </button>
-              
+
               <Link
                 to={`/forums/${slug}/new`}
                 className="btn-primary flex items-center space-x-2"
@@ -332,7 +332,7 @@ export default function ForumThreads() {
             </div>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3">
@@ -365,7 +365,7 @@ export default function ForumThreads() {
                   )}
                 </div>
               </div>
-              
+
               {/* Sort & Filter Controls */}
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center space-x-4">
@@ -383,7 +383,7 @@ export default function ForumThreads() {
                       ))}
                     </select>
                   </div>
-                  
+
                   {/* Time Filter */}
                   <div className="relative">
                     <select
@@ -398,7 +398,7 @@ export default function ForumThreads() {
                       ))}
                     </select>
                   </div>
-                  
+
                   {/* View Options */}
                   <div className="flex items-center space-x-2">
                     <label className="flex items-center text-sm">
@@ -412,12 +412,12 @@ export default function ForumThreads() {
                     </label>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-2 text-sm">
                   <span className="text-gray-600">
                     {filteredThreads.length} threads
                   </span>
-                  
+
                   {(selectedTag || searchQuery || filters.minVotes > 0 || filters.hasReplies || filters.authorOnly || filters.unreadOnly) && (
                     <button
                       onClick={handleClearFilters}
@@ -429,7 +429,7 @@ export default function ForumThreads() {
                 </div>
               </div>
             </div>
-            
+
             {/* Tag Filter */}
             {allTags.length > 0 && (
               <div className="mb-6">
@@ -447,7 +447,7 @@ export default function ForumThreads() {
                         'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors',
                         selectedTag === tag
                           ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          : 'bg-gray-50 text-gray-700 hover:bg-gray-200'
                       )}
                     >
                       <span>{tag}</span>
@@ -457,7 +457,7 @@ export default function ForumThreads() {
                 </div>
               </div>
             )}
-            
+
             {/* Thread List */}
             {threadsLoading ? (
               <div className="space-y-4">
@@ -496,7 +496,7 @@ export default function ForumThreads() {
               </div>
             )}
           </div>
-          
+
           {/* Sidebar */}
           <div>
             <ForumSidebar forum={forum} />

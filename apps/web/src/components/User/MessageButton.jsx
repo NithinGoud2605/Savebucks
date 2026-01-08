@@ -4,18 +4,18 @@ import { api } from '../../lib/api'
 import { useToast } from '../Toast'
 import { clsx } from 'clsx'
 
-export function MessageButton({ 
-  userId, 
+export function MessageButton({
+  userId,
   userName,
-  className = '', 
+  className = '',
   size = 'md',
   variant = 'default',
-  disabled = false 
+  disabled = false
 }) {
   const [showModal, setShowModal] = useState(false)
   const [message, setMessage] = useState('')
   const [subject, setSubject] = useState('')
-  
+
   const toast = useToast()
   const queryClient = useQueryClient()
   const currentUserId = localStorage.getItem('demo_user') // Mock auth
@@ -37,7 +37,7 @@ export function MessageButton({
 
   const handleSendMessage = (e) => {
     e.preventDefault()
-    
+
     if (!message.trim()) {
       toast.error('Please enter a message')
       return
@@ -55,12 +55,12 @@ export function MessageButton({
       toast.error('Please log in to send messages')
       return
     }
-    
+
     if (currentUserId === userId) {
       toast.error("You can't message yourself")
       return
     }
-    
+
     setShowModal(true)
   }
 
@@ -79,7 +79,7 @@ export function MessageButton({
     default: 'bg-blue-600 text-white hover:bg-blue-700',
     outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50',
     ghost: 'text-blue-600 hover:bg-blue-50',
-    secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+    secondary: 'bg-gray-50 text-gray-700 hover:bg-gray-200'
   }
 
   return (
@@ -107,7 +107,7 @@ export function MessageButton({
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             {/* Background overlay */}
-            <div 
+            <div
               className="fixed inset-0 transition-opacity bg-black bg-opacity-50"
               onClick={() => setShowModal(false)}
             />
@@ -120,7 +120,7 @@ export function MessageButton({
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-50"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -166,21 +166,21 @@ export function MessageButton({
                   <button
                     type="button"
                     onClick={() => setMessage(prev => prev + " Thanks for the great deal!")}
-                    className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                    className="px-3 py-1 text-xs bg-gray-50 hover:bg-gray-200 rounded-full transition-colors"
                   >
                     + Thanks for deal
                   </button>
                   <button
                     type="button"
                     onClick={() => setMessage(prev => prev + " Is this deal still active?")}
-                    className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                    className="px-3 py-1 text-xs bg-gray-50 hover:bg-gray-200 rounded-full transition-colors"
                   >
                     + Ask about deal
                   </button>
                   <button
                     type="button"
                     onClick={() => setMessage(prev => prev + " Do you have any similar deals?")}
-                    className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                    className="px-3 py-1 text-xs bg-gray-50 hover:bg-gray-200 rounded-full transition-colors"
                   >
                     + Ask for similar
                   </button>
@@ -227,7 +227,7 @@ export function MessageButton({
 // Compact version
 export function MessageButtonCompact({ userId, userName, className = '' }) {
   return (
-    <MessageButton 
+    <MessageButton
       userId={userId}
       userName={userName}
       size="sm"

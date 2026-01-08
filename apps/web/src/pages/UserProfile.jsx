@@ -2,10 +2,10 @@ import React, { useState } from 'react'
 import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { 
-  User, 
-  MapPin, 
-  Globe, 
+import {
+  User,
+  MapPin,
+  Globe,
   Calendar,
   Star,
   TrendingUp,
@@ -24,7 +24,7 @@ import {
   Camera
 } from 'lucide-react'
 import { Container } from '../components/Layout/Container'
-import { Skeleton } from '../components/Loader/Skeleton'
+import { Skeleton } from '../components/ui/Skeleton'
 import NewDealCard from '../components/Deal/NewDealCard'
 import CouponCard from '../components/Coupon/CouponCard'
 import { api } from '../lib/api'
@@ -37,7 +37,7 @@ const UserProfile = () => {
   const [searchParams] = useSearchParams()
   const { user: currentUser } = useAuth()
   const queryClient = useQueryClient()
-  
+
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview')
   const [viewMode, setViewMode] = useState('grid')
   const [sortBy, setSortBy] = useState('newest')
@@ -137,19 +137,19 @@ const UserProfile = () => {
   // Form validation
   const validateForm = () => {
     const errors = {}
-    
+
     if (editForm.display_name && editForm.display_name.length > 50) {
       errors.display_name = 'Display name must be less than 50 characters'
     }
-    
+
     if (editForm.bio && editForm.bio.length > 500) {
       errors.bio = 'Bio must be less than 500 characters'
     }
-    
+
     if (editForm.website && editForm.website && !editForm.website.match(/^https?:\/\/.+/)) {
       errors.website = 'Please enter a valid URL starting with http:// or https://'
     }
-    
+
     setFormErrors(errors)
     return Object.keys(errors).length === 0
   }
@@ -157,7 +157,7 @@ const UserProfile = () => {
   // Handle form input changes with validation
   const handleInputChange = (field, value) => {
     setEditForm(prev => ({ ...prev, [field]: value }))
-    
+
     // Clear error when user starts typing
     if (formErrors[field]) {
       setFormErrors(prev => ({ ...prev, [field]: '' }))
@@ -266,7 +266,7 @@ const UserProfile = () => {
       case 'moderator':
         return 'bg-blue-100 text-blue-700'
       default:
-        return 'bg-gray-100 text-gray-700'
+        return 'bg-gray-50 text-gray-700'
     }
   }
 
@@ -322,7 +322,7 @@ const UserProfile = () => {
                         {profile.display_name}
                       </h1>
                     )}
-                    
+
                     {/* Handle */}
                     <div className="flex items-center gap-3 mb-3">
                       <p className="text-lg text-gray-600 font-medium">@{profile.handle}</p>
@@ -354,7 +354,7 @@ const UserProfile = () => {
                       <span className="text-gray-600 ml-1">karma points</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                     <Calendar className="w-5 h-5 text-blue-500" />
                     <div>
@@ -378,7 +378,7 @@ const UserProfile = () => {
                       href={profile.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       <Globe className="w-5 h-5 text-purple-500" />
                       <div>
@@ -426,11 +426,10 @@ const UserProfile = () => {
                       <button
                         onClick={() => followMutation.mutate()}
                         disabled={followMutation.isPending}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md ${
-                          followStatus?.following
-                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
-                            : 'bg-primary-600 text-white hover:bg-primary-700'
-                        }`}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md ${followStatus?.following
+                          ? 'bg-gray-50 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                          : 'bg-primary-600 text-white hover:bg-primary-700'
+                          }`}
                       >
                         {followMutation.isPending ? (
                           <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -439,7 +438,7 @@ const UserProfile = () => {
                         ) : (
                           <UserPlus className="w-4 h-4" />
                         )}
-                        {followMutation.isPending 
+                        {followMutation.isPending
                           ? (followStatus?.following ? 'Unfollowing...' : 'Following...')
                           : (followStatus?.following ? 'Unfollow' : 'Follow')
                         }
@@ -550,11 +549,10 @@ const UserProfile = () => {
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-1 sm:gap-2 py-2 px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
-                          activeTab === tab.id
-                            ? 'border-primary-500 text-primary-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                        }`}
+                        className={`flex items-center gap-1 sm:gap-2 py-2 px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === tab.id
+                          ? 'border-primary-500 text-primary-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                          }`}
                       >
                         <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span className="hidden sm:inline">{tab.name}</span>
@@ -568,21 +566,19 @@ const UserProfile = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setViewMode('grid')}
-                      className={`p-2 rounded-lg transition-colors ${
-                        viewMode === 'grid'
-                          ? 'bg-primary-100 text-primary-600'
-                          : 'text-gray-400 hover:text-gray-600'
-                      }`}
+                      className={`p-2 rounded-lg transition-colors ${viewMode === 'grid'
+                        ? 'bg-primary-100 text-primary-600'
+                        : 'text-gray-400 hover:text-gray-600'
+                        }`}
                     >
                       <Grid3X3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setViewMode('list')}
-                      className={`p-2 rounded-lg transition-colors ${
-                        viewMode === 'list'
-                          ? 'bg-primary-100 text-primary-600'
-                          : 'text-gray-400 hover:text-gray-600'
-                      }`}
+                      className={`p-2 rounded-lg transition-colors ${viewMode === 'list'
+                        ? 'bg-primary-100 text-primary-600'
+                        : 'text-gray-400 hover:text-gray-600'
+                        }`}
                     >
                       <List className="w-4 h-4" />
                     </button>
@@ -641,7 +637,7 @@ const UserProfile = () => {
                       <TrendingUp className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">No content yet</h3>
                       <p className="text-gray-600">
-                        {isOwnProfile 
+                        {isOwnProfile
                           ? "You haven't posted any deals or coupons yet. Start sharing great deals with the community!"
                           : `@${profile.handle} hasn't posted any deals or coupons yet.`
                         }
@@ -669,16 +665,15 @@ const UserProfile = () => {
                       ))}
                     </div>
                   ) : userDeals && userDeals.length > 0 ? (
-                    <div className={`grid gap-6 ${
-                      viewMode === 'grid' 
-                        ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                        : 'grid-cols-1'
-                    }`}>
+                    <div className={`grid gap-6 ${viewMode === 'grid'
+                      ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                      : 'grid-cols-1'
+                      }`}>
                       {userDeals.map((deal) => (
-                        <NewDealCard 
-                          key={deal.id} 
-                          deal={deal} 
-                          variant={viewMode === 'list' ? 'compact' : 'default'} 
+                        <NewDealCard
+                          key={deal.id}
+                          deal={deal}
+                          variant={viewMode === 'list' ? 'compact' : 'default'}
                         />
                       ))}
                     </div>
@@ -687,7 +682,7 @@ const UserProfile = () => {
                       <TrendingUp className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">No deals posted</h3>
                       <p className="text-gray-600">
-                        {isOwnProfile 
+                        {isOwnProfile
                           ? "You haven't posted any deals yet."
                           : `@${profile.handle} hasn't posted any deals yet.`
                         }
@@ -706,16 +701,15 @@ const UserProfile = () => {
                       ))}
                     </div>
                   ) : userCoupons && userCoupons.length > 0 ? (
-                    <div className={`grid gap-6 ${
-                      viewMode === 'grid' 
-                        ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                        : 'grid-cols-1'
-                    }`}>
+                    <div className={`grid gap-6 ${viewMode === 'grid'
+                      ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                      : 'grid-cols-1'
+                      }`}>
                       {userCoupons.map((coupon) => (
-                        <CouponCard 
-                          key={coupon.id} 
-                          coupon={coupon} 
-                          variant={viewMode === 'list' ? 'compact' : 'default'} 
+                        <CouponCard
+                          key={coupon.id}
+                          coupon={coupon}
+                          variant={viewMode === 'list' ? 'compact' : 'default'}
                         />
                       ))}
                     </div>
@@ -724,7 +718,7 @@ const UserProfile = () => {
                       <Tag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">No coupons posted</h3>
                       <p className="text-gray-600">
-                        {isOwnProfile 
+                        {isOwnProfile
                           ? "You haven't posted any coupons yet."
                           : `@${profile.handle} hasn't posted any coupons yet.`
                         }
@@ -861,9 +855,8 @@ const UserProfile = () => {
                     type="text"
                     value={editForm.display_name}
                     onChange={(e) => handleInputChange('display_name', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                      formErrors.display_name ? 'border-red-300' : 'border-gray-300'
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${formErrors.display_name ? 'border-red-300' : 'border-gray-300'
+                      }`}
                     placeholder="How others will see your name"
                     maxLength={50}
                   />
@@ -887,9 +880,8 @@ const UserProfile = () => {
                   <textarea
                     value={editForm.bio}
                     onChange={(e) => handleInputChange('bio', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors resize-none ${
-                      formErrors.bio ? 'border-red-300' : 'border-gray-300'
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors resize-none ${formErrors.bio ? 'border-red-300' : 'border-gray-300'
+                      }`}
                     rows={4}
                     placeholder="Tell us about yourself, your interests, or what you're passionate about..."
                     maxLength={500}
@@ -928,9 +920,8 @@ const UserProfile = () => {
                     type="url"
                     value={editForm.website}
                     onChange={(e) => handleInputChange('website', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                      formErrors.website ? 'border-red-300' : 'border-gray-300'
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${formErrors.website ? 'border-red-300' : 'border-gray-300'
+                      }`}
                     placeholder="https://yourwebsite.com"
                   />
                   <div className="flex justify-between items-center mt-1">
@@ -950,7 +941,7 @@ const UserProfile = () => {
                       setShowEditModal(false)
                       setAvatarPreview(null)
                     }}
-                    className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                    className="px-6 py-3 text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                   >
                     Cancel
                   </button>

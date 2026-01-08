@@ -92,11 +92,10 @@ const UserPreferences = () => {
             <button
               key={theme.value}
               onClick={() => handlePreferenceChange('theme', theme.value)}
-              className={`p-3 border rounded-lg text-left transition-colors ${
-                preferences?.theme === theme.value
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
+              className={`p-3 border rounded-lg text-left transition-colors ${preferences?.theme === theme.value
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-300 hover:border-gray-400'
+                }`}
             >
               <div className="font-medium text-gray-900">{theme.label}</div>
               <div className="text-sm text-gray-600">{theme.description}</div>
@@ -170,14 +169,12 @@ const UserPreferences = () => {
             </div>
             <button
               onClick={() => handlePreferenceChange(setting.key, !preferences?.[setting.key])}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences?.[setting.key] ? 'bg-blue-600' : 'bg-gray-200'
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences?.[setting.key] ? 'bg-blue-600' : 'bg-gray-200'
+                }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  preferences?.[setting.key] ? 'translate-x-6' : 'translate-x-1'
-                }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${preferences?.[setting.key] ? 'translate-x-6' : 'translate-x-1'
+                  }`}
               />
             </button>
           </div>
@@ -226,14 +223,12 @@ const UserPreferences = () => {
             </div>
             <button
               onClick={() => handlePreferenceChange(setting.key, !preferences?.[setting.key])}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences?.[setting.key] ? 'bg-blue-600' : 'bg-gray-200'
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences?.[setting.key] ? 'bg-blue-600' : 'bg-gray-200'
+                }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  preferences?.[setting.key] ? 'translate-x-6' : 'translate-x-1'
-                }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${preferences?.[setting.key] ? 'translate-x-6' : 'translate-x-1'
+                  }`}
               />
             </button>
           </div>
@@ -277,14 +272,12 @@ const UserPreferences = () => {
         </div>
         <button
           onClick={() => handlePreferenceChange('show_adult_content', !preferences?.show_adult_content)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            preferences?.show_adult_content ? 'bg-blue-600' : 'bg-gray-200'
-          }`}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences?.show_adult_content ? 'bg-blue-600' : 'bg-gray-200'
+            }`}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              preferences?.show_adult_content ? 'translate-x-6' : 'translate-x-1'
-            }`}
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${preferences?.show_adult_content ? 'translate-x-6' : 'translate-x-1'
+              }`}
           />
         </button>
       </div>
@@ -355,11 +348,10 @@ const UserPreferences = () => {
                 <button
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors ${
-                    activeSection === section.id
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors ${activeSection === section.id
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-700 hover:bg-gray-50'
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   {section.name}

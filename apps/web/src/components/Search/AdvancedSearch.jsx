@@ -6,7 +6,7 @@ import { api } from '../../lib/api.js'
 export function AdvancedSearch({ isOpen, onClose, onSearch }) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  
+
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
     category_id: searchParams.get('category_id') || '',
@@ -34,7 +34,7 @@ export function AdvancedSearch({ isOpen, onClose, onSearch }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    
+
     // Build search params
     const params = new URLSearchParams()
     Object.entries(filters).forEach(([key, value]) => {
@@ -42,15 +42,15 @@ export function AdvancedSearch({ isOpen, onClose, onSearch }) {
         params.set(key, value.toString())
       }
     })
-    
+
     // Navigate to search results
     const searchUrl = `/search?${params.toString()}`
     navigate(searchUrl)
-    
+
     if (onSearch) {
       onSearch(filters)
     }
-    
+
     if (onClose) {
       onClose()
     }
@@ -68,7 +68,7 @@ export function AdvancedSearch({ isOpen, onClose, onSearch }) {
     })
   }
 
-  const hasActiveFilters = Object.values(filters).some(value => 
+  const hasActiveFilters = Object.values(filters).some(value =>
     value && value !== '' && value !== false && value !== 'hot'
   )
 
@@ -78,7 +78,7 @@ export function AdvancedSearch({ isOpen, onClose, onSearch }) {
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
         {/* Backdrop */}
-        <div 
+        <div
           className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
           onClick={onClose}
         />
@@ -225,12 +225,11 @@ export function AdvancedSearch({ isOpen, onClose, onSearch }) {
                         handleFilterChange('max_price', filter.price)
                       }
                     }}
-                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-                      (filter.value && filters.min_discount === filter.value) ||
+                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${(filter.value && filters.min_discount === filter.value) ||
                       (filter.price && filters.max_price === filter.price)
-                        ? 'bg-primary-100 border-primary-300 text-primary-700'
-                        : 'bg-white border-secondary-300 text-secondary-700 hover:bg-secondary-50'
-                    }`}
+                      ? 'bg-primary-100 border-primary-300 text-primary-700'
+                      : 'bg-white border-secondary-300 text-secondary-700 hover:bg-secondary-50'
+                      }`}
                   >
                     {filter.label}
                   </button>
@@ -282,7 +281,7 @@ export function AdvancedSearch({ isOpen, onClose, onSearch }) {
               >
                 Reset Filters
               </button>
-              
+
               <div className="flex space-x-3">
                 <button
                   type="button"

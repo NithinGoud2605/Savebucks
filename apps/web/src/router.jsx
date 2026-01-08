@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { App } from './App'
-import { Skeleton } from './components/Loader/Skeleton'
+import { Skeleton } from './components/ui/Skeleton'
 
 // Lazy load components for code splitting
 const ListPage = React.lazy(() => import('./pages/ListPage'))
@@ -42,6 +42,8 @@ const UserPreferences = React.lazy(() => import('./components/Personalization/Us
 const Achievements = React.lazy(() => import('./pages/Achievements'))
 const EnhancedLeaderboard = React.lazy(() => import('./pages/EnhancedLeaderboard'))
 const Settings = React.lazy(() => import('./pages/Settings'))
+const Chat = React.lazy(() => import('./pages/Chat'))
+const AILogs = React.lazy(() => import('./pages/AILogs'))
 
 const PageLoader = () => (
   <div className="container mx-auto px-4 py-8">
@@ -344,6 +346,22 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <CompaniesPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'chat',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <Chat />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'admin/logs',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <AILogs />
           </Suspense>
         ),
       },

@@ -29,7 +29,7 @@ export function ThreadRow({ thread, compact = false, showForum = false }) {
                 'font-semibold text-gray-900 hover:text-blue-600',
                 compact ? 'text-sm' : 'text-lg'
               )}>
-                <Link 
+                <Link
                   to={`/forums/${thread.forumSlug}/thread/${thread.id}`}
                   className="focus-ring rounded"
                 >
@@ -78,7 +78,7 @@ export function ThreadRow({ thread, compact = false, showForum = false }) {
             </div>
             <span>•</span>
             <span>{dateAgo(thread.created_at)}</span>
-            
+
             {showForum && (
               <>
                 <span>•</span>

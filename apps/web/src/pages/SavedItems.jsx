@@ -132,34 +132,31 @@ const SavedItems = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-1 mb-6 sm:mb-8 bg-gray-100 p-1 rounded-lg w-full sm:w-fit overflow-x-auto">
+      <div className="flex space-x-1 mb-6 sm:mb-8 bg-gray-50 p-1 rounded-lg w-full sm:w-fit overflow-x-auto">
         <button
           onClick={() => setActiveTab('all')}
-          className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-            activeTab === 'all'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
+          className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === 'all'
+            ? 'bg-white text-gray-900 shadow-sm'
+            : 'text-gray-600 hover:text-gray-900'
+            }`}
         >
           All ({items.length})
         </button>
         <button
           onClick={() => setActiveTab('deals')}
-          className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-            activeTab === 'deals'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
+          className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === 'deals'
+            ? 'bg-white text-gray-900 shadow-sm'
+            : 'text-gray-600 hover:text-gray-900'
+            }`}
         >
           Deals ({dealsCount})
         </button>
         <button
           onClick={() => setActiveTab('coupons')}
-          className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-            activeTab === 'coupons'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
+          className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === 'coupons'
+            ? 'bg-white text-gray-900 shadow-sm'
+            : 'text-gray-600 hover:text-gray-900'
+            }`}
         >
           Coupons ({couponsCount})
         </button>
@@ -171,7 +168,7 @@ const SavedItems = () => {
           <BookmarkIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No saved items yet</h3>
           <p className="text-gray-600 mb-6">
-            {activeTab === 'all' 
+            {activeTab === 'all'
               ? 'Start saving deals and coupons to see them here'
               : `No saved ${activeTab} yet`
             }
@@ -198,16 +195,15 @@ const SavedItems = () => {
                     src={data.image_url}
                     alt={data.title}
                     className="w-full h-48 object-cover rounded-t-lg"
-                    fallbackClassName="w-full h-48 bg-gray-100 rounded-t-lg"
+                    fallbackClassName="w-full h-48 bg-gray-50 rounded-t-lg"
                   />
-                  
+
                   {/* Type Badge */}
                   <div className="absolute top-3 left-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      isDeal 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-green-100 text-green-800'
-                    }`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${isDeal
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-green-100 text-green-800'
+                      }`}>
                       {isDeal ? 'Deal' : 'Coupon'}
                     </span>
                   </div>
@@ -251,7 +247,7 @@ const SavedItems = () => {
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <span className="text-lg font-bold text-green-600">
-                          {data.discount_type === 'percentage' 
+                          {data.discount_type === 'percentage'
                             ? `${data.discount_value}% OFF`
                             : `${formatPrice(data.discount_value)} OFF`
                           }
@@ -261,7 +257,7 @@ const SavedItems = () => {
                       {data.coupon_code && (
                         <div className="flex items-center space-x-2">
                           <TagIcon className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                          <span className="text-sm font-mono bg-gray-50 px-2 py-1 rounded">
                             {data.coupon_code}
                           </span>
                         </div>

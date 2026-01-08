@@ -29,7 +29,7 @@ import {
   ChevronDownIcon,
   ChevronUpIcon
 } from '@heroicons/react/24/outline'
-import { 
+import {
   StarIcon as StarIconSolid,
   HeartIcon as HeartIconSolid,
   BookmarkIcon as BookmarkIconSolid
@@ -45,7 +45,7 @@ const ProductImageGallery = ({ images, title, onImageClick }) => {
   const [isZoomed, setIsZoomed] = useState(false)
 
   const validImages = Array.isArray(images) ? images.filter(Boolean) : []
-  
+
   if (validImages.length === 0) {
     return (
       <div className="bg-gradient-to-br from-cream-50 via-yellow-50/30 to-amber-50/40 rounded-xl border border-gray-200 p-8 flex items-center justify-center">
@@ -68,14 +68,13 @@ const ProductImageGallery = ({ images, title, onImageClick }) => {
             <ImageWithFallback
               src={currentImage}
               alt={title}
-              className={`w-full h-full object-contain transition-transform duration-300 cursor-zoom-in ${
-                isZoomed ? 'scale-150' : 'hover:scale-105'
-              }`}
+              className={`w-full h-full object-contain transition-transform duration-300 cursor-zoom-in ${isZoomed ? 'scale-150' : 'hover:scale-105'
+                }`}
               onClick={() => setIsZoomed(!isZoomed)}
               fallbackClassName="w-full h-full"
             />
           </div>
-          
+
           {/* Zoom indicator */}
           <div className="absolute top-6 right-6 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
             <MagnifyingGlassIcon className="w-4 h-4" />
@@ -90,9 +89,8 @@ const ProductImageGallery = ({ images, title, onImageClick }) => {
             <button
               key={index}
               onClick={() => setSelectedIndex(index)}
-              className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden bg-white p-1 ${
-                selectedIndex === index ? 'border-mint-500' : 'border-gray-200 hover:border-gray-300'
-              }`}
+              className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden bg-white p-1 ${selectedIndex === index ? 'border-mint-500' : 'border-gray-200 hover:border-gray-300'
+                }`}
             >
               <ImageWithFallback
                 src={image}
@@ -111,40 +109,38 @@ const ProductImageGallery = ({ images, title, onImageClick }) => {
 // Price Display Component
 const PriceDisplay = ({ deal }) => {
   const hasDiscount = deal.original_price && deal.original_price > deal.price
-  const discountPercentage = hasDiscount 
+  const discountPercentage = hasDiscount
     ? Math.round(((deal.original_price - deal.price) / deal.original_price) * 100)
     : deal.discount_percentage
 
   return (
     <div className="space-y-3">
       <div className="flex items-baseline space-x-3 flex-wrap">
-        <span className={`font-bold text-mint-700 ${
-          deal.price > 1000 
-            ? 'text-2xl lg:text-3xl' 
-            : 'text-3xl lg:text-4xl'
-        }`}>
+        <span className={`font-bold text-mint-700 ${deal.price > 1000
+          ? 'text-2xl lg:text-3xl'
+          : 'text-3xl lg:text-4xl'
+          }`}>
           {formatPrice(deal.price)}
         </span>
-        
+
         {hasDiscount && (
           <span className="text-lg text-gray-500 line-through">
             {formatPrice(deal.original_price)}
           </span>
         )}
-        
+
         {discountPercentage > 0 && (
-          <span className={`text-white px-3 py-1 rounded-full font-bold ${
-            discountPercentage >= 50 
-              ? 'bg-gradient-to-r from-red-500 to-pink-600' 
-              : discountPercentage >= 30
+          <span className={`text-white px-3 py-1 rounded-full font-bold ${discountPercentage >= 50
+            ? 'bg-gradient-to-r from-red-500 to-pink-600'
+            : discountPercentage >= 30
               ? 'bg-gradient-to-r from-orange-500 to-red-500'
               : 'bg-gradient-to-r from-mint-500 to-emerald-600'
-          }`}>
+            }`}>
             -{discountPercentage}% OFF
           </span>
         )}
       </div>
-      
+
       {hasDiscount && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-3">
           <p className="text-sm text-green-800 font-medium">
@@ -178,28 +174,28 @@ const StockStatus = ({ deal }) => {
 
   const getStatusConfig = (status) => {
     switch (status) {
-      case 'in_stock': 
+      case 'in_stock':
         return {
           color: 'text-green-700',
           bgColor: 'bg-green-50',
           borderColor: 'border-green-200',
           text: 'In Stock'
         }
-      case 'low_stock': 
+      case 'low_stock':
         return {
           color: 'text-yellow-700',
           bgColor: 'bg-yellow-50',
           borderColor: 'border-yellow-200',
           text: 'Low Stock - Order Soon'
         }
-      case 'out_of_stock': 
+      case 'out_of_stock':
         return {
           color: 'text-red-700',
           bgColor: 'bg-red-50',
           borderColor: 'border-red-200',
           text: 'Currently Unavailable'
         }
-      default: 
+      default:
         return null // Don't show anything for unknown status
     }
   }
@@ -347,9 +343,8 @@ const RelatedDealsAndCoupons = ({ dealId, companyId }) => {
           />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className={`font-medium text-gray-900 group-hover:text-mint-700 transition-colors line-clamp-2 ${
-            deal.title.length > 60 ? 'text-sm' : 'text-base'
-          }`}>
+          <h3 className={`font-medium text-gray-900 group-hover:text-mint-700 transition-colors line-clamp-2 ${deal.title.length > 60 ? 'text-sm' : 'text-base'
+            }`}>
             {deal.title}
           </h3>
           <div className="mt-2 flex items-center justify-between">
@@ -402,9 +397,8 @@ const RelatedDealsAndCoupons = ({ dealId, companyId }) => {
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className={`font-medium text-gray-900 group-hover:text-amber-700 transition-colors line-clamp-2 ${
-            coupon.title.length > 60 ? 'text-sm' : 'text-base'
-          }`}>
+          <h3 className={`font-medium text-gray-900 group-hover:text-amber-700 transition-colors line-clamp-2 ${coupon.title.length > 60 ? 'text-sm' : 'text-base'
+            }`}>
             {coupon.title}
           </h3>
           {coupon.coupon_code && (
@@ -459,8 +453,8 @@ const RelatedDealsAndCoupons = ({ dealId, companyId }) => {
         <div className="text-center py-8">
           <div className="text-red-400 text-lg mb-2">⚠️</div>
           <div className="text-gray-600 mb-2">{error}</div>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="text-mint-600 hover:text-mint-700 text-sm font-medium"
           >
             Try again
@@ -477,21 +471,19 @@ const RelatedDealsAndCoupons = ({ dealId, companyId }) => {
         <div className="flex">
           <button
             onClick={() => setActiveTab('deals')}
-            className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
-              activeTab === 'deals'
-                ? 'text-mint-600 border-b-2 border-mint-600 bg-mint-50'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-            }`}
+            className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${activeTab === 'deals'
+              ? 'text-mint-600 border-b-2 border-mint-600 bg-mint-50'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
           >
             Related Deals
           </button>
           <button
             onClick={() => setActiveTab('coupons')}
-            className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
-              activeTab === 'coupons'
-                ? 'text-amber-600 border-b-2 border-amber-600 bg-amber-50'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-            }`}
+            className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${activeTab === 'coupons'
+              ? 'text-amber-600 border-b-2 border-amber-600 bg-amber-50'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
           >
             Company Coupons
           </button>
@@ -545,7 +537,7 @@ export default function ProfessionalDealPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  
+
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [showFullDescription, setShowFullDescription] = useState(false)
 
@@ -604,14 +596,14 @@ export default function ProfessionalDealPage() {
       toast.error('Please login to vote')
       return
     }
-    
+
     // Check if we have a valid token before making the request
     const token = localStorage.getItem('access_token')
     if (!token) {
       toast.error('Session expired. Please login again.')
       return
     }
-    
+
     const currentVote = deal?.userVote
     const newVote = currentVote === vote ? null : vote
     voteMutation.mutate({ dealId: id, vote: newVote })
@@ -688,91 +680,71 @@ export default function ProfessionalDealPage() {
   ].filter(Boolean)
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16">
-      {/* Header Section */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+    <div className="min-h-screen bg-slate-50 pt-14">
+      {/* Compact Header */}
+      <div className="bg-white border-b border-slate-200 shadow-sm">
+        <div className="max-w-5xl mx-auto px-4 py-3">
           {/* Breadcrumb */}
-          <nav className="flex items-center space-x-2 text-sm mb-4">
-            <Link to="/" className="text-mint-600 hover:text-mint-700 font-medium">Home</Link>
-            <ChevronRightIcon className="w-4 h-4 text-gray-400" />
+          <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-2">
+            <Link to="/" className="hover:text-violet-600 transition-colors">Home</Link>
+            <ChevronRightIcon className="w-3 h-3" />
             {deal.categories && (
               <>
-                <Link to={`/category/${deal.categories.slug}`} className="text-mint-600 hover:text-mint-700 font-medium">
+                <Link to={`/category/${deal.categories.slug}`} className="hover:text-violet-600 transition-colors">
                   {deal.categories.name}
                 </Link>
-                <ChevronRightIcon className="w-4 h-4 text-gray-400" />
+                <ChevronRightIcon className="w-3 h-3" />
               </>
             )}
-            <span className="text-gray-600 truncate">{truncate(deal.title, 50)}</span>
+            <span className="text-slate-400 truncate max-w-[200px]">{truncate(deal.title, 40)}</span>
           </nav>
 
-          {/* Deal Title and Company */}
-          <div className="flex items-start justify-between">
+          {/* Title Row */}
+          <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h1 className={`font-bold text-gray-900 mb-3 leading-tight ${
-                deal.title.length > 80 
-                  ? 'text-lg lg:text-xl' 
-                  : deal.title.length > 50 
-                  ? 'text-xl lg:text-2xl' 
-                  : 'text-2xl lg:text-3xl'
-              }`}>
+              <h1 className="text-lg md:text-xl font-bold text-slate-900 leading-tight line-clamp-2">
                 {deal.title}
               </h1>
-              <div className="flex items-center space-x-3 flex-wrap">
-                <div className="flex items-center space-x-2">
-                  <Link 
-                    to={`/company/${deal.companies?.slug || deal.merchant}`}
-                    className="flex items-center space-x-2 text-mint-600 hover:text-mint-700 font-medium group"
-                  >
-                    {deal.companies?.logo_url ? (
-                      <img 
-                        src={deal.companies.logo_url} 
-                        alt={deal.companies.name}
-                        className="w-6 h-6 rounded object-contain bg-white p-0.5 border border-gray-200 group-hover:border-mint-300 transition-colors"
-                      />
-                    ) : (
-                      <div className="w-6 h-6 bg-gradient-to-br from-mint-100 to-emerald-100 rounded flex items-center justify-center group-hover:from-mint-200 group-hover:to-emerald-200 transition-colors">
-                        <span className="text-xs font-bold text-mint-700">
-                          {(deal.companies?.name || deal.merchant || 'S').charAt(0)}
-                        </span>
-                      </div>
-                    )}
-                    <span className={`${
-                      (deal.companies?.name || deal.merchant || '').length > 20 
-                        ? 'text-sm' 
-                        : 'text-base'
-                    }`}>
-                      {deal.companies?.name || deal.merchant}
-                    </span>
-                  </Link>
-                  {deal.companies?.is_verified && (
-                    <CheckCircleIcon className="w-4 h-4 text-blue-500 flex-shrink-0" />
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <Link
+                  to={`/company/${deal.companies?.slug || deal.merchant}`}
+                  className="flex items-center gap-1.5 text-sm text-violet-600 hover:text-violet-700 font-medium"
+                >
+                  {deal.companies?.logo_url ? (
+                    <img src={deal.companies.logo_url} alt="" className="w-4 h-4 rounded object-contain" />
+                  ) : (
+                    <div className="w-4 h-4 bg-violet-100 rounded flex items-center justify-center text-[10px] font-bold text-violet-700">
+                      {(deal.companies?.name || deal.merchant || 'S').charAt(0)}
+                    </div>
                   )}
-                </div>
-                <span className="text-gray-400">•</span>
-                <span className="text-sm text-gray-600">{dateAgo(deal.created_at)}</span>
+                  {deal.companies?.name || deal.merchant}
+                </Link>
+                {deal.companies?.is_verified && (
+                  <CheckCircleIcon className="w-3.5 h-3.5 text-blue-500" />
+                )}
+                <span className="text-slate-300">•</span>
+                <span className="text-xs text-slate-500">{dateAgo(deal.created_at)}</span>
+                <span className="text-slate-300">•</span>
+                <span className="text-xs text-slate-500">{deal.views_count || 0} views</span>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center space-x-2 ml-4 flex-shrink-0">
+            {/* Action buttons */}
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={handleBookmark}
-                className={`p-3 rounded-lg border transition-all duration-200 ${
-                  isBookmarked 
-                    ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100' 
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                }`}
-                title={isBookmarked ? 'Remove from bookmarks' : 'Add to bookmarks'}
+                className={`p-2 rounded-lg transition-colors ${isBookmarked
+                  ? 'bg-red-50 text-red-600'
+                  : 'hover:bg-slate-100 text-slate-500'
+                  }`}
+                title="Save"
               >
                 {isBookmarked ? <HeartIconSolid className="w-5 h-5" /> : <HeartIcon className="w-5 h-5" />}
               </button>
-              
               <button
                 onClick={handleShare}
-                className="p-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
-                title="Share deal"
+                className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors"
+                title="Share"
               >
                 <ShareIcon className="w-5 h-5" />
               </button>
@@ -781,256 +753,214 @@ export default function ProfessionalDealPage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left Column - Images */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-8">
-              <ProductImageGallery 
-                images={images} 
-                title={deal.title}
-              />
+      {/* Main Content - Compact 2 Column */}
+      <div className="max-w-5xl mx-auto px-4 py-5">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+
+          {/* Left: Image Gallery */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden sticky top-20">
+              <div className="aspect-square p-3 bg-gradient-to-br from-slate-50 to-white">
+                <div className="w-full h-full bg-white rounded-lg flex items-center justify-center p-2">
+                  <ImageWithFallback
+                    src={images[0]}
+                    alt={deal.title}
+                    className="w-full h-full object-contain"
+                    fallbackClassName="w-full h-full"
+                  />
+                </div>
+              </div>
+              {/* Thumbnails */}
+              {images.length > 1 && (
+                <div className="flex gap-1.5 p-2 border-t border-slate-100 overflow-x-auto">
+                  {images.slice(0, 5).map((img, i) => (
+                    <div key={i} className="w-12 h-12 flex-shrink-0 rounded-md border border-slate-200 bg-white p-1">
+                      <ImageWithFallback src={img} alt="" className="w-full h-full object-contain" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Middle Column - Main Info */}
-          <div className="lg:col-span-1 space-y-6">
-            
-            {/* Price and Action Card */}
-            <div className="bg-gradient-to-br from-cream-50 via-yellow-50/30 to-amber-50/40 rounded-xl border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
-              <PriceDisplay deal={deal} />
-              
-              {/* Stock Status */}
-              <div className="mt-4">
-                <StockStatus deal={deal} />
+          {/* Right: All Info */}
+          <div className="lg:col-span-3 space-y-4">
+
+            {/* Price & Action Card */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              {/* Price */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-3xl font-bold text-emerald-600">{formatPrice(deal.price)}</span>
+                {deal.original_price && deal.original_price > deal.price && (
+                  <span className="text-lg text-slate-400 line-through">{formatPrice(deal.original_price)}</span>
+                )}
+                {(deal.discount_percentage || (deal.original_price && deal.original_price > deal.price)) && (
+                  <span className="px-2 py-0.5 bg-gradient-to-r from-red-500 to-orange-500 text-white text-sm font-bold rounded-full">
+                    -{deal.discount_percentage || Math.round(((deal.original_price - deal.price) / deal.original_price) * 100)}%
+                  </span>
+                )}
               </div>
 
-              {/* Coupon Code */}
-              {deal.coupon_code && (
-                <div className="mt-4 p-4 bg-white border-2 border-dashed border-green-400 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Coupon Code:</p>
-                      <code className="text-xl font-mono font-bold text-green-900">
-                        {deal.coupon_code}
-                      </code>
-                    </div>
-                    <button 
-                      onClick={() => {
-                        navigator.clipboard.writeText(deal.coupon_code)
-                        toast.success('Coupon code copied!')
-                      }}
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                    >
-                      Copy
-                    </button>
-                  </div>
+              {deal.original_price && deal.original_price > deal.price && (
+                <div className="mt-2 text-sm text-emerald-700 font-medium">
+                  💰 You save {formatPrice(deal.original_price - deal.price)}
                 </div>
               )}
 
-              {/* Main Action Button */}
-              <div className="mt-6">
-                <a
-                  href={deal.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-lg text-center block transition-all duration-300 text-lg shadow-lg hover:shadow-xl"
-                  onClick={() => {
-                    // Track click
-                    api.trackDealClick(deal.id).catch(() => {})
-                  }}
-                >
-                  Get This Deal
-                </a>
+              {/* Coupon Code */}
+              {deal.coupon_code && (
+                <div className="mt-3 flex items-center gap-2 bg-amber-50 border border-dashed border-amber-300 rounded-lg px-3 py-2">
+                  <TagIcon className="w-4 h-4 text-amber-600" />
+                  <code className="font-mono font-bold text-amber-900 flex-1">{deal.coupon_code}</code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(deal.coupon_code)
+                      toast.success('Copied!')
+                    }}
+                    className="text-xs bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 rounded font-medium"
+                  >
+                    Copy
+                  </button>
+                </div>
+              )}
+
+              {/* Stock/Expiry info */}
+              <StockStatus deal={deal} />
+
+              {/* CTA Button */}
+              <a
+                href={deal.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => api.trackDealClick(deal.id).catch(() => { })}
+                className="mt-4 w-full block text-center bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                Get This Deal →
+              </a>
+
+              {/* Voting - inline */}
+              <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleVote('up')}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${deal?.userVote === 1
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-slate-100 text-slate-600 hover:bg-emerald-50'
+                      }`}
+                  >
+                    <HandThumbUpIcon className="w-4 h-4" />
+                    {deal.upvotes || 0}
+                  </button>
+                  <button
+                    onClick={() => handleVote('down')}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${deal?.userVote === -1
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-slate-100 text-slate-600 hover:bg-red-50'
+                      }`}
+                  >
+                    <HandThumbDownIcon className="w-4 h-4" />
+                    {deal.downvotes || 0}
+                  </button>
+                </div>
+                <div className="text-sm text-slate-500">
+                  Score: <span className="font-bold text-slate-900">{(deal.upvotes || 0) - (deal.downvotes || 0)}</span>
+                </div>
               </div>
             </div>
 
-            {/* Description Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300">
-              <h3 className="font-semibold text-gray-900 mb-4">Product Details</h3>
+            {/* Description Card - Compact */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <h3 className="text-sm font-semibold text-slate-900 mb-2">Product Details</h3>
               {deal.description ? (
                 <div>
-                  <p className={`text-gray-700 leading-relaxed ${
-                    !showFullDescription && deal.description.length > 300 ? 'line-clamp-4' : ''
-                  }`}>
+                  <p className={`text-sm text-slate-600 leading-relaxed ${!showFullDescription && deal.description.length > 200 ? 'line-clamp-3' : ''}`}>
                     {deal.description}
                   </p>
-                  {deal.description.length > 300 && (
+                  {deal.description.length > 200 && (
                     <button
                       onClick={() => setShowFullDescription(!showFullDescription)}
-                      className="mt-3 text-mint-600 hover:text-mint-700 text-sm font-medium"
+                      className="mt-2 text-violet-600 hover:text-violet-700 text-xs font-medium"
                     >
-                      {showFullDescription ? 'Show less' : 'Read more'}
+                      {showFullDescription ? '↑ Show less' : '↓ Read more'}
                     </button>
                   )}
                 </div>
               ) : (
-                <p className="text-gray-500 italic">No description available</p>
+                <p className="text-sm text-slate-400 italic">No description available</p>
               )}
 
               {/* Tags */}
               {deal.tags && deal.tags.length > 0 && (
-                <div className="mt-4">
-                  <TagChips
-                    tags={deal.tags.map(t => `#${t.slug}`)}
-                    onTagClick={(tag) => navigate(`/search?q=${encodeURIComponent(tag)}`)}
-                    className="flex-wrap"
-                  />
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {deal.tags.slice(0, 6).map((tag, i) => (
+                    <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full">
+                      #{tag.name || tag.slug || tag}
+                    </span>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* Trust Indicators Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300">
-              <h3 className="font-semibold text-gray-900 mb-4">Why shop with confidence</h3>
-              <TrustIndicators />
-            </div>
-          </div>
-
-          {/* Right Column - Additional Info */}
-          <div className="lg:col-span-1 space-y-6">
-            
-            {/* Voting Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300">
-              <h3 className="font-semibold text-gray-900 mb-4">Community Rating</h3>
-              <div className="flex items-center justify-between">
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleVote('up')}
-                    className={`p-3 rounded-lg border transition-colors ${
-                      deal?.userVote === 1 
-                        ? 'bg-green-50 border-green-200 text-green-700' 
-                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <HandThumbUpIcon className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => handleVote('down')}
-                    className={`p-3 rounded-lg border transition-colors ${
-                      deal?.userVote === -1 
-                        ? 'bg-red-50 border-red-200 text-red-700' 
-                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <HandThumbDownIcon className="w-5 h-5" />
-                  </button>
+            {/* Trust & Merchant - Compact Inline */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <div className="flex items-center gap-4 text-xs text-slate-500">
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheckIcon className="w-4 h-4 text-emerald-500" />
+                  <span>Secure checkout</span>
                 </div>
-                
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-gray-900">
-                    {(deal.upvotes || 0) - (deal.downvotes || 0)}
-                  </div>
-                  <div className="text-sm text-gray-600">Net Score</div>
-                  <div className="mt-2 text-xs text-gray-500">
-                    <div className="flex items-center justify-end space-x-4">
-                      <span className="flex items-center">
-                        <HandThumbUpIcon className="w-3 h-3 mr-1 text-green-600" />
-                        {deal.upvotes || 0}
-                      </span>
-                      <span className="flex items-center">
-                        <HandThumbDownIcon className="w-3 h-3 mr-1 text-red-600" />
-                        {deal.downvotes || 0}
-                      </span>
+                <div className="flex items-center gap-1.5">
+                  <TruckIcon className="w-4 h-4 text-blue-500" />
+                  <span>Fast delivery</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <ArrowPathIcon className="w-4 h-4 text-purple-500" />
+                  <span>Easy returns</span>
+                </div>
+              </div>
+
+              {/* Merchant Info */}
+              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                <Link
+                  to={`/company/${deal.companies?.slug || deal.merchant}`}
+                  className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-violet-600 transition-colors"
+                >
+                  {deal.companies?.logo_url ? (
+                    <img src={deal.companies.logo_url} alt="" className="w-6 h-6 rounded object-contain border border-slate-200" />
+                  ) : (
+                    <div className="w-6 h-6 bg-violet-100 rounded flex items-center justify-center text-xs font-bold text-violet-700">
+                      {(deal.companies?.name || deal.merchant || 'S').charAt(0)}
                     </div>
-                  </div>
-                </div>
+                  )}
+                  <span>{deal.companies?.name || deal.merchant}</span>
+                  {deal.companies?.is_verified && <CheckCircleIcon className="w-4 h-4 text-blue-500" />}
+                </Link>
+                <a
+                  href={deal.companies?.website_url || deal.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-violet-600 hover:text-violet-700 font-medium"
+                >
+                  Visit Store →
+                </a>
               </div>
             </div>
 
-            {/* Store Information Panel */}
-            <StoreInfoPanel company={deal.company} deal={deal} />
-
-            {/* Deal Stats Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300">
-              <h3 className="font-semibold text-gray-900 mb-4">Deal Information</h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Views:</span>
-                  <span className="font-medium text-gray-900">{deal.views_count || 0}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Clicks:</span>
-                  <span className="font-medium text-gray-900">{deal.clicks_count || 0}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Posted:</span>
-                  <span className="font-medium text-gray-900">{dateAgo(deal.created_at)}</span>
-                </div>
-                {deal.expires_at && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Expires:</span>
-                    <span className="font-medium text-red-600">
-                      {dateAgo(deal.expires_at)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Related Deals Card */}
-            {relatedDeals && relatedDeals.length > 0 && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300">
-                <h3 className="font-semibold text-gray-900 mb-4">Related Deals</h3>
-                <div className="space-y-4">
-                  {relatedDeals.slice(0, 3).map((relatedDeal) => (
-                    <Link
-                      key={relatedDeal.id}
-                      to={`/deal/${relatedDeal.id}`}
-                      className="flex space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-                    >
-                      <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-cream-50 via-yellow-50/30 to-amber-50/40 border border-gray-200 p-2 flex items-center justify-center flex-shrink-0">
-                        <ImageWithFallback
-                          src={relatedDeal.image_url || relatedDeal.featured_image}
-                          alt={relatedDeal.title}
-                          className="w-full h-full object-contain"
-                          fallbackClassName="w-full h-full"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`font-medium text-gray-900 group-hover:text-mint-700 transition-colors ${
-                          relatedDeal.title.length > 60 
-                            ? 'text-xs line-clamp-2' 
-                            : 'text-sm line-clamp-2'
-                        }`}>
-                          {relatedDeal.title}
-                        </p>
-                        <p className="text-sm text-mint-600 font-bold mt-1">
-                          {formatPrice(relatedDeal.price)}
-                        </p>
-                        {relatedDeal.discount_percentage && (
-                          <span className="inline-block mt-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded">
-                            -{relatedDeal.discount_percentage}% OFF
-                          </span>
-                        )}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Related Deals and Coupons Section */}
+        {/* Related Deals Section */}
         {deal?.id && (
-          <div className="mt-8">
-            <RelatedDealsAndCoupons 
-              dealId={deal.id} 
-              companyId={deal.companies?.id} 
-            />
+          <div className="mt-6">
+            <RelatedDealsAndCoupons dealId={deal.id} companyId={deal.companies?.id} />
           </div>
         )}
 
-        {/* Reviews and Ratings Section */}
+        {/* Reviews */}
         {deal?.id && (
-          <div className="mt-12">
+          <div className="mt-6">
             <ReviewsAndRatings dealId={String(deal.id)} />
           </div>
         )}
-
       </div>
     </div>
   )

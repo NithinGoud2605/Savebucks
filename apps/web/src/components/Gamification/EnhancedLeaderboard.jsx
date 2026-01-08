@@ -20,9 +20,8 @@ const LeaderboardEntry = ({ user, rank, showDetails = false }) => {
   }
 
   return (
-    <div className={`p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${
-      rank <= 3 ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200' : 'bg-white border-gray-200'
-    }`}>
+    <div className={`p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${rank <= 3 ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200' : 'bg-white border-gray-200'
+      }`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           {/* Rank */}
@@ -33,8 +32,8 @@ const LeaderboardEntry = ({ user, rank, showDetails = false }) => {
           {/* Avatar */}
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
             {user.avatar_url ? (
-              <img 
-                src={user.avatar_url} 
+              <img
+                src={user.avatar_url}
                 alt={user.handle}
                 className="w-full h-full rounded-full object-cover"
               />
@@ -111,9 +110,8 @@ const LeaderboardFilters = ({ filters, onFiltersChange }) => {
             <button
               key={p.key}
               onClick={() => onFiltersChange({ ...filters, period: p.key })}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                filters.period === p.key ? 'bg-white shadow border border-gray-200 text-blue-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${filters.period === p.key ? 'bg-white shadow border border-gray-200 text-blue-600' : 'bg-gray-50 text-gray-700 hover:bg-gray-200'
+                }`}
             >
               {p.label}
             </button>
@@ -203,7 +201,7 @@ export default function EnhancedLeaderboard({ compact = false, showFilters = tru
       {!compact && showFilters && (
         <LeaderboardFilters filters={filters} onFiltersChange={setFilters} />
       )}
-      
+
       {!compact && <LeaderboardStats stats={stats} />}
 
       <div className="space-y-3">
@@ -215,7 +213,7 @@ export default function EnhancedLeaderboard({ compact = false, showFilters = tru
             </button>
           </div>
         )}
-        
+
         {users.map((user, index) => (
           <LeaderboardEntry
             key={user.user_id || user.id || index}

@@ -1,21 +1,21 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { 
-  StarIcon, 
-  SparklesIcon, 
+import {
+  StarIcon,
+  SparklesIcon,
   TrophyIcon,
-  FireIcon 
+  FireIcon
 } from '@heroicons/react/24/outline'
 
-export default function KarmaDisplay({ 
-  karma = 0, 
-  level = 1, 
+export default function KarmaDisplay({
+  karma = 0,
+  level = 1,
   className = '',
   showLevel = true,
   size = 'md'
 }) {
   const getKarmaLevel = () => {
-    if (karma < 50) return { level: 'Newcomer', color: 'text-gray-600', bg: 'bg-gray-100', icon: StarIcon }
+    if (karma < 50) return { level: 'Newcomer', color: 'text-gray-600', bg: 'bg-gray-50', icon: StarIcon }
     if (karma < 200) return { level: 'Contributor', color: 'text-blue-600', bg: 'bg-blue-100', icon: SparklesIcon }
     if (karma < 500) return { level: 'Expert', color: 'text-green-600', bg: 'bg-green-100', icon: TrophyIcon }
     if (karma < 1000) return { level: 'Master', color: 'text-purple-600', bg: 'bg-purple-100', icon: TrophyIcon }
@@ -44,7 +44,7 @@ export default function KarmaDisplay({
   }
 
   return (
-    <motion.div 
+    <motion.div
       className={`bg-white rounded-lg border border-gray-200 ${sizeClasses[size]} ${className}`}
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.2 }}
@@ -73,6 +73,9 @@ export default function KarmaDisplay({
     </motion.div>
   )
 }
+
+
+
 
 
 

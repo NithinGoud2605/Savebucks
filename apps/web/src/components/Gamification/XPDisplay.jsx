@@ -15,7 +15,7 @@ const XPProgressBar = ({ currentXP, nextLevelXP, level, compact = false }) => {
           <span className="text-xs font-medium text-gray-700">{currentXP} XP</span>
         </div>
         <div className="flex-1 bg-gray-200 rounded-full h-1.5 min-w-[60px]">
-          <div 
+          <div
             className="bg-gradient-to-r from-blue-500 to-purple-600 h-1.5 rounded-full transition-all duration-500"
             style={{ width: `${Math.min(progress, 100)}%` }}
           />
@@ -41,14 +41,14 @@ const XPProgressBar = ({ currentXP, nextLevelXP, level, compact = false }) => {
           <p className="font-medium">{nextLevelXP - currentXP} XP to go</p>
         </div>
       </div>
-      
+
       <div className="space-y-2">
         <div className="flex justify-between text-sm text-gray-600">
           <span>Progress to Level {level + 1}</span>
           <span>{Math.round(progress)}%</span>
         </div>
         <div className="bg-gray-200 rounded-full h-3">
-          <div 
+          <div
             className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500 relative overflow-hidden"
             style={{ width: `${Math.min(progress, 100)}%` }}
           >
@@ -171,7 +171,7 @@ export default function XPDisplay({ userId, compact = false }) {
         level={userLevel.level}
         compact={compact}
       />
-      
+
       {!compact && (
         <RecentXPGains userId={userId} />
       )}

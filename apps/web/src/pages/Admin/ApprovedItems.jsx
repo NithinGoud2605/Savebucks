@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
-import { Skeleton } from '../../components/Loader/Skeleton'
+import { Skeleton } from '../../components/ui/Skeleton'
 import AdminEditModal from '../../components/Admin/AdminEditModal'
-import { ConfirmModal } from '../../components/ui/Modal'
+import { ConfirmModal } from '../../components/ui/Dialog'
 import { toast } from '../../lib/toast'
 import {
   CheckCircleIcon,
@@ -37,9 +37,9 @@ const ItemRow = ({ item, type, onEdit, onDelete, onView }) => {
       <div className="flex items-start gap-4">
         <div className="w-16 h-16 bg-secondary-100 rounded overflow-hidden flex items-center justify-center">
           {currentImage ? (
-            <img 
-              src={currentImage} 
-              alt={item.title} 
+            <img
+              src={currentImage}
+              alt={item.title}
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.target.style.display = 'none'
@@ -63,7 +63,7 @@ const ItemRow = ({ item, type, onEdit, onDelete, onView }) => {
           </div>
           {type === 'deals' && (
             <div className="text-sm text-secondary-800 mb-2">
-              {item.price != null && <span className="font-semibold">${item.price}</span>} 
+              {item.price != null && <span className="font-semibold">${item.price}</span>}
               {item.original_price && <span className="line-through text-secondary-500 ml-2">${item.original_price}</span>}
             </div>
           )}
@@ -73,7 +73,7 @@ const ItemRow = ({ item, type, onEdit, onDelete, onView }) => {
             </div>
           )}
           <div className="text-sm text-secondary-700 line-clamp-2">{item.description}</div>
-          
+
           {/* Tags */}
           {item.deal_tags && item.deal_tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
@@ -83,7 +83,7 @@ const ItemRow = ({ item, type, onEdit, onDelete, onView }) => {
                 </span>
               ))}
               {item.deal_tags.length > 3 && (
-                <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
+                <span className="px-2 py-0.5 text-xs bg-gray-50 text-gray-600 rounded-full">
                   +{item.deal_tags.length - 3} more
                 </span>
               )}
@@ -97,7 +97,7 @@ const ItemRow = ({ item, type, onEdit, onDelete, onView }) => {
                 </span>
               ))}
               {item.coupon_tags.length > 3 && (
-                <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
+                <span className="px-2 py-0.5 text-xs bg-gray-50 text-gray-600 rounded-full">
                   +{item.coupon_tags.length - 3} more
                 </span>
               )}
@@ -105,20 +105,20 @@ const ItemRow = ({ item, type, onEdit, onDelete, onView }) => {
           )}
         </div>
         <div className="flex-shrink-0 flex gap-2">
-          <button 
-            onClick={onView} 
+          <button
+            onClick={onView}
             className="inline-flex items-center gap-1 px-3 py-2 text-sm border border-secondary-300 rounded-lg hover:bg-secondary-50 text-secondary-700"
           >
             <EyeIcon className="w-4 h-4" /> View
           </button>
-          <button 
-            onClick={onEdit} 
+          <button
+            onClick={onEdit}
             className="inline-flex items-center gap-1 px-3 py-2 text-sm border border-primary-300 rounded-lg hover:bg-primary-50 text-primary-700"
           >
             <PencilSquareIcon className="w-4 h-4" /> Edit
           </button>
-          <button 
-            onClick={onDelete} 
+          <button
+            onClick={onDelete}
             className="inline-flex items-center gap-1 px-3 py-2 text-sm border border-red-300 rounded-lg hover:bg-red-50 text-red-700"
           >
             <TrashIcon className="w-4 h-4" /> Delete
@@ -233,32 +233,30 @@ const ApprovedItems = () => {
 
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
         <div className="flex gap-2">
-          <button 
-            onClick={() => { setActiveTab('deals'); setPage(1) }} 
-            className={`px-3 py-2 rounded-lg border ${
-              activeTab === 'deals' 
-                ? 'border-primary-300 bg-primary-50 text-primary-700' 
-                : 'border-secondary-200 text-secondary-700'
-            }`}
+          <button
+            onClick={() => { setActiveTab('deals'); setPage(1) }}
+            className={`px-3 py-2 rounded-lg border ${activeTab === 'deals'
+              ? 'border-primary-300 bg-primary-50 text-primary-700'
+              : 'border-secondary-200 text-secondary-700'
+              }`}
           >
             Deals
           </button>
-          <button 
-            onClick={() => { setActiveTab('coupons'); setPage(1) }} 
-            className={`px-3 py-2 rounded-lg border ${
-              activeTab === 'coupons' 
-                ? 'border-primary-300 bg-primary-50 text-primary-700' 
-                : 'border-secondary-200 text-secondary-700'
-            }`}
+          <button
+            onClick={() => { setActiveTab('coupons'); setPage(1) }}
+            className={`px-3 py-2 rounded-lg border ${activeTab === 'coupons'
+              ? 'border-primary-300 bg-primary-50 text-primary-700'
+              : 'border-secondary-200 text-secondary-700'
+              }`}
           >
             Coupons
           </button>
         </div>
         <div className="flex-1">
-          <SearchBar 
-            value={search} 
-            onChange={setSearch} 
-            placeholder={`Search approved ${activeTab}`} 
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder={`Search approved ${activeTab}`}
           />
         </div>
       </div>

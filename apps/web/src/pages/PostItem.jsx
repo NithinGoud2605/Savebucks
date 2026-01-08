@@ -5,73 +5,73 @@ import { api } from '../lib/api'
 import { toast } from '../lib/toast'
 import { Input, Textarea } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
-import { Icon } from '../components/ui/Icon'
+import { Tag, Ticket, Settings, ChevronDown, ChevronRight, Calendar, Upload } from 'lucide-react'
 import KarmaIndicator from '../components/Submission/KarmaIndicator'
 
 export default function PostItemOrCoupon() {
   const navigate = useNavigate()
   const { isAuthenticated, isInitialized } = useAuth()
-  
+
   const [postType, setPostType] = useState('deal') // 'deal' or 'coupon'
   const [isSubmitting, setIsSubmitting] = useState(false)
-  
-                // Deal form data
-              const [dealData, setDealData] = useState({
-                title: '',
-                url: '',
-                price: '',
-                merchant: '',
-                description: '',
-                image_url: '',
-                category_id: '',
-                company_id: '',
-                deal_type: 'deal',
-                original_price: '',
-                discount_percentage: '',
-                discount_amount: '',
-                coupon_code: '',
-                coupon_type: 'none',
-                minimum_order_amount: '',
-                maximum_discount_amount: '',
-                terms_conditions: '',
-                starts_at: '',
-                expires_at: '',
-                tags: '',
-                is_featured: false,
-                is_exclusive: false,
-                stock_status: 'unknown',
-                stock_quantity: '',
-                showAdvanced: false
-              })
-  
+
+  // Deal form data
+  const [dealData, setDealData] = useState({
+    title: '',
+    url: '',
+    price: '',
+    merchant: '',
+    description: '',
+    image_url: '',
+    category_id: '',
+    company_id: '',
+    deal_type: 'deal',
+    original_price: '',
+    discount_percentage: '',
+    discount_amount: '',
+    coupon_code: '',
+    coupon_type: 'none',
+    minimum_order_amount: '',
+    maximum_discount_amount: '',
+    terms_conditions: '',
+    starts_at: '',
+    expires_at: '',
+    tags: '',
+    is_featured: false,
+    is_exclusive: false,
+    stock_status: 'unknown',
+    stock_quantity: '',
+    showAdvanced: false
+  })
+
   // Coupon form data
-                const [couponData, setCouponData] = useState({
-                title: '',
-                description: '',
-                coupon_code: '',
-                coupon_type: '',
-                discount_value: '',
-                minimum_order_amount: '',
-                maximum_discount_amount: '',
-                company_id: '',
-                category_id: '',
-                terms_conditions: '',
-                usage_limit: '',
-                usage_limit_per_user: '1',
-                starts_at: '',
-                expires_at: '',
-                source_url: '',
-                tags: [],
-                showAdvanced: false
-              })
-  
-                const [errors, setErrors] = useState({})
-              const [companies, setCompanies] = useState([])
-              const [categories, setCategories] = useState([])
-              
-              // Image upload state
-              const [dealImages, setDealImages] = useState([])
-              const [isUploading, setIsUploading] = useState(false)
+  const [couponData, setCouponData] = useState({
+    title: '',
+    description: '',
+    coupon_code: '',
+    coupon_type: '',
+    discount_value: '',
+    minimum_order_amount: '',
+    maximum_discount_amount: '',
+    company_id: '',
+    category_id: '',
+    terms_conditions: '',
+    usage_limit: '',
+    usage_limit_per_user: '1',
+    starts_at: '',
+    expires_at: '',
+    source_url: '',
+    tags: [],
+    showAdvanced: false
+  })
+
+  const [errors, setErrors] = useState({})
+  const [companies, setCompanies] = useState([])
+  const [categories, setCategories] = useState([])
+
+  // Image upload state
+  const [dealImages, setDealImages] = useState([])
+  const [isUploading, setIsUploading] = useState(false)
 
   // Redirect to sign in if not authenticated (only after auth is initialized)
   useEffect(() => {
@@ -107,20 +107,20 @@ export default function PostItemOrCoupon() {
 
   const handleInputChange = (e, formType) => {
     const { name, value } = e.target
-    
+
     // Handle date inputs - convert date to ISO string for storage
     let processedValue = value
     if ((name === 'starts_at' || name === 'expires_at') && value) {
       // Convert date input (YYYY-MM-DD) to ISO string for storage
       processedValue = new Date(value + 'T00:00:00').toISOString()
     }
-    
+
     if (formType === 'deal') {
       setDealData(prev => ({ ...prev, [name]: processedValue }))
     } else {
       setCouponData(prev => ({ ...prev, [name]: processedValue }))
     }
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }))
@@ -129,7 +129,7 @@ export default function PostItemOrCoupon() {
 
   const validateDealForm = () => {
     const newErrors = {}
-    
+
     if (!dealData.title.trim()) {
       newErrors.title = 'Title is required'
     } else if (dealData.title.trim().length < 6) {
@@ -137,7 +137,7 @@ export default function PostItemOrCoupon() {
     } else if (dealData.title.trim().length > 160) {
       newErrors.title = 'Title must be less than 160 characters'
     }
-    
+
     if (!dealData.url.trim()) {
       newErrors.url = 'URL is required'
     } else {
@@ -147,7 +147,7 @@ export default function PostItemOrCoupon() {
         newErrors.url = 'Please enter a valid URL'
       }
     }
-    
+
     if (dealData.price && dealData.price.trim()) {
       const price = parseFloat(dealData.price)
       if (isNaN(price) || price <= 0) {
@@ -156,7 +156,7 @@ export default function PostItemOrCoupon() {
         newErrors.price = 'Price must be less than $100,000'
       }
     }
-    
+
     if (dealData.merchant && dealData.merchant.trim()) {
       if (dealData.merchant.trim().length < 2) {
         newErrors.merchant = 'Merchant name must be at least 2 characters'
@@ -164,11 +164,11 @@ export default function PostItemOrCoupon() {
         newErrors.merchant = 'Merchant name must be less than 80 characters'
       }
     }
-    
+
     if (dealData.description && dealData.description.trim().length > 2000) {
       newErrors.description = 'Description must be less than 2000 characters'
     }
-    
+
     if (dealData.image_url && dealData.image_url.trim()) {
       try {
         new URL(dealData.image_url.trim())
@@ -176,14 +176,14 @@ export default function PostItemOrCoupon() {
         newErrors.image_url = 'Please enter a valid image URL'
       }
     }
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const validateCouponForm = () => {
     const newErrors = {}
-    
+
     if (!couponData.title.trim()) {
       newErrors.title = 'Title is required'
     } else if (couponData.title.trim().length < 6) {
@@ -191,21 +191,21 @@ export default function PostItemOrCoupon() {
     } else if (couponData.title.trim().length > 160) {
       newErrors.title = 'Title must be less than 160 characters'
     }
-    
+
     if (!couponData.coupon_code.trim()) {
       newErrors.coupon_code = 'Coupon code is required'
     } else if (couponData.coupon_code.trim().length > 50) {
       newErrors.coupon_code = 'Coupon code must be less than 50 characters'
     }
-    
+
     if (!couponData.company_id) {
       newErrors.company_id = 'Company is required'
     }
-    
+
     if (!couponData.coupon_type) {
       newErrors.coupon_type = 'Coupon type is required'
     }
-    
+
     if (couponData.discount_value && couponData.discount_value.trim()) {
       const value = parseFloat(couponData.discount_value)
       if (isNaN(value) || value <= 0) {
@@ -214,35 +214,35 @@ export default function PostItemOrCoupon() {
         newErrors.discount_value = 'Percentage discount cannot exceed 100%'
       }
     }
-    
+
     if (couponData.minimum_order_amount && couponData.minimum_order_amount.trim()) {
       const amount = parseFloat(couponData.minimum_order_amount)
       if (isNaN(amount) || amount < 0) {
         newErrors.minimum_order_amount = 'Minimum order amount must be a non-negative number'
       }
     }
-    
+
     if (couponData.maximum_discount_amount && couponData.maximum_discount_amount.trim()) {
       const amount = parseFloat(couponData.maximum_discount_amount)
       if (isNaN(amount) || amount <= 0) {
         newErrors.maximum_discount_amount = 'Maximum discount amount must be a positive number'
       }
     }
-    
+
     if (couponData.usage_limit && couponData.usage_limit.trim()) {
       const limit = parseInt(couponData.usage_limit)
       if (isNaN(limit) || limit <= 0) {
         newErrors.usage_limit = 'Usage limit must be a positive number'
       }
     }
-    
+
     if (couponData.usage_limit_per_user && couponData.usage_limit_per_user.trim()) {
       const limit = parseInt(couponData.usage_limit_per_user)
       if (isNaN(limit) || limit <= 0) {
         newErrors.usage_limit_per_user = 'Per-user usage limit must be a positive number'
       }
     }
-    
+
     if (couponData.source_url && couponData.source_url.trim()) {
       try {
         new URL(couponData.source_url.trim())
@@ -250,28 +250,28 @@ export default function PostItemOrCoupon() {
         newErrors.source_url = 'Please enter a valid URL'
       }
     }
-    
+
     if (couponData.description && couponData.description.trim().length > 2000) {
       newErrors.description = 'Description must be less than 2000 characters'
     }
-    
+
     if (couponData.terms_conditions && couponData.terms_conditions.trim().length > 1000) {
       newErrors.terms_conditions = 'Terms & conditions must be less than 1000 characters'
     }
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleDealSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateDealForm()) {
       return
     }
-    
+
     setIsSubmitting(true)
-    
+
     try {
       const dealPayload = {
         title: dealData.title.trim(),
@@ -299,9 +299,9 @@ export default function PostItemOrCoupon() {
         stock_status: dealData.stock_status,
         stock_quantity: dealData.stock_quantity ? parseInt(dealData.stock_quantity) : null,
       }
-      
+
       const result = await api.createDeal(dealPayload)
-      
+
       // Upload images if any
       if (dealImages.length > 0) {
         try {
@@ -311,9 +311,9 @@ export default function PostItemOrCoupon() {
           toast.warning('Deal created but image upload failed')
         }
       }
-      
+
       toast.success('Deal submitted successfully! It will be reviewed by moderators and appear on the site once approved.')
-      
+
       // Reset form
       setDealData({
         title: '',
@@ -343,15 +343,15 @@ export default function PostItemOrCoupon() {
         showAdvanced: false
       })
       setDealImages([])
-      
+
       // Navigate to home page with success notification
-      navigate('/', { 
-        state: { 
+      navigate('/', {
+        state: {
           message: 'Deal submitted successfully! It will be reviewed by moderators and appear on the site once approved.',
           type: 'success'
         }
       })
-      
+
     } catch (error) {
       console.error('Error submitting deal:', error)
       toast.error(error.message || 'Failed to submit deal. Please try again.')
@@ -362,13 +362,13 @@ export default function PostItemOrCoupon() {
 
   const handleCouponSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateCouponForm()) {
       return
     }
-    
+
     setIsSubmitting(true)
-    
+
     try {
       const couponPayload = {
         title: couponData.title.trim(),
@@ -393,11 +393,11 @@ export default function PostItemOrCoupon() {
       if (couponData.source_url && couponData.source_url.trim()) {
         couponPayload.source_url = couponData.source_url.trim()
       }
-      
+
       const result = await api.createCoupon(couponPayload)
-      
+
       toast.success('Coupon submitted successfully! It will be reviewed by moderators and appear on the site once approved.')
-      
+
       // Reset form
       setCouponData({
         title: '',
@@ -418,15 +418,15 @@ export default function PostItemOrCoupon() {
         tags: [],
         showAdvanced: false
       })
-      
+
       // Navigate to home page with success notification
-      navigate('/', { 
-        state: { 
+      navigate('/', {
+        state: {
           message: 'Coupon submitted successfully! It will be reviewed by moderators and appear on the site once approved.',
           type: 'success'
         }
       })
-      
+
     } catch (error) {
       console.error('Error submitting coupon:', error)
       toast.error(error.message || 'Failed to submit coupon. Please try again.')
@@ -438,32 +438,32 @@ export default function PostItemOrCoupon() {
   // Image upload functions (deals only)
   const handleImageUpload = (e, formType) => {
     if (formType !== 'deal') return // Only handle deals
-    
+
     const files = Array.from(e.target.files)
     const maxFiles = 5
     const maxSize = 10 // MB
     const currentImages = dealImages.length
-    
+
     if (currentImages + files.length > maxFiles) {
       toast.error(`Maximum ${maxFiles} images allowed. You can add ${maxFiles - currentImages} more.`)
       return
     }
-    
+
     const validFiles = files.filter(file => {
       if (file.size > maxSize * 1024 * 1024) {
         toast.error(`${file.name} is too large. Max size: ${maxSize}MB`)
         return false
       }
-      
+
       const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
       if (!validTypes.includes(file.type)) {
         toast.error(`${file.name} is not a valid image type`)
         return false
       }
-      
+
       return true
     })
-    
+
     setDealImages(prev => [...prev, ...validFiles])
     if (validFiles.length > 0) {
       toast.success(`Added ${validFiles.length} image${validFiles.length !== 1 ? 's' : ''}`)
@@ -478,7 +478,7 @@ export default function PostItemOrCoupon() {
 
   const uploadImages = async (entityId, formType) => {
     if (formType === 'deal' && dealImages.length === 0) return
-    
+
     setIsUploading(true)
     try {
       if (formType === 'deal') {
@@ -508,34 +508,34 @@ export default function PostItemOrCoupon() {
   const handleDrop = (e, formType) => {
     e.preventDefault()
     e.currentTarget.setAttribute('data-dragover', 'false')
-    
+
     if (formType !== 'deal') return // Only handle deals
-    
+
     const files = Array.from(e.dataTransfer.files)
     const maxFiles = 5
     const maxSize = 10 // MB
     const currentImages = dealImages.length
-    
+
     if (currentImages + files.length > maxFiles) {
       toast.error(`Maximum ${maxFiles} images allowed. You can add ${maxFiles - currentImages} more.`)
       return
     }
-    
+
     const validFiles = files.filter(file => {
       if (file.size > maxSize * 1024 * 1024) {
         toast.error(`${file.name} is too large. Max size: ${maxSize}MB`)
         return false
       }
-      
+
       const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
       if (!validTypes.includes(file.type)) {
         toast.error(`${file.name} is not a valid image type`)
         return false
       }
-      
+
       return true
     })
-    
+
     setDealImages(prev => [...prev, ...validFiles])
     if (validFiles.length > 0) {
       toast.success(`Added ${validFiles.length} image${validFiles.length !== 1 ? 's' : ''}`)
@@ -585,7 +585,7 @@ export default function PostItemOrCoupon() {
       </div>
     )
   }
-  
+
   // Don't render the form if not authenticated
   if (!isAuthenticated) {
     return null
@@ -609,24 +609,22 @@ export default function PostItemOrCoupon() {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => setPostType('deal')}
-              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
-                postType === 'deal'
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${postType === 'deal'
                   ? 'bg-primary-600 text-white shadow-md'
                   : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
-              }`}
+                }`}
             >
-              <Icon name="tag" size="sm" className="mx-auto mb-1" />
+              <Tag className="w-4 h-4 mx-auto mb-1" />
               Post a Deal
             </button>
             <button
               onClick={() => setPostType('coupon')}
-              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
-                postType === 'coupon'
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${postType === 'coupon'
                   ? 'bg-primary-600 text-white shadow-md'
                   : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
-              }`}
+                }`}
             >
-              <Icon name="ticket" size="sm" className="mx-auto mb-1" />
+              <Ticket className="w-4 h-4 mx-auto mb-1" />
               Share a Coupon
             </button>
           </div>
@@ -638,14 +636,14 @@ export default function PostItemOrCoupon() {
             <h2 className="text-lg sm:text-xl font-bold text-secondary-900 mb-4 text-center">
               Share a Great Deal
             </h2>
-            
+
             {/* Karma Points Indicator */}
-            <KarmaIndicator 
-              submissionType="deal" 
+            <KarmaIndicator
+              submissionType="deal"
               formData={dealData}
               className="mb-6"
             />
-            
+
             <form onSubmit={handleDealSubmit} className="space-y-4">
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -661,7 +659,7 @@ export default function PostItemOrCoupon() {
                   leftIcon="tag"
                   size="sm"
                 />
-                
+
                 <Input
                   label="Deal URL *"
                   name="url"
@@ -701,13 +699,13 @@ export default function PostItemOrCoupon() {
                   onClick={() => setDealData(prev => ({ ...prev, showAdvanced: !prev.showAdvanced }))}
                   className="flex items-center space-x-2 text-secondary-600 hover:text-secondary-800 transition-colors w-full text-left"
                 >
-                  <Icon 
-                    name={dealData.showAdvanced ? "chevronDown" : "chevronRight"} 
-                    size="sm" 
+                  <Icon
+                    name={dealData.showAdvanced ? "chevronDown" : "chevronRight"}
+                    size="sm"
                     className="transition-transform duration-200"
                   />
                   <span className="font-medium">
-                    {dealData.showAdvanced ? 'Hide Advanced Details' : 'Add More Details'} 
+                    {dealData.showAdvanced ? 'Hide Advanced Details' : 'Add More Details'}
                     <span className="text-sm font-normal text-secondary-500 ml-2">
                       (optional fields for better deal visibility)
                     </span>
@@ -724,11 +722,11 @@ export default function PostItemOrCoupon() {
               {dealData.showAdvanced && (
                 <div className="space-y-4 bg-gradient-to-br from-secondary-50 to-blue-50 rounded-xl p-4 border border-secondary-200 shadow-sm animate-in slide-in-from-top-2 duration-300">
                   <div className="flex items-center space-x-2 mb-4">
-                    <Icon name="settings" size="sm" className="text-secondary-600" />
+                    <Settings className="w-4 h-4 text-secondary-600" />
                     <h3 className="text-lg font-semibold text-secondary-800">Advanced Deal Information</h3>
                     <span className="text-xs bg-secondary-200 text-secondary-700 px-2 py-1 rounded-full">Optional</span>
                   </div>
-                  
+
                   {/* Advanced Pricing */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input
@@ -746,7 +744,7 @@ export default function PostItemOrCoupon() {
                       max="100000"
                       size="sm"
                     />
-                    
+
                     <Input
                       label="Discount %"
                       name="discount_percentage"
@@ -776,12 +774,12 @@ export default function PostItemOrCoupon() {
                       leftIcon="store"
                       size="sm"
                     />
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-secondary-700 mb-2">Category</label>
-                      <select 
-                        name="category_id" 
-                        value={dealData.category_id} 
+                      <select
+                        name="category_id"
+                        value={dealData.category_id}
                         onChange={(e) => handleInputChange(e, 'deal')}
                         className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200"
                       >
@@ -797,9 +795,9 @@ export default function PostItemOrCoupon() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-secondary-700 mb-2">Deal Type</label>
-                      <select 
-                        name="deal_type" 
-                        value={dealData.deal_type} 
+                      <select
+                        name="deal_type"
+                        value={dealData.deal_type}
                         onChange={(e) => handleInputChange(e, 'deal')}
                         className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200"
                       >
@@ -811,7 +809,7 @@ export default function PostItemOrCoupon() {
                         <option value="cashback">Cashback</option>
                       </select>
                     </div>
-                    
+
                     <Input
                       label="Coupon Code"
                       name="coupon_code"
@@ -823,12 +821,12 @@ export default function PostItemOrCoupon() {
                       leftIcon="hash"
                       size="sm"
                     />
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-secondary-700 mb-2">Coupon Type</label>
-                      <select 
-                        name="coupon_type" 
-                        value={dealData.coupon_type} 
+                      <select
+                        name="coupon_type"
+                        value={dealData.coupon_type}
                         onChange={(e) => handleInputChange(e, 'deal')}
                         className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200"
                       >
@@ -855,12 +853,12 @@ export default function PostItemOrCoupon() {
                           className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
                           min={new Date().toISOString().split('T')[0]}
                         />
-                        <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400 pointer-events-none" />
+                        <Calendar className="w-4 h-4 absolute right-3 top-2.5 text-secondary-400 pointer-events-none" />
                       </div>
                       <p className="mt-1 text-xs text-secondary-500">When the deal becomes active (optional)</p>
                       {errors.starts_at && <p className="mt-1 text-sm text-danger-600">{errors.starts_at}</p>}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-secondary-700 mb-2">
                         Expiration Date
@@ -874,7 +872,7 @@ export default function PostItemOrCoupon() {
                           className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
                           min={formatDateForInput(dealData.starts_at) || new Date().toISOString().split('T')[0]}
                         />
-                        <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400 pointer-events-none" />
+                        <Calendar className="w-4 h-4 absolute right-3 top-2.5 text-secondary-400 pointer-events-none" />
                       </div>
                       <p className="mt-1 text-xs text-secondary-500">When the deal expires (optional)</p>
                       {errors.expires_at && <p className="mt-1 text-sm text-danger-600">{errors.expires_at}</p>}
@@ -885,9 +883,9 @@ export default function PostItemOrCoupon() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-secondary-700 mb-2">Stock Status</label>
-                      <select 
-                        name="stock_status" 
-                        value={dealData.stock_status} 
+                      <select
+                        name="stock_status"
+                        value={dealData.stock_status}
                         onChange={(e) => handleInputChange(e, 'deal')}
                         className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200"
                       >
@@ -897,7 +895,7 @@ export default function PostItemOrCoupon() {
                         <option value="out_of_stock">Out of Stock</option>
                       </select>
                     </div>
-                    
+
                     <Input
                       label="Stock Quantity"
                       name="stock_quantity"
@@ -911,7 +909,7 @@ export default function PostItemOrCoupon() {
                       min="0"
                       size="sm"
                     />
-                    
+
                   </div>
 
                   {/* Additional Fields */}
@@ -927,7 +925,7 @@ export default function PostItemOrCoupon() {
                       leftIcon="hash"
                       size="sm"
                     />
-                    
+
                     <Input
                       label="Image URL (Alternative)"
                       name="image_url"
@@ -973,7 +971,7 @@ export default function PostItemOrCoupon() {
               {/* Image Upload Section */}
               <div className="space-y-3">
                 <label className="block text-sm font-medium text-secondary-700">Product Images</label>
-                <div 
+                <div
                   className="border-2 border-dashed border-secondary-300 rounded-xl p-6 text-center hover:border-primary-400 transition-all duration-200 data-[dragover=true]:border-primary-400 data-[dragover=true]:bg-primary-50"
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -989,53 +987,53 @@ export default function PostItemOrCoupon() {
                     id="deal-image-upload"
                   />
                   <label htmlFor="deal-image-upload" className="cursor-pointer">
-                    <Icon name="upload" size="lg" className="mx-auto mb-2 text-secondary-400" />
+                    <Upload className="w-6 h-6 mx-auto mb-2 text-secondary-400" />
                     <p className="text-secondary-600 mb-1">Click to upload images or drag and drop</p>
                     <p className="text-sm text-secondary-500">Up to 5 images, max 10MB each (JPEG, PNG, WebP, GIF)</p>
                   </label>
                 </div>
-                
-                              {/* Image Preview */}
-              {dealImages.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-secondary-600">
-                      {dealImages.length} image{dealImages.length !== 1 ? 's' : ''} selected
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setDealImages([])}
-                      className="text-sm text-red-600 hover:text-red-700 font-medium"
-                    >
-                      Clear All
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {dealImages.map((file, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={`Preview ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg border border-secondary-200"
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index, 'deal')}
-                            className="bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                          >
-                            <Icon name="x" size="sm" />
-                          </button>
+
+                {/* Image Preview */}
+                {dealImages.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-secondary-600">
+                        {dealImages.length} image{dealImages.length !== 1 ? 's' : ''} selected
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setDealImages([])}
+                        className="text-sm text-red-600 hover:text-red-700 font-medium"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {dealImages.map((file, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border border-secondary-200"
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index, 'deal')}
+                              className="bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                            >
+                              <Icon name="x" size="sm" />
+                            </button>
+                          </div>
+                          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 rounded-b-lg">
+                            <div className="truncate">{file.name.length > 20 ? file.name.substring(0, 17) + '...' : file.name}</div>
+                            <div className="text-xs opacity-75">{formatFileSize(file.size)}</div>
+                          </div>
                         </div>
-                        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 rounded-b-lg">
-                          <div className="truncate">{file.name.length > 20 ? file.name.substring(0, 17) + '...' : file.name}</div>
-                          <div className="text-xs opacity-75">{formatFileSize(file.size)}</div>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
               </div>
 
 
@@ -1062,14 +1060,14 @@ export default function PostItemOrCoupon() {
             <h2 className="text-lg sm:text-xl font-bold text-secondary-900 mb-4 text-center">
               Share a Coupon
             </h2>
-            
+
             {/* Karma Points Indicator */}
-            <KarmaIndicator 
-              submissionType="coupon" 
+            <KarmaIndicator
+              submissionType="coupon"
               formData={couponData}
               className="mb-6"
             />
-            
+
             <form onSubmit={handleCouponSubmit} className="space-y-4">
               {/* Title Field */}
               <Input
@@ -1099,7 +1097,7 @@ export default function PostItemOrCoupon() {
                   leftIcon="hash"
                   size="sm"
                 />
-                
+
                 <div>
                   <label className="block text-sm font-medium text-secondary-700 mb-2">
                     Coupon Type *
@@ -1141,7 +1139,7 @@ export default function PostItemOrCoupon() {
                   min="0"
                   size="sm"
                 />
-                
+
                 <div>
                   <label className="block text-sm font-medium text-secondary-700 mb-2">
                     Company/Store *
@@ -1174,13 +1172,13 @@ export default function PostItemOrCoupon() {
                   onClick={() => setCouponData(prev => ({ ...prev, showAdvanced: !prev.showAdvanced }))}
                   className="flex items-center space-x-2 text-secondary-600 hover:text-secondary-800 transition-colors w-full text-left"
                 >
-                  <Icon 
-                    name={couponData.showAdvanced ? "chevronDown" : "chevronRight"} 
-                    size="sm" 
+                  <Icon
+                    name={couponData.showAdvanced ? "chevronDown" : "chevronRight"}
+                    size="sm"
                     className="transition-transform duration-200"
                   />
                   <span className="font-medium">
-                    {couponData.showAdvanced ? 'Hide Advanced Details' : 'Add More Details'} 
+                    {couponData.showAdvanced ? 'Hide Advanced Details' : 'Add More Details'}
                     <span className="text-sm font-normal text-secondary-500 ml-2">
                       (optional fields for better coupon visibility)
                     </span>
@@ -1197,195 +1195,195 @@ export default function PostItemOrCoupon() {
               {couponData.showAdvanced && (
                 <div className="space-y-4 bg-gradient-to-br from-secondary-50 to-blue-50 rounded-xl p-4 border border-secondary-200 shadow-sm animate-in slide-in-from-top-2 duration-300">
                   <div className="flex items-center space-x-2 mb-4">
-                    <Icon name="settings" size="sm" className="text-secondary-600" />
+                    <Settings className="w-4 h-4 text-secondary-600" />
                     <h3 className="text-lg font-semibold text-secondary-800">Advanced Coupon Information</h3>
                     <span className="text-xs bg-secondary-200 text-secondary-700 px-2 py-1 rounded-full">Optional</span>
                   </div>
 
-              {/* Minimum Order and Max Discount Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="Minimum Order Amount"
-                  name="minimum_order_amount"
-                  type="number"
-                  value={couponData.minimum_order_amount}
-                  onChange={(e) => handleInputChange(e, 'coupon')}
-                  placeholder="50.00"
-                  error={errors.minimum_order_amount}
-                  description="Minimum purchase required (optional)"
-                  leftIcon="dollarSign"
-                  step="0.01"
-                  min="0"
-                  size="sm"
-                />
-                
-                <Input
-                  label="Maximum Discount Amount"
-                  name="maximum_discount_amount"
-                  type="number"
-                  value={couponData.maximum_discount_amount}
-                  onChange={(e) => handleInputChange(e, 'coupon')}
-                  placeholder="25.00"
-                  error={errors.maximum_discount_amount}
-                  description="Maximum discount allowed (optional)"
-                  leftIcon="dollarSign"
-                  step="0.01"
-                  min="0"
-                  size="sm"
-                />
-              </div>
-
-              {/* Usage Limits Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="Total Usage Limit"
-                  name="usage_limit"
-                  type="number"
-                  value={couponData.usage_limit}
-                  onChange={(e) => handleInputChange(e, 'coupon')}
-                  placeholder="1000"
-                  error={errors.usage_limit}
-                  description="How many times this coupon can be used total (optional)"
-                  leftIcon="users"
-                  min="1"
-                  size="sm"
-                />
-                
-                <Input
-                  label="Per-User Usage Limit"
-                  name="usage_limit_per_user"
-                  type="number"
-                  value={couponData.usage_limit_per_user}
-                  onChange={(e) => handleInputChange(e, 'coupon')}
-                  placeholder="1"
-                  error={errors.usage_limit_per_user}
-                  description="How many times each user can use this coupon"
-                  leftIcon="user"
-                  min="1"
-                  size="sm"
-                />
-              </div>
-
-              {/* Dates Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
-                    Start Date
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      name="starts_at"
-                      value={formatDateForInput(couponData.starts_at)}
+                  {/* Minimum Order and Max Discount Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Minimum Order Amount"
+                      name="minimum_order_amount"
+                      type="number"
+                      value={couponData.minimum_order_amount}
                       onChange={(e) => handleInputChange(e, 'coupon')}
-                      className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
-                      min={new Date().toISOString().split('T')[0]}
+                      placeholder="50.00"
+                      error={errors.minimum_order_amount}
+                      description="Minimum purchase required (optional)"
+                      leftIcon="dollarSign"
+                      step="0.01"
+                      min="0"
+                      size="sm"
                     />
-                    <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400 pointer-events-none" />
-                  </div>
-                  <p className="mt-1 text-xs text-secondary-500">When the coupon becomes valid (optional)</p>
-                  {errors.starts_at && <p className="mt-1 text-sm text-danger-600">{errors.starts_at}</p>}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
-                    Expiration Date
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      name="expires_at"
-                      value={formatDateForInput(couponData.expires_at)}
+
+                    <Input
+                      label="Maximum Discount Amount"
+                      name="maximum_discount_amount"
+                      type="number"
+                      value={couponData.maximum_discount_amount}
                       onChange={(e) => handleInputChange(e, 'coupon')}
-                      className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
-                      min={formatDateForInput(couponData.starts_at) || new Date().toISOString().split('T')[0]}
+                      placeholder="25.00"
+                      error={errors.maximum_discount_amount}
+                      description="Maximum discount allowed (optional)"
+                      leftIcon="dollarSign"
+                      step="0.01"
+                      min="0"
+                      size="sm"
                     />
-                    <Icon name="calendar" size="sm" className="absolute right-3 top-2.5 text-secondary-400 pointer-events-none" />
                   </div>
-                  <p className="mt-1 text-xs text-secondary-500">When the coupon expires (optional)</p>
-                  {errors.expires_at && <p className="mt-1 text-sm text-danger-600">{errors.expires_at}</p>}
-                </div>
-              </div>
 
-              {/* Source URL and Category Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="Source URL"
-                  name="source_url"
-                  type="url"
-                  value={couponData.source_url}
-                  onChange={(e) => handleInputChange(e, 'coupon')}
-                  placeholder="https://example.com/coupon-page"
-                  error={errors.source_url}
-                  description="Where users can find/use this coupon (optional)"
-                  leftIcon="link"
-                  size="sm"
-                />
-                
-                <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
-                    Category
-                  </label>
-                  <select
-                    name="category_id"
-                    value={couponData.category_id}
-                    onChange={(e) => handleInputChange(e, 'coupon')}
-                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
-                  >
-                    <option value="">Select a category (optional)</option>
-                    {categories.map(category => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="mt-1 text-xs text-secondary-500">Product category for better organization (optional)</p>
-                </div>
-              </div>
+                  {/* Usage Limits Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Total Usage Limit"
+                      name="usage_limit"
+                      type="number"
+                      value={couponData.usage_limit}
+                      onChange={(e) => handleInputChange(e, 'coupon')}
+                      placeholder="1000"
+                      error={errors.usage_limit}
+                      description="How many times this coupon can be used total (optional)"
+                      leftIcon="users"
+                      min="1"
+                      size="sm"
+                    />
 
-              {/* Description and Terms Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Textarea
-                  label="Description"
-                  name="description"
-                  value={couponData.description}
-                  onChange={(e) => handleInputChange(e, 'coupon')}
-                  placeholder="Describe what this coupon offers and any important details..."
-                  error={errors.description}
-                  description="Additional details about the coupon (optional)"
-                  rows={2}
-                  leftIcon="messageSquare"
-                />
-                
-                <Textarea
-                  label="Terms & Conditions"
-                  name="terms_conditions"
-                  value={couponData.terms_conditions}
-                  onChange={(e) => handleInputChange(e, 'coupon')}
-                  placeholder="Any restrictions, exclusions, or special terms..."
-                  error={errors.terms_conditions}
-                  description="Important terms users should know (optional)"
-                  rows={2}
-                  leftIcon="fileText"
-                />
-              </div>
+                    <Input
+                      label="Per-User Usage Limit"
+                      name="usage_limit_per_user"
+                      type="number"
+                      value={couponData.usage_limit_per_user}
+                      onChange={(e) => handleInputChange(e, 'coupon')}
+                      placeholder="1"
+                      error={errors.usage_limit_per_user}
+                      description="How many times each user can use this coupon"
+                      leftIcon="user"
+                      min="1"
+                      size="sm"
+                    />
+                  </div>
 
-              {/* Tags Input */}
-              <Input
-                label="Tags"
-                name="tags"
-                value={Array.isArray(couponData.tags) ? couponData.tags.join(', ') : couponData.tags || ''}
-                onChange={(e) => {
-                  const tagsValue = e.target.value
-                  const tagsArray = tagsValue ? tagsValue.split(',').map(tag => tag.trim()).filter(tag => tag) : []
-                  setCouponData(prev => ({ ...prev, tags: tagsArray }))
-                }}
-                placeholder="electronics, discount, new-customer"
-                error={errors.tags}
-                description="Comma-separated tags to help users find this coupon (optional)"
-                leftIcon="tag"
-                size="sm"
-              />
+                  {/* Dates Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Start Date
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          name="starts_at"
+                          value={formatDateForInput(couponData.starts_at)}
+                          onChange={(e) => handleInputChange(e, 'coupon')}
+                          className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
+                          min={new Date().toISOString().split('T')[0]}
+                        />
+                        <Calendar className="w-4 h-4 absolute right-3 top-2.5 text-secondary-400 pointer-events-none" />
+                      </div>
+                      <p className="mt-1 text-xs text-secondary-500">When the coupon becomes valid (optional)</p>
+                      {errors.starts_at && <p className="mt-1 text-sm text-danger-600">{errors.starts_at}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Expiration Date
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          name="expires_at"
+                          value={formatDateForInput(couponData.expires_at)}
+                          onChange={(e) => handleInputChange(e, 'coupon')}
+                          className="w-full px-4 py-2 border border-secondary-300 rounded-xl bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
+                          min={formatDateForInput(couponData.starts_at) || new Date().toISOString().split('T')[0]}
+                        />
+                        <Calendar className="w-4 h-4 absolute right-3 top-2.5 text-secondary-400 pointer-events-none" />
+                      </div>
+                      <p className="mt-1 text-xs text-secondary-500">When the coupon expires (optional)</p>
+                      {errors.expires_at && <p className="mt-1 text-sm text-danger-600">{errors.expires_at}</p>}
+                    </div>
+                  </div>
+
+                  {/* Source URL and Category Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Source URL"
+                      name="source_url"
+                      type="url"
+                      value={couponData.source_url}
+                      onChange={(e) => handleInputChange(e, 'coupon')}
+                      placeholder="https://example.com/coupon-page"
+                      error={errors.source_url}
+                      description="Where users can find/use this coupon (optional)"
+                      leftIcon="link"
+                      size="sm"
+                    />
+
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Category
+                      </label>
+                      <select
+                        name="category_id"
+                        value={couponData.category_id}
+                        onChange={(e) => handleInputChange(e, 'coupon')}
+                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 text-sm"
+                      >
+                        <option value="">Select a category (optional)</option>
+                        {categories.map(category => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-1 text-xs text-secondary-500">Product category for better organization (optional)</p>
+                    </div>
+                  </div>
+
+                  {/* Description and Terms Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Textarea
+                      label="Description"
+                      name="description"
+                      value={couponData.description}
+                      onChange={(e) => handleInputChange(e, 'coupon')}
+                      placeholder="Describe what this coupon offers and any important details..."
+                      error={errors.description}
+                      description="Additional details about the coupon (optional)"
+                      rows={2}
+                      leftIcon="messageSquare"
+                    />
+
+                    <Textarea
+                      label="Terms & Conditions"
+                      name="terms_conditions"
+                      value={couponData.terms_conditions}
+                      onChange={(e) => handleInputChange(e, 'coupon')}
+                      placeholder="Any restrictions, exclusions, or special terms..."
+                      error={errors.terms_conditions}
+                      description="Important terms users should know (optional)"
+                      rows={2}
+                      leftIcon="fileText"
+                    />
+                  </div>
+
+                  {/* Tags Input */}
+                  <Input
+                    label="Tags"
+                    name="tags"
+                    value={Array.isArray(couponData.tags) ? couponData.tags.join(', ') : couponData.tags || ''}
+                    onChange={(e) => {
+                      const tagsValue = e.target.value
+                      const tagsArray = tagsValue ? tagsValue.split(',').map(tag => tag.trim()).filter(tag => tag) : []
+                      setCouponData(prev => ({ ...prev, tags: tagsArray }))
+                    }}
+                    placeholder="electronics, discount, new-customer"
+                    error={errors.tags}
+                    description="Comma-separated tags to help users find this coupon (optional)"
+                    leftIcon="tag"
+                    size="sm"
+                  />
 
                 </div>
               )}

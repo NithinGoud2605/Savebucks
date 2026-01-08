@@ -1,139 +1,194 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { api } from '../../lib/api';
-import { clsx } from 'clsx';
-import { 
-  Flame, 
-  TrendingUp, 
-  Tag, 
-  ArrowRight, 
-  Loader2,
-  Trophy,
-  Store,
-  Hash,
+import { Area, AreaChart, ResponsiveContainer } from 'recharts';
+import {
+  TrendingUp,
   TrendingDown,
-  Star,
+  ArrowRight,
+  Trophy,
+  Building2,
+  Sparkles,
   Crown,
-  Award,
-  Target,
-  Shield,
-  Diamond,
-  Rocket,
-  Zap,
-  Compass,
-  Heart
+  Users
 } from 'lucide-react';
+import { Skeleton } from '../ui/Skeleton';
+import { Separator } from '../ui/Separator';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../ui/Tooltip';
+
+// Mini sparkline component
+function MiniSparkline({ data, color, trend }) {
+  const chartData = data.map((value, index) => ({ value, index }));
+  const gradientId = `gradient-${Math.random().toString(36).substr(2, 9)}`;
+
+  return (
+    <div className="w-12 h-6">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.4} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke={color}
+            strokeWidth={1.5}
+            fill={`url(#${gradientId})`}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 export function RightSidebar() {
   return (
-    <aside className="space-y-3">
-      <TrendingTagsWidget />
-      <TopCompaniesWidget />
-      <LeaderboardWidget />
-    </aside>
+    <TooltipProvider delayDuration={300}>
+      <aside className="space-y-4">
+        <TrendingTagsWidget />
+        <Separator className="bg-slate-200" />
+        <LeaderboardWidget />
+      </aside>
+    </TooltipProvider>
   );
 }
 
-/**
- * HOT Community Highlight
- */
-function HotCommunityBox() {
+
+function TrendingTagsWidget() {
+  // Simulated trend data (could come from API)
+  const tags = [
+    { name: 'Electronics', count: 124, trend: 'up', data: [45, 52, 38, 65, 78, 85, 95], color: '#8b5cf6' },
+    { name: 'Fashion', count: 89, trend: 'up', data: [30, 42, 55, 48, 62, 70, 68], color: '#ec4899' },
+    { name: 'Home', count: 67, trend: 'down', data: [80, 72, 68, 55, 45, 40, 35], color: '#ef4444' },
+    { name: 'Beauty', count: 45, trend: 'up', data: [20, 25, 32, 38, 42, 48, 55], color: '#f59e0b' },
+  ];
+
   return (
-    <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-lg border-2 border-orange-300 p-2 shadow-sm">
-      <div className="flex items-center gap-1.5 mb-1.5">
-        <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-1.5 py-0.5 rounded text-xs font-bold uppercase tracking-wide flex items-center gap-1 shadow-sm">
-          <Flame className="w-2.5 h-2.5" />
-          HOT
-        </div>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 }}
+      className="bg-white rounded-xl p-3 shadow-sm"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-violet-500" />
+          Trending
+        </h3>
+        <Link to="/tags" className="text-[10px] text-violet-600 hover:text-violet-700 flex items-center gap-0.5 font-medium">
+          All <ArrowRight className="w-2.5 h-2.5" />
+        </Link>
       </div>
 
-      <div className="flex items-start gap-1.5">
-        {/* Avatar */}
-        <div className="flex-shrink-0 w-6 h-6 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm">
-          JD
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="font-bold text-gray-900 text-xs mb-0.5">john_doe</div>
-          <div className="text-xs text-gray-700 leading-tight">
-            Shared a whipping <span className="font-bold text-orange-900">70% off</span> on tech products 🌟
-          </div>
-        </div>
+      <div className="space-y-1.5">
+        {tags.map((tag, index) => (
+          <motion.div
+            key={tag.name}
+            initial={{ opacity: 0, x: -5 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 + index * 0.03 }}
+          >
+            <Link
+              to={`/tag/${tag.name.toLowerCase()}`}
+              className="flex items-center gap-2 px-2.5 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-xs font-medium text-slate-700 transition-all duration-200"
+            >
+              <span className="flex-1 truncate">{tag.name}</span>
+              <MiniSparkline data={tag.data} color={tag.color} trend={tag.trend} />
+              <span className="text-slate-400 text-[10px] min-w-[24px] text-right">{tag.count}</span>
+              {tag.trend === 'up' ? (
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+              ) : (
+                <TrendingDown className="w-3.5 h-3.5 text-red-400" />
+              )}
+            </Link>
+          </motion.div>
+        ))}
       </div>
-
-      <Link
-        to="/forums"
-        className="mt-1.5 block text-center bg-white hover:bg-gray-50 text-orange-900 font-semibold py-1 rounded text-xs transition-all duration-200 shadow-sm"
-      >
-        View Community
-      </Link>
-    </div>
+    </motion.div>
   );
 }
 
-/**
- * Quick Stats Widget
- */
-function QuickStatsWidget() {
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ['quick-stats'],
-    queryFn: () => api.getQuickStats(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+function TopCompaniesWidget() {
+  const { data: companies, isLoading } = useQuery({
+    queryKey: ['top-companies'],
+    queryFn: () => api.getCompanies({ limit: 6, sort: 'newest', verified: true }),
+    staleTime: 10 * 60 * 1000,
   });
 
+  const fallbackCompanies = [
+    { id: 1, name: 'Amazon', slug: 'amazon', initial: 'A', gradient: 'from-orange-400 to-orange-600' },
+    { id: 2, name: 'Target', slug: 'target', initial: 'T', gradient: 'from-red-400 to-red-600' },
+    { id: 3, name: 'Best Buy', slug: 'best-buy', initial: 'B', gradient: 'from-blue-400 to-blue-600' },
+    { id: 4, name: 'Walmart', slug: 'walmart', initial: 'W', gradient: 'from-sky-400 to-blue-500' },
+    { id: 5, name: 'Sony', slug: 'sony', initial: 'S', gradient: 'from-slate-500 to-slate-700' },
+    { id: 6, name: 'Nike', slug: 'nike', initial: 'N', gradient: 'from-slate-700 to-slate-900' },
+  ];
+
+  const displayCompanies = companies?.length > 0 ? companies : fallbackCompanies;
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-2 shadow-sm">
-      <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5">
-        Quick Stats
-      </h3>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="bg-white rounded-xl p-3 shadow-sm"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+          <Building2 className="w-3.5 h-3.5 text-violet-500" />
+          Top Companies
+        </h3>
+        <Link to="/companies" className="text-[10px] text-violet-600 hover:text-violet-700 flex items-center gap-0.5 font-medium">
+          View All <ArrowRight className="w-2.5 h-2.5" />
+        </Link>
+      </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-3">
-          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+        <div className="grid grid-cols-3 gap-2">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="aspect-square bg-gray-100 rounded-lg animate-pulse" />
+          ))}
         </div>
       ) : (
-        <div className="space-y-1">
-          <StatItem
-            label="Live deals"
-            value={stats?.liveDeals?.toLocaleString() || '0'}
-            icon={TrendingUp}
-            color="text-blue-600"
-          />
-          <StatItem
-            label="Average savings"
-            value={`$${stats?.avgSavings || '0'}`}
-            icon={Tag}
-            color="text-green-600"
-          />
-          <StatItem
-            label="Coupons"
-            value={stats?.couponsRedeemed?.toLocaleString() || '0'}
-            icon={Tag}
-            color="text-orange-600"
-          />
+        <div className="grid grid-cols-3 gap-2">
+          {displayCompanies.slice(0, 6).map((company, index) => (
+            <motion.div
+              key={company.id}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.25 + index * 0.04 }}
+            >
+              <Link
+                to={`/company/${company.slug}?tab=coupons`}
+                className="group flex items-center justify-center aspect-square bg-gray-50 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                title={company.name}
+              >
+                {company.logo_url ? (
+                  <img
+                    src={company.logo_url}
+                    alt={company.name}
+                    className="max-h-7 max-w-full object-contain opacity-70 group-hover:opacity-100 transition-opacity"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                ) : (
+                  <div className={`w-8 h-8 bg-gradient-to-br ${company.gradient || 'from-slate-500 to-slate-700'} rounded-lg flex items-center justify-center text-white text-xs font-bold`}>
+                    {company.initial || company.name?.[0] || '?'}
+                  </div>
+                )}
+              </Link>
+            </motion.div>
+          ))}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
-function StatItem({ label, value, icon: Icon, color }) {
-  return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-1.5">
-        <Icon className={clsx('w-2.5 h-2.5', color)} />
-        <span className="text-xs text-gray-600">{label}</span>
-      </div>
-      <span className="text-xs font-bold text-gray-900">{value}</span>
-    </div>
-  );
-}
-
-/**
- * Leaderboard Widget - Enhanced Graphical Design
- */
 function LeaderboardWidget() {
   const { data: leaderboard, isLoading } = useQuery({
     queryKey: ['leaderboard', 'weekly'],
@@ -141,275 +196,86 @@ function LeaderboardWidget() {
     staleTime: 5 * 60 * 1000,
   });
 
-  return (
-    <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide flex items-center gap-1.5">
-          <Crown className="w-3 h-3 text-blue-600" />
-          Top Savers
-        </h3>
-        <Link
-          to="/leaderboard"
-          className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-        >
-          View All
-          <ArrowRight className="w-2.5 h-2.5" />
-        </Link>
-      </div>
+  const rankColors = [
+    'bg-yellow-400 text-yellow-900',
+    'bg-slate-300 text-slate-700',
+    'bg-amber-500 text-amber-900',
+    'bg-slate-200 text-slate-600',
+    'bg-slate-200 text-slate-600',
+  ];
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-        </div>
-      ) : leaderboard && leaderboard.length > 0 ? (
-        <div className="space-y-2">
-          {leaderboard.slice(0, 5).map((user, index) => (
-            <LeaderboardItem key={user.id} user={user} rank={index + 1} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-4 text-xs text-gray-500">
-          <Trophy className="w-6 h-6 mx-auto mb-2 text-gray-300" />
-          No data yet
-        </div>
-      )}
-    </div>
-  );
-}
-
-function LeaderboardItem({ user, rank }) {
-  const rankIcons = {
-    1: '🥇',
-    2: '🥈',
-    3: '🥉',
-  };
-
-  const getRankColor = (rank) => {
-    switch (rank) {
-      case 1: return 'from-yellow-400 to-yellow-600';
-      case 2: return 'from-gray-300 to-gray-500';
-      case 3: return 'from-amber-600 to-amber-800';
-      default: return 'from-mint-500 to-emerald-600';
-    }
-  };
-
-  return (
-    <Link
-      to={`/u/${user.handle}`}
-      className="group relative bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-2 hover:from-mint-50 hover:to-emerald-50 transition-all duration-200 border border-gray-200 hover:border-mint-300 hover:shadow-sm"
-    >
-      <div className="flex items-center gap-2">
-        {/* Rank Badge */}
-        <div className={`flex-shrink-0 w-6 h-6 bg-gradient-to-r ${getRankColor(rank)} text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm`}>
-          {rankIcons[rank] || `${rank}`}
-        </div>
-        
-        {/* User Info */}
-        <div className="flex-1 min-w-0">
-          <div className="text-xs font-semibold text-gray-900 truncate group-hover:text-blue-700 transition-colors">
-            {user.handle || `User ${user.id}`}
-          </div>
-          <div className="flex items-center gap-1 text-xs text-gray-600">
-            <span className="font-medium text-green-600">
-              {user.points || user.karma || 0}
-            </span>
-            <span className="text-gray-400">points</span>
-          </div>
-        </div>
-        
-        {/* Trophy for top 3 */}
-        {rank <= 3 && (
-          <Trophy className="w-3 h-3 text-yellow-500 opacity-60 group-hover:opacity-100 transition-opacity" />
-        )}
-      </div>
-    </Link>
-  );
-}
-
-/**
- * Top Companies Widget - 8 Companies Grid
- */
-function TopCompaniesWidget() {
-  const { data: companies, isLoading } = useQuery({
-    queryKey: ['top-companies'],
-    queryFn: () => api.getCompanies({ limit: 8, sort: 'newest', verified: true }),
-    staleTime: 10 * 60 * 1000, // 10 minutes
-  });
-
-  return (
-    <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide flex items-center gap-1.5">
-          <Shield className="w-3 h-3 text-blue-600" />
-          Top Companies
-        </h3>
-        <Link
-          to="/companies"
-          className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-        >
-          View All
-          <ArrowRight className="w-2.5 h-2.5" />
-        </Link>
-      </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-        </div>
-      ) : companies && companies.length > 0 ? (
-        <div className="grid grid-cols-4 gap-1">
-          {companies.slice(0, 8).map((company, index) => (
-            <Link
-              key={company.id}
-              to={`/company/${company.slug}?tab=coupons`}
-              className="group relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-1.5 hover:from-mint-50 hover:to-emerald-50 transition-all duration-200 border border-gray-200 hover:border-mint-300 hover:shadow-sm"
-              title={company.name}
-            >
-              {/* Company Logo Only */}
-              <div className="flex items-center justify-center h-6">
-                {company.logo_url ? (
-                  <img
-                    src={company.logo_url}
-                    alt={company.name}
-                    className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform"
-                  />
-                ) : (
-                  <Store className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
-                )}
-              </div>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-4 text-xs text-gray-500">
-          No companies yet
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * Hot Coupons Widget
- */
-function HotCouponsWidget() {
-  const { data: coupons, isLoading } = useQuery({
-    queryKey: ['hot-coupons'],
-    queryFn: () => api.listCoupons({ limit: 5, sort: 'newest' }),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  return (
-    <div className="bg-white rounded-lg border border-gray-200 p-2 shadow-sm">
-      <div className="flex items-center justify-between mb-1.5">
-        <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide">
-          Hot Coupons
-        </h3>
-        <Link
-          to="/companies"
-          className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-        >
-          View All
-          <ArrowRight className="w-2.5 h-2.5" />
-        </Link>
-      </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center py-3">
-          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-        </div>
-      ) : coupons && coupons.length > 0 ? (
-        <div className="space-y-1">
-          {coupons.slice(0, 5).map((coupon) => (
-            <HotCouponItem key={coupon.id} coupon={coupon} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-3 text-xs text-gray-500">
-          No coupons yet
-        </div>
-      )}
-    </div>
-  );
-}
-
-function HotCouponItem({ coupon }) {
-  const company = coupon.companies || {};
-
-  return (
-    <Link
-      to={`/company/${company.slug}?tab=coupons`}
-      className="block p-1.5 rounded-md hover:bg-amber-50 transition-colors group"
-    >
-      <div className="flex items-center gap-1.5 mb-0.5">
-        <Tag className="w-2.5 h-2.5 text-amber-600" />
-        <span className="text-xs font-semibold text-gray-900 truncate">
-          {company.name || 'Store'}
-        </span>
-      </div>
-      <div className="text-xs text-gray-600 line-clamp-2 mb-0.5">
-        {coupon.title}
-      </div>
-      {coupon.coupon_code && (
-        <div className="bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded text-xs font-mono font-bold inline-block">
-          {coupon.coupon_code}
-        </div>
-      )}
-    </Link>
-  );
-}
-
-/**
- * Trending Tags Widget
- */
-function TrendingTagsWidget() {
-  const trendingTags = [
-    { name: 'Electronics', count: 124, trend: 'up' },
-    { name: 'Fashion', count: 89, trend: 'up' },
-    { name: 'Home & Garden', count: 67, trend: 'down' },
-    { name: 'Beauty', count: 45, trend: 'up' },
-    { name: 'Sports', count: 32, trend: 'up' },
-    { name: 'Books', count: 28, trend: 'down' },
+  const avatarGradients = [
+    'from-violet-500 to-purple-600',
+    'from-pink-500 to-rose-600',
+    'from-cyan-500 to-blue-600',
+    'from-emerald-500 to-green-600',
+    'from-orange-500 to-red-500',
   ];
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-2 shadow-sm">
-      <div className="flex items-center justify-between mb-1.5">
-        <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide flex items-center gap-1.5">
-          <Hash className="w-3 h-3 text-blue-600" />
-          Trending Tags
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+      className="bg-white rounded-xl p-3 shadow-sm"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+          <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+          Top Savers
         </h3>
-        <Link
-          to="/tags"
-          className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-        >
-          View All
-          <ArrowRight className="w-2.5 h-2.5" />
+        <Link to="/leaderboard" className="text-[10px] text-violet-600 hover:text-violet-700 flex items-center gap-0.5 font-medium">
+          View All <ArrowRight className="w-2.5 h-2.5" />
         </Link>
       </div>
 
-      <div className="space-y-1">
-        {trendingTags.map((tag, index) => (
-          <Link
-            key={tag.name}
-            to={`/tag/${tag.name.toLowerCase().replace(/\s+/g, '-')}`}
-            className="flex items-center justify-between p-1 rounded-md hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center gap-1.5">
-              <Hash className="w-2.5 h-2.5 text-gray-400" />
-              <span className="text-xs font-medium text-gray-700">{tag.name}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-gray-500">{tag.count}</span>
-              {tag.trend === 'up' ? (
-                <TrendingUp className="w-2.5 h-2.5 text-green-500" />
-              ) : (
-                <TrendingDown className="w-2.5 h-2.5 text-red-500" />
-              )}
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
+      {isLoading ? (
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      ) : leaderboard?.length > 0 ? (
+        <div className="space-y-1.5">
+          {leaderboard.slice(0, 5).map((user, index) => (
+            <motion.div
+              key={user.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.35 + index * 0.05 }}
+            >
+              <Link
+                to={`/u/${user.handle}`}
+                className="flex items-center gap-2.5 px-2.5 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all duration-200 group"
+              >
+                <div className={`w-6 h-6 ${rankColors[index]} rounded-md flex items-center justify-center text-[10px] font-bold`}>
+                  {index + 1}
+                </div>
+
+                <div className={`w-8 h-8 bg-gradient-to-br ${avatarGradients[index]} rounded-full flex items-center justify-center text-white text-xs font-bold`}>
+                  {user.handle?.[0]?.toUpperCase() || 'U'}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-medium text-slate-800 truncate group-hover:text-violet-600 transition-colors">
+                    {user.handle || `User`}
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    {(user.points || user.karma || 0).toLocaleString()} pts
+                  </div>
+                </div>
+
+                {index === 0 && <Crown className="w-4 h-4 text-yellow-500" />}
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-6 text-xs text-slate-400">
+          <Users className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+          No data yet
+        </div>
+      )}
+    </motion.div>
   );
 }

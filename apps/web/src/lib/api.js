@@ -15,7 +15,7 @@ function getAuthHeaders() {
 
 export async function apiRequest(endpoint, options = {}, retryCount = 0) {
   const url = `${API_BASE}${endpoint}`
-  
+
   const config = {
     headers: {
       ...getAuthHeaders(),
@@ -36,14 +36,14 @@ export async function apiRequest(endpoint, options = {}, retryCount = 0) {
 
   try {
     const response = await fetch(url, config)
-    
+
     if (!response.ok) {
       const error = await response.text()
-      
+
       // Check if it's a JWT expiration error and we haven't retried yet
       if ((error.includes('JWT expired') || error.includes('expired') || error.includes('invalid JWT') || error.includes('token is expired')) && retryCount === 0) {
         console.log('🔄 JWT expired, attempting token refresh...')
-        
+
         // Try to refresh the token
         try {
           const refreshToken = localStorage.getItem('refresh_token')
@@ -55,12 +55,12 @@ export async function apiRequest(endpoint, options = {}, retryCount = 0) {
               },
               body: JSON.stringify({ refresh_token: refreshToken }),
             })
-            
+
             if (refreshResponse.ok) {
               const refreshData = await refreshResponse.json()
               localStorage.setItem('access_token', refreshData.session.access_token)
               localStorage.setItem('refresh_token', refreshData.session.refresh_token)
-              
+
               // Also update Supabase token if it exists
               const supabaseToken = localStorage.getItem('sb-ixkhkzjhelyumdplutbz-auth-token')
               if (supabaseToken) {
@@ -73,7 +73,7 @@ export async function apiRequest(endpoint, options = {}, retryCount = 0) {
                   console.warn('Failed to update Supabase token:', e)
                 }
               }
-              
+
               console.log('✅ Token refresh successful, retrying request...')
               // Retry the original request with new token
               return apiRequest(endpoint, options, retryCount + 1)
@@ -103,7 +103,7 @@ export async function apiRequest(endpoint, options = {}, retryCount = 0) {
           throw new ApiError('Session expired. Please login again.', 401)
         }
       }
-      
+
       throw new ApiError(error || 'Request failed', response.status)
     }
 
@@ -112,7 +112,7 @@ export async function apiRequest(endpoint, options = {}, retryCount = 0) {
     if (contentType && contentType.includes('application/json')) {
       return await response.json()
     }
-    
+
     return await response.text()
   } catch (error) {
     if (error instanceof ApiError) {
@@ -200,23 +200,23 @@ export const api = {
     method: 'POST',
     body: credentials,
   }),
-  
+
   signIn: (credentials) => apiRequest('/api/auth/signin', {
     method: 'POST',
     body: credentials,
   }),
-  
+
   signOut: () => apiRequest('/api/auth/signout', {
     method: 'POST',
   }),
-  
+
   refreshToken: (refreshToken) => apiRequest('/api/auth/refresh', {
     method: 'POST',
     body: { refresh_token: refreshToken },
   }),
-  
+
   getCurrentUser: () => apiRequest('/api/auth/me'),
-  
+
   updateAuthProfile: (profileData) => apiRequest('/api/auth/profile', {
     method: 'PUT',
     body: profileData,
@@ -248,24 +248,24 @@ export const api = {
     })
     return apiRequest(`/api/deals?${searchParams}`)
   },
-  
+
   getDeal: (id) => {
     const normalizedId = String(id)
     return apiRequest(`/api/deals/${normalizedId}`)
   },
   getRelatedDeals: (categoryId, excludeId) => apiRequest(`/api/deals?category_id=${categoryId}&exclude=${excludeId}&limit=6&sort=popular`),
   getDealComments: (id) => apiRequest(`/api/deals/${id}/comments`),
-  
+
   // Reviews
   getDealReviews: (dealId, options = {}) => {
     const normalizedDealId = String(dealId)
-    
+
     const params = new URLSearchParams()
     if (options.sort) params.append('sort', options.sort)
     if (options.limit) params.append('limit', options.limit)
     if (options.page) params.append('page', options.page)
     if (options.filter) params.append('filter', options.filter)
-    
+
     const url = `/api/reviews/deals/${normalizedDealId}/reviews?${params}`
     return apiRequest(url)
   },
@@ -334,79 +334,79 @@ export const api = {
 
   // Saved Items
   getSavedItems: (type = 'all') => apiRequest(`/api/saved-items?type=${type}`),
-  
+
   saveDeal: (dealId) => apiRequest(`/api/saved-items/deals/${dealId}`, {
     method: 'POST',
   }),
-  
+
   saveCoupon: (couponId) => apiRequest(`/api/saved-items/coupons/${couponId}`, {
     method: 'POST',
   }),
-  
+
   unsaveDeal: (dealId) => apiRequest(`/api/saved-items/deals/${dealId}`, {
     method: 'DELETE',
   }),
-  
+
   unsaveCoupon: (couponId) => apiRequest(`/api/saved-items/coupons/${couponId}`, {
     method: 'DELETE',
   }),
-  
+
   checkSavedItems: (dealIds = [], couponIds = []) => {
     const params = new URLSearchParams()
     if (dealIds.length > 0) params.append('deal_ids', dealIds.join(','))
     if (couponIds.length > 0) params.append('coupon_ids', couponIds.join(','))
     return apiRequest(`/api/saved-items/check?${params}`)
   },
-  
+
   createDeal: (deal) => apiRequest('/api/deals', {
     method: 'POST',
     body: deal,
   }),
-  
+
   voteDeal: (id, value) => apiRequest(`/api/deals/${id}/vote`, {
     method: 'POST',
     body: { value },
   }),
   bookmarkDeal: (id) => apiRequest(`/api/deals/${id}/bookmark`, { method: 'POST' }),
-  
+
   commentDeal: (id, body, parentId = null) => apiRequest(`/api/deals/${id}/comment`, {
     method: 'POST',
     body: { body, parent_id: parentId },
   }),
-  
+
   // Categories
   getCategories: (params = {}) => {
     const searchParams = new URLSearchParams(params)
     return apiRequest(`/api/categories?${searchParams}`)
   },
-  
+
   getCategory: (slug) => apiRequest(`/api/categories/${slug}`),
-  
+
   // Collections
   getCollections: (params = {}) => {
     const searchParams = new URLSearchParams(params)
     return apiRequest(`/api/collections?${searchParams}`)
   },
-  
+
   getCollection: (slug) => apiRequest(`/api/collections/${slug}`),
-  
+
   // Banners
   getBanners: (params = {}) => {
     const searchParams = new URLSearchParams(params)
     return apiRequest(`/api/banners?${searchParams}`)
   },
-  
+
   // Deal Tags
   getDealTags: () => apiRequest('/api/deal-tags'),
 
   // Users
   getUser: (handle) => apiRequest(`/api/users/${handle}/profile`),
-  
+
   updateUserProfile: (handle, profileData) => apiRequest(`/api/users/${handle}/profile`, {
     method: 'PUT',
     body: JSON.stringify(profileData),
   }),
-  
+
   uploadAvatar: (handle, file) => {
     const formData = new FormData()
     formData.append('avatar', file)
@@ -417,7 +417,7 @@ export const api = {
       // Content-Type will be automatically set by browser for FormData
     })
   },
-  
+
   toggleFollowUser: (handle) => apiRequest(`/api/users/${handle}/follow`, {
     method: 'POST',
   }),
@@ -426,14 +426,14 @@ export const api = {
     const params = new URLSearchParams({ page: page.toString() })
     return apiRequest(`/api/users/${handle}/followers?${params}`)
   },
-  
+
   getUserFollowing: (handle, page = 1) => {
     const params = new URLSearchParams({ page: page.toString() })
     return apiRequest(`/api/users/${handle}/following?${params}`)
   },
-  
+
   getUserAchievements: (handle) => apiRequest(`/api/users/${handle}/achievements`),
-  
+
   getUserActivity: (handle, page = 1) => {
     const params = new URLSearchParams({ page: page.toString() })
     return apiRequest(`/api/users/${handle}/activity?${params}`)
@@ -488,12 +488,12 @@ export const api = {
       console.log(`📎 Appending file ${index}:`, { name: file.name, size: file.size, type: file.type })
       formData.append('images', file)
     })
-    
+
     // Debug FormData contents
     for (let [key, value] of formData.entries()) {
       console.log(`🔍 FormData entry: ${key} =`, value)
     }
-    
+
     return apiRequest(`/api/deals/${dealId}/images`, {
       method: 'POST',
       body: formData,
@@ -526,12 +526,12 @@ export const api = {
       console.log(`📎 Appending file ${index}:`, { name: file.name, size: file.size, type: file.type })
       formData.append('images', file)
     })
-    
+
     // Debug FormData contents
     for (let [key, value] of formData.entries()) {
       console.log(`🔍 FormData entry: ${key} =`, value)
     }
-    
+
     return apiRequest(`/api/coupons/${couponId}/images`, {
       method: 'POST',
       body: formData,
@@ -623,22 +623,22 @@ export const api = {
 
   // Admin APIs
   getAdminDashboard: () => apiRequest('/api/admin/dashboard'),
-  
+
   getPendingDeals: (page = 1) => {
     const params = new URLSearchParams({ page: page.toString(), status: 'pending' })
     return apiRequest(`/api/admin/deals?${params}`)
   },
-  
+
   getPendingCoupons: (page = 1) => {
     const params = new URLSearchParams({ page: page.toString() })
     return apiRequest(`/api/admin/coupons/pending?${params}`)
   },
-  
+
   reviewDeal: ({ dealId, action, reason }) => apiRequest(`/api/admin/deals/${dealId}/review`, {
     method: 'POST',
     body: { action, rejection_reason: reason },
   }),
-  
+
   reviewCoupon: ({ couponId, action, reason }) => apiRequest(`/api/admin/coupons/${couponId}/review`, {
     method: 'POST',
     body: { action, rejection_reason: reason },
@@ -662,12 +662,12 @@ export const api = {
   deleteCoupon: (couponId) => apiRequest(`/api/admin/coupons/${couponId}`, {
     method: 'DELETE',
   }),
-  
+
   // Upload image for admin use
   uploadImage: (file) => {
     const formData = new FormData();
     formData.append('image', file);
-    
+
     return fetch(`${API_BASE}/api/admin/upload-image`, {
       method: 'POST',
       headers: {
@@ -682,7 +682,7 @@ export const api = {
       return response.json();
     });
   },
-  
+
   getAdminUsers: (params = {}) => {
     const searchParams = new URLSearchParams()
     Object.entries(params).forEach(([key, value]) => {
@@ -692,12 +692,12 @@ export const api = {
     })
     return apiRequest(`/api/admin/users?${searchParams}`)
   },
-  
+
   updateUserRole: (userId, role) => apiRequest(`/api/admin/users/${userId}/role`, {
     method: 'POST',
     body: { role },
   }),
-  
+
   getAdminAnalytics: (period = '30') => {
     const params = new URLSearchParams({ period })
     return apiRequest(`/api/admin/analytics?${params}`)
@@ -731,12 +731,12 @@ export const api = {
     method: 'PUT',
     body: companyData,
   }),
-  
+
   featureDeal: (dealId, featured) => apiRequest(`/api/admin/deals/${dealId}/feature`, {
     method: 'POST',
     body: { featured },
   }),
-  
+
   featureCoupon: (couponId, featured) => apiRequest(`/api/admin/coupons/${couponId}/feature`, {
     method: 'POST',
     body: { featured },
@@ -746,10 +746,10 @@ export const api = {
     console.log('🔧 API: uploadCompanyLogo called with:', { companyId, logoFile: logoFile.name })
     const formData = new FormData()
     formData.append('logo', logoFile)
-    
+
     console.log('🔧 API: Making request to:', `${API_BASE}/api/companies/${companyId}/logo`)
     console.log('🔧 API: Authorization header present:', !!localStorage.getItem('access_token'))
-    
+
     return fetch(`${API_BASE}/api/companies/${companyId}/logo`, {
       method: 'POST',
       headers: {
@@ -809,17 +809,17 @@ export const api = {
   getUserProfile: (handle) => {
     return apiRequest(`/api/users/${handle}/profile`)
   },
-  
+
   getUserDeals: (handle, page = 1, limit = 20) => {
     const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() })
     return apiRequest(`/api/users/${handle}/deals?${params}`)
   },
-  
+
   getUserCoupons: (handle, page = 1, limit = 20) => {
     const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() })
     return apiRequest(`/api/users/${handle}/coupons?${params}`)
   },
-  
+
   getUserActivity: (handle, page = 1, limit = 20) => {
     const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() })
     return apiRequest(`/api/users/${handle}/activity?${params}`)
@@ -865,79 +865,79 @@ export const api = {
       body: JSON.stringify({ avatar_url: avatarUrl })
     })
   },
-  
+
   trackDealView: (dealId) => apiRequest(`/api/deals/${dealId}/view`, {
     method: 'POST',
   }),
-  
+
   reportDeal: (dealId, reason) => apiRequest(`/api/deals/${dealId}/report`, {
     method: 'POST',
     body: { reason },
   }),
-  
+
   rateDeal: (dealId, rating) => apiRequest(`/api/deals/${dealId}/rate`, {
     method: 'POST',
     body: { rating },
   }),
-  
+
   // Deal alerts
   getDealAlerts: async (dealId) => {
     return await apiRequest(`/api/deals/${dealId}/alerts`)
   },
-  
+
   createDealAlert: (alertData) => apiRequest('/api/deal-alerts', {
     method: 'POST',
     body: alertData,
   }),
-  
+
   deleteDealAlert: (alertId) => apiRequest(`/api/deal-alerts/${alertId}`, {
     method: 'DELETE',
   }),
-  
+
   // Store ratings
   getStoreRating: async (merchant) => {
     return await apiRequest(`/api/stores/${encodeURIComponent(merchant)}/rating`)
   },
-  
+
   // Deal reviews
   submitDealReview: (dealId, reviewData) => {
     const normalizedDealId = String(dealId)
-    
+
     // Add deal_id to the reviewData since the backend expects it
     const reviewDataWithDealId = {
       ...reviewData,
       deal_id: normalizedDealId
     }
-    
+
     const url = `/api/reviews`
     return apiRequest(url, {
       method: 'POST',
       body: reviewDataWithDealId,
     })
   },
-  
+
   voteOnReview: (reviewId, isHelpful) => {
     return apiRequest(`/api/reviews/${reviewId}/vote`, {
       method: 'POST',
       body: { isHelpful },
     })
   },
-  
+
   // Search
   searchDeals: (query, filters = {}) => {
     const params = new URLSearchParams({ q: query, ...filters })
     return apiRequest(`/api/search/deals?${params}`)
   },
-  
+
   getSearchSuggestions: (query) => apiRequest(`/api/search/suggestions?q=${encodeURIComponent(query)}`),
-  
+
   saveSearch: (searchData) => apiRequest('/api/searches', {
     method: 'POST',
     body: searchData,
   }),
-  
+
   getSavedSearches: () => apiRequest('/api/searches'),
-  
+
   // Filter Categories
   getTrendingDeals: (params = {}) => {
     const searchParams = new URLSearchParams()
@@ -948,7 +948,7 @@ export const api = {
     })
     return apiRequest(`/api/filters/trending?${searchParams}`)
   },
-  
+
   getUnder20Deals: (params = {}) => {
     const searchParams = new URLSearchParams()
     Object.entries(params).forEach(([key, value]) => {
@@ -958,7 +958,7 @@ export const api = {
     })
     return apiRequest(`/api/filters/under-20?${searchParams}`)
   },
-  
+
   get50OffDeals: (params = {}) => {
     const searchParams = new URLSearchParams()
     Object.entries(params).forEach(([key, value]) => {
@@ -968,7 +968,7 @@ export const api = {
     })
     return apiRequest(`/api/filters/50-off?${searchParams}`)
   },
-  
+
   getFreeShippingDeals: (params = {}) => {
     const searchParams = new URLSearchParams()
     Object.entries(params).forEach(([key, value]) => {
@@ -978,7 +978,7 @@ export const api = {
     })
     return apiRequest(`/api/filters/free-shipping?${searchParams}`)
   },
-  
+
   getNewArrivalsDeals: (params = {}) => {
     const searchParams = new URLSearchParams()
     Object.entries(params).forEach(([key, value]) => {
@@ -988,7 +988,7 @@ export const api = {
     })
     return apiRequest(`/api/filters/new-arrivals?${searchParams}`)
   },
-  
+
   getHotDeals: (params = {}) => {
     const searchParams = new URLSearchParams()
     Object.entries(params).forEach(([key, value]) => {
@@ -998,7 +998,7 @@ export const api = {
     })
     return apiRequest(`/api/filters/hot-deals?${searchParams}`)
   },
-  
+
   getEndingSoonDeals: (params = {}) => {
     const searchParams = new URLSearchParams()
     Object.entries(params).forEach(([key, value]) => {
@@ -1008,12 +1008,12 @@ export const api = {
     })
     return apiRequest(`/api/filters/ending-soon?${searchParams}`)
   },
-  
+
   // Users
   getUserProfile: async (handle) => {
     return await apiRequest(`/api/users/${handle}/profile`)
   },
-  
+
   getUserDeals: async (handle, status = 'all') => {
     const params = new URLSearchParams()
     if (status !== 'all') {
@@ -1021,51 +1021,51 @@ export const api = {
     }
     return await apiRequest(`/api/users/${handle}/deals?${params}`)
   },
-  
+
   followUser: (userId) => apiRequest(`/api/users/${userId}/follow`, {
     method: 'POST',
   }),
-  
+
   unfollowUser: (userId) => apiRequest(`/api/users/${userId}/unfollow`, {
     method: 'POST',
   }),
-  
-    isFollowing: async (userId) => {
+
+  isFollowing: async (userId) => {
     return await apiRequest(`/api/users/${userId}/following`)
   },
 
   getUserFollowers: async (handle) => {
     return await apiRequest(`/api/users/${handle}/followers`)
   },
-  
+
   getUserActivity: async (handle, options = {}) => {
     const params = new URLSearchParams(options)
     return await apiRequest(`/api/users/${handle}/activity?${params}`)
   },
-  
+
   getUserStats: async (handle) => {
     return await apiRequest(`/api/users/${handle}/stats`)
   },
-  
+
   getUserBadges: async (handle) => {
     return await apiRequest(`/api/users/${handle}/badges`)
   },
-  
+
   getUserReputation: async (handle) => {
     return await apiRequest(`/api/users/${handle}/reputation`)
   },
-  
+
   getUserAchievements: async (userId) => {
     return await apiRequest(`/api/users/${userId}/achievements`)
   },
-  
+
   sendMessage: async (messageData) => {
     return await apiRequest('/api/messages', {
       method: 'POST',
       body: messageData,
     })
   },
-  
+
   updateUserPreferences: (preferences) => apiRequest('/api/user/preferences', {
     method: 'PUT',
     body: preferences,
@@ -1134,29 +1134,29 @@ export const api = {
   getForums: async () => {
     return await apiRequest('/api/forums')
   },
-  
+
   // Notifications
   getNotifications: (unreadOnly = false) => apiRequest(`/api/notifications?unread=${unreadOnly}`),
-  
+
   markNotificationRead: (notificationId) => apiRequest(`/api/notifications/${notificationId}/read`, {
     method: 'POST',
   }),
-  
+
   createNotificationSubscription: (subscription) => apiRequest('/api/notifications/subscribe', {
     method: 'POST',
     body: subscription,
   }),
-  
+
   // Analytics
   trackEvent: (eventName, properties = {}) => apiRequest('/api/analytics/track', {
     method: 'POST',
     body: { event: eventName, properties },
   }),
-  
+
   getPersonalizedDeals: () => apiRequest('/api/deals/personalized'),
-  
+
   getDealRecommendations: (dealId) => apiRequest(`/api/deals/${dealId}/recommendations`),
-  
+
   // Admin
   getAdminDeals: (status) => {
     const params = status ? `?status=${status}` : ''
@@ -1181,17 +1181,17 @@ export const api = {
     if (limit) sp.append('limit', limit.toString())
     return apiAuth(`/api/admin/coupons?${sp.toString()}`)
   },
-  
+
   approveDeal: (id, edits) => apiAuth(`/api/admin/deals/${id}/approve`, {
     method: 'POST',
     body: edits || {},
   }),
-  
+
   rejectDeal: (id, reason) => apiAuth(`/api/admin/deals/${id}/reject`, {
     method: 'POST',
     body: { reason },
   }),
-  
+
   expireDeal: (id) => apiAuth(`/api/admin/deals/${id}/expire`, {
     method: 'POST',
   }),
@@ -1206,23 +1206,23 @@ export const api = {
     method: 'PUT',
     body: updates,
   }),
-  
+
   checkAdmin: () => apiAuth('/api/admin/whoami'),
-  
+
   getAdminAnalytics: (timeRange = '7d') => apiRequest(`/api/admin/analytics?range=${timeRange}`),
-  
+
   getUserManagement: (filters = {}) => {
     const params = new URLSearchParams(filters)
     return apiRequest(`/api/admin/users?${params}`)
   },
-  
+
   bulkModeratePosts: (action, postIds) => apiRequest('/api/admin/bulk-moderate', {
     method: 'POST',
     body: { action, postIds },
   }),
 
   // ===== TRACKING & ANALYTICS APIs =====
-  
+
   // Deal tracking
   trackDealClick: (dealId, source = 'unknown') => apiRequest(`/api/deals/${dealId}/click`, {
     method: 'POST',
@@ -1238,7 +1238,7 @@ export const api = {
   // User session tracking
   trackUserSession: (page = 'unknown') => apiRequest('/api/users/session/heartbeat', {
     method: 'POST',
-    body: { 
+    body: {
       page,
       user_agent: navigator.userAgent
     }
@@ -1264,18 +1264,18 @@ export const api = {
       method: 'POST',
       body: searchData,
     }),
-    
+
     list: () => apiRequest('/api/saved-searches'),
-    
+
     update: (searchId, updates) => apiRequest(`/api/saved-searches/${searchId}`, {
       method: 'PUT',
       body: updates,
     }),
-    
+
     delete: (searchId) => apiRequest(`/api/saved-searches/${searchId}`, {
       method: 'DELETE',
     }),
-    
+
     toggle: (searchId) => apiRequest(`/api/saved-searches/${searchId}/toggle`, {
       method: 'POST',
     }),
@@ -1283,17 +1283,17 @@ export const api = {
 
   notifications: {
     getPreferences: () => apiRequest('/api/notifications/preferences'),
-    
+
     updatePreferences: (preferences) => apiRequest('/api/notifications/preferences', {
       method: 'PUT',
       body: preferences,
     }),
-    
+
     getQueue: (params = {}) => {
       const searchParams = new URLSearchParams(params)
       return apiRequest(`/api/notifications?${searchParams}`)
     },
-    
+
     markAsRead: (notificationIds) => apiRequest('/api/notifications/mark-read', {
       method: 'POST',
       body: { notification_ids: notificationIds },
@@ -1307,73 +1307,73 @@ export const api = {
       method: 'POST',
       body: dealData,
     }),
-    
+
     getMerchantPatterns: () => apiRequest('/api/auto-tagging/merchant-patterns'),
-    
+
     createMerchantPattern: (patternData) => apiRequest('/api/auto-tagging/merchant-patterns', {
       method: 'POST',
       body: patternData,
     }),
-    
+
     updateMerchantPattern: (patternId, updates) => apiRequest(`/api/auto-tagging/merchant-patterns/${patternId}`, {
       method: 'PUT',
       body: updates,
     }),
-    
+
     deleteMerchantPattern: (patternId) => apiRequest(`/api/auto-tagging/merchant-patterns/${patternId}`, {
       method: 'DELETE',
     }),
-    
+
     getCategoryPatterns: () => apiRequest('/api/auto-tagging/category-patterns'),
-    
+
     createCategoryPattern: (patternData) => apiRequest('/api/auto-tagging/category-patterns', {
       method: 'POST',
       body: patternData,
     }),
-    
+
     updateCategoryPattern: (patternId, updates) => apiRequest(`/api/auto-tagging/category-patterns/${patternId}`, {
       method: 'PUT',
       body: updates,
     }),
-    
+
     deleteCategoryPattern: (patternId) => apiRequest(`/api/auto-tagging/category-patterns/${patternId}`, {
       method: 'DELETE',
     }),
-    
+
     getTaggingLog: (params = {}) => {
       const searchParams = new URLSearchParams(params)
       return apiRequest(`/api/auto-tagging/log?${searchParams}`)
     },
-    
+
     getTaggingStats: () => apiRequest('/api/auto-tagging/stats'),
   },
 
   // Gamification
   gamification: {
     getUserXP: (userId) => apiRequest(`/api/gamification/users/${userId}/xp`),
-    
+
     getUserLevel: (userId) => apiRequest(`/api/gamification/users/${userId}/level`),
-    
+
     getUserAchievements: (userId) => apiRequest(`/api/gamification/users/${userId}/achievements`),
-    
+
     getAchievements: () => apiRequest('/api/gamification/achievements'),
-    
+
     getLeaderboard: (params = {}) => {
       const searchParams = new URLSearchParams(params)
       return apiRequest(`/api/gamification/leaderboard?${searchParams}`)
     },
-    
+
     awardXP: (userId, xpData) => apiRequest(`/api/gamification/users/${userId}/xp`, {
       method: 'POST',
       body: xpData,
     }),
-    
+
     checkAchievements: (userId) => apiRequest(`/api/gamification/users/${userId}/check-achievements`, {
       method: 'POST',
     }),
-    
+
     getXPConfig: () => apiRequest('/api/gamification/xp-config'),
-    
+
     updateXPConfig: (config) => apiRequest('/api/gamification/xp-config', {
       method: 'PUT',
       body: config,
@@ -1438,23 +1438,212 @@ export const api = {
 
   // Generic HTTP methods for enterprise search
   get: (url, options = {}) => apiRequest(url, { method: 'GET', ...options }),
-  post: (url, data, options = {}) => apiRequest(url, { 
-    method: 'POST', 
+  post: (url, data, options = {}) => apiRequest(url, {
+    method: 'POST',
     body: JSON.stringify(data),
     headers: {
       'Content-Type': 'application/json',
       ...options.headers
     },
-    ...options 
+    ...options
   }),
-  put: (url, data, options = {}) => apiRequest(url, { 
-    method: 'PUT', 
+  put: (url, data, options = {}) => apiRequest(url, {
+    method: 'PUT',
     body: JSON.stringify(data),
     headers: {
       'Content-Type': 'application/json',
       ...options.headers
     },
-    ...options 
+    ...options
   }),
   delete: (url, options = {}) => apiRequest(url, { method: 'DELETE', ...options }),
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // AI Chat APIs
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Send a chat message to the AI (non-streaming)
+   * @param {Object} params - Chat parameters
+   * @param {string} params.message - User message
+   * @param {string} [params.conversationId] - Continue existing conversation
+   * @param {Object} [params.context] - Additional context
+   * @returns {Promise<Object>} AI response with content and optional deals
+   */
+  aiChat: ({ message, conversationId, context }) => {
+    // Build body - only include optional fields if they have values
+    const body = { message }
+    if (conversationId) body.conversationId = conversationId
+    if (context) body.context = context
+
+    return apiRequest('/api/ai/chat', {
+      method: 'POST',
+      body,
+    })
+  },
+
+  /**
+   * Create an SSE stream for AI chat (streaming responses)
+   * Uses fetch with ReadableStream for proper auth support
+   * @param {Object} params - Chat parameters
+   * @param {string} params.message - User message
+   * @param {string} [params.conversationId] - Continue existing conversation
+   * @param {Function} onEvent - Callback for each SSE event
+   * @param {Function} [onError] - Error callback
+   * @returns {Function} Cleanup function to abort the connection
+   */
+  aiChatStream: ({ message, conversationId }, onEvent, onError) => {
+    const controller = new AbortController()
+    const token = localStorage.getItem('access_token')
+
+    async function startStream() {
+      try {
+        // Build request body - only include conversationId if it has a value
+        const requestBody = { message }
+        if (conversationId) {
+          requestBody.conversationId = conversationId
+        }
+
+        const response = await fetch(`${API_BASE}/api/ai/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream',
+            ...(token && { 'Authorization': `Bearer ${token}` })
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || `HTTP ${response.status}`)
+        }
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (true) {
+          const { done, value } = await reader.read()
+
+          if (done) {
+            // Process any remaining buffer
+            if (buffer.trim()) {
+              processSSEData(buffer, onEvent)
+            }
+            break
+          }
+
+          buffer += decoder.decode(value, { stream: true })
+
+          // Process complete SSE messages
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || '' // Keep incomplete line in buffer
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6)
+              processSSEData(data, onEvent)
+            }
+          }
+        }
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          // Intentionally aborted
+          return
+        }
+        console.error('SSE stream error:', error)
+        if (onError) onError(error)
+        onEvent({ type: 'error', error: error.message || 'Stream failed' })
+      }
+    }
+
+    function processSSEData(data, callback) {
+      try {
+        const parsed = JSON.parse(data)
+        callback(parsed)
+      } catch (e) {
+        // Ignore parse errors for empty/invalid chunks
+        if (data.trim()) {
+          console.warn('Failed to parse SSE data:', data)
+        }
+      }
+    }
+
+    // Start the stream
+    startStream()
+
+    // Return cleanup function
+    return () => controller.abort()
+  },
+
+  /**
+   * Get user's AI conversation history
+   * @returns {Promise<Object>} List of conversations
+   */
+  getAIConversations: () => apiRequest('/api/ai/conversations'),
+
+  /**
+   * Get a specific conversation with messages
+   * @param {string} conversationId - Conversation ID
+   * @returns {Promise<Object>} Conversation with messages
+   */
+  getAIConversation: (conversationId) => apiRequest(`/api/ai/conversations/${conversationId}`),
+
+  /**
+   * Create a new AI conversation
+   * @returns {Promise<Object>} New conversation
+   */
+  createAIConversation: () => apiRequest('/api/ai/conversations', {
+    method: 'POST',
+  }),
+
+  /**
+   * Delete an AI conversation
+   * @param {string} conversationId - Conversation ID
+   * @returns {Promise<Object>} Success response
+   */
+  deleteAIConversation: (conversationId) => apiRequest(`/api/ai/conversations/${conversationId}`, {
+    method: 'DELETE',
+  }),
+
+  /**
+   * Submit feedback on an AI response
+   * @param {Object} params - Feedback parameters
+   * @param {string} params.messageId - Message ID
+   * @param {string} params.rating - 'positive' or 'negative'
+   * @param {string} [params.comment] - Optional comment
+   * @returns {Promise<Object>} Success response
+   */
+  submitAIFeedback: ({ messageId, rating, comment }) => apiRequest('/api/ai/feedback', {
+    method: 'POST',
+    body: { messageId, rating, comment },
+  }),
+
+  /**
+   * Check AI service health
+   * @returns {Promise<Object>} Health status
+   */
+  getAIHealth: () => apiRequest('/api/ai/health'),
+
+  /**
+   * Get AI usage statistics (admin)
+   * @returns {Promise<Object>} Usage stats
+   */
+  getAIStats: () => apiRequest('/api/ai/stats'),
+
+  /**
+   * Get AI chat logs with pagination
+   * @param {Object} params - Query parameters
+   * @param {number} params.limit - Number of logs per page
+   * @param {string} params.cursor - Cursor for pagination
+   * @returns {Promise<Object>} Paginated logs
+   */
+  getAILogs: ({ limit = 50, cursor = null } = {}) => {
+    const params = new URLSearchParams()
+    if (limit) params.set('limit', limit)
+    if (cursor) params.set('cursor', cursor)
+    return apiRequest(`/api/ai/logs?${params.toString()}`)
+  },
 }

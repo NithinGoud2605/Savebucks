@@ -67,7 +67,7 @@ const NotificationBell = () => {
     const unreadIds = notifications
       .filter(n => n.status === 'pending')
       .map(n => n.id)
-    
+
     if (unreadIds.length > 0) {
       markAsReadMutation.mutate(unreadIds)
     }
@@ -105,7 +105,7 @@ const NotificationBell = () => {
     const now = new Date()
     const created = new Date(createdAt)
     const diffInMinutes = Math.floor((now - created) / (1000 * 60))
-    
+
     if (diffInMinutes < 1) return 'Just now'
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`
@@ -122,7 +122,7 @@ const NotificationBell = () => {
         className="relative flex items-center justify-center h-7 w-7 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-white hover:text-cyan-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded-lg transition-colors flex-shrink-0"
       >
         <BellIcon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-        
+
         {/* Unread Badge */}
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-3.5 w-3.5 sm:h-4 sm:w-4 bg-red-500 text-white text-[9px] sm:text-[10px] rounded-full flex items-center justify-center font-medium">
@@ -194,7 +194,7 @@ const NotificationBell = () => {
                       <div className="flex-shrink-0 mt-0.5">
                         {getNotificationIcon(notification.notification_type)}
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <p className="text-sm font-medium text-gray-900 line-clamp-2">
@@ -212,17 +212,17 @@ const NotificationBell = () => {
                             )}
                           </div>
                         </div>
-                        
+
                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                           {notification.message}
                         </p>
-                        
+
                         <div className="flex items-center justify-between mt-2">
                           <div className="flex items-center space-x-2 text-xs text-gray-500">
                             <ClockIcon className="h-3 w-3" />
                             <span>{formatNotificationTime(notification.created_at)}</span>
                           </div>
-                          
+
                           {notification.action_url && (
                             <Link
                               to={notification.action_url}
@@ -233,10 +233,10 @@ const NotificationBell = () => {
                             </Link>
                           )}
                         </div>
-                        
+
                         {/* Related Content */}
                         {(notification.deal || notification.coupon || notification.saved_search) && (
-                          <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
+                          <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
                             {notification.deal && (
                               <div className="text-gray-600">
                                 <span className="font-medium">Deal:</span> {notification.deal.title}

@@ -22,9 +22,9 @@ const TagManagement = () => {
   // Fetch tags
   const { data: tags = [], isLoading } = useQuery({
     queryKey: ['admin-tags', selectedCategory],
-    queryFn: () => api.getTags({ 
+    queryFn: () => api.getTags({
       category: selectedCategory === 'all' ? undefined : selectedCategory,
-      limit: 200 
+      limit: 200
     }),
   })
 
@@ -87,7 +87,7 @@ const TagManagement = () => {
   ]
 
   const colors = [
-    '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', 
+    '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
     '#EC4899', '#06B6D4', '#F97316', '#84CC16', '#6366F1'
   ]
 
@@ -141,7 +141,7 @@ const TagManagement = () => {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {popularTags.map((tag) => (
             <div key={tag.tag_id} className="text-center">
-              <div 
+              <div
                 className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center"
                 style={{ backgroundColor: `${tag.tag_color}20` }}
               >
@@ -165,7 +165,7 @@ const TagManagement = () => {
                 'px-3 py-1 rounded-full text-sm font-medium transition-colors',
                 selectedCategory === category.value
                   ? 'bg-blue-100 text-blue-700 border border-blue-300'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                  : 'bg-gray-50 text-gray-700 hover:bg-gray-200 border border-gray-300'
               )}
             >
               {category.label}
@@ -181,7 +181,7 @@ const TagManagement = () => {
             <div className="p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center space-x-2">
-                  <div 
+                  <div
                     className="w-8 h-8 rounded-full flex items-center justify-center"
                     style={{ backgroundColor: `${tag.color}20` }}
                   >
@@ -192,7 +192,7 @@ const TagManagement = () => {
                     <p className="text-sm text-gray-500 capitalize">{tag.category}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-1">
                   {tag.is_featured && (
                     <SparklesIcon className="h-4 w-4 text-yellow-500" />
@@ -211,11 +211,11 @@ const TagManagement = () => {
                   </button>
                 </div>
               </div>
-              
+
               {tag.description && (
                 <p className="text-sm text-gray-600 mb-2">{tag.description}</p>
               )}
-              
+
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <span>/{tag.slug}</span>
                 <span>Created {new Date(tag.created_at).toLocaleDateString()}</span>
@@ -253,14 +253,14 @@ const TagManagement = () => {
   )
 }
 
-const TagFormModal = ({ 
-  title, 
-  initialData = {}, 
-  onSubmit, 
-  onCancel, 
-  colors, 
-  categories, 
-  isLoading 
+const TagFormModal = ({
+  title,
+  initialData = {},
+  onSubmit,
+  onCancel,
+  colors,
+  categories,
+  isLoading
 }) => {
   const [formData, setFormData] = useState({
     name: initialData.name || '',
@@ -384,7 +384,7 @@ const TagFormModal = ({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-200 transition-colors"
             >
               Cancel
             </button>

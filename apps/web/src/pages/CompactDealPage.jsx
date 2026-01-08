@@ -110,14 +110,14 @@ export default function CompactDealPage() {
       toast.error('Please login to vote')
       return
     }
-    
+
     // Check if we have a valid token before making the request
     const token = localStorage.getItem('access_token')
     if (!token) {
       toast.error('Session expired. Please login again.')
       return
     }
-    
+
     const currentVote = deal?.userVote
     const newVote = currentVote === vote ? null : vote
     voteMutation.mutate({ dealId: id, vote: newVote })
@@ -198,7 +198,7 @@ export default function CompactDealPage() {
                   </span>
                 </div>
               )}
-              
+
               {timeRemaining && !isExpired && (
                 <div className="absolute top-3 right-3 z-10">
                   <span className="inline-flex items-center px-2 py-1 bg-orange-500 text-white text-xs font-medium rounded-full">
@@ -222,7 +222,7 @@ export default function CompactDealPage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                  <div className="w-full h-full bg-gray-50 flex items-center justify-center">
                     <GiftIcon className="h-20 w-20 text-gray-400" />
                   </div>
                 )}
@@ -240,7 +240,7 @@ export default function CompactDealPage() {
                       <ChevronLeftIcon className="h-4 w-4" />
                     </button>
                   </div>
-                  
+
                   <div className="absolute inset-y-0 right-0 flex items-center">
                     <button
                       onClick={() => setSelectedImageIndex(Math.min(images.length - 1, selectedImageIndex + 1))}
@@ -290,10 +290,10 @@ export default function CompactDealPage() {
                     <BuildingStorefrontIcon className="h-4 w-4 mr-1" />
                     {deal.merchant}
                   </div>
-                  
+
                   {/* Submitter Info */}
-                  <SubmitterBadge 
-                    submitter={deal.submitter} 
+                  <SubmitterBadge
+                    submitter={deal.submitter}
                     submitter_id={deal.submitter_id}
                     created_at={deal.created_at}
                     size="sm"
@@ -366,7 +366,7 @@ export default function CompactDealPage() {
                 >
                   <BookmarkIcon className={`h-6 w-6 ${isBookmarked ? 'text-red-500 fill-current' : ''}`} />
                 </button>
-                
+
                 <button
                   onClick={handleShare}
                   className="p-2 text-gray-400 hover:text-blue-500 transition-colors"

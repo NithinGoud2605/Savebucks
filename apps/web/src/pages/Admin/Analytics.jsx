@@ -1,7 +1,7 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../lib/api'
-import { Skeleton } from '../../components/Loader/Skeleton'
+import { Skeleton } from '../../components/ui/Skeleton'
 import {
   ChartBarIcon,
   TrophyIcon,
@@ -69,16 +69,15 @@ const Analytics = () => {
               {topContributors.map((contributor, index) => (
                 <div key={contributor.handle} className="flex items-center space-x-4">
                   <div className="flex-shrink-0">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                      index === 0 ? 'bg-yellow-100 text-yellow-800' :
-                      index === 1 ? 'bg-gray-100 text-gray-800' :
-                      index === 2 ? 'bg-orange-100 text-orange-800' :
-                      'bg-secondary-100 text-secondary-600'
-                    }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-800' :
+                      index === 1 ? 'bg-gray-50 text-gray-800' :
+                        index === 2 ? 'bg-orange-100 text-orange-800' :
+                          'bg-secondary-100 text-secondary-600'
+                      }`}>
                       {index + 1}
                     </div>
                   </div>
-                  
+
                   <div className="flex-shrink-0">
                     {contributor.avatar_url ? (
                       <img
@@ -94,7 +93,7 @@ const Analytics = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-secondary-900">{contributor.handle}</p>
                     <div className="flex items-center space-x-4 text-sm text-secondary-500">
@@ -103,7 +102,7 @@ const Analytics = () => {
                       <span>{contributor.total_comments} comments</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <ArrowTrendingUpIcon className="w-4 h-4 text-green-500" />
                     <span className="text-sm font-medium text-green-600">
@@ -192,14 +191,14 @@ const Analytics = () => {
               </div>
               <div className="text-sm text-secondary-600">Total Posts</div>
             </div>
-            
+
             <div className="text-center">
               <div className="text-3xl font-bold text-green-600 mb-2">
                 {topContributors.reduce((sum, user) => sum + (user.total_comments || 0), 0)}
               </div>
               <div className="text-sm text-secondary-600">Total Comments</div>
             </div>
-            
+
             <div className="text-center">
               <div className="text-3xl font-bold text-yellow-600 mb-2">
                 {topContributors.reduce((sum, user) => sum + (user.karma || 0), 0)}

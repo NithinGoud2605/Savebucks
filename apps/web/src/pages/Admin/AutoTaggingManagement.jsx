@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiRequest } from '../../lib/api'
 import { toast } from '../../lib/toast'
-import { Skeleton } from '../../components/Loader/Skeleton'
+import { Skeleton } from '../../components/ui/Skeleton'
 import {
   TagIcon,
   BuildingStorefrontIcon,
@@ -221,12 +221,11 @@ const AutoTaggingManagement = () => {
                         {log.detected_category || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          log.status === 'applied' ? 'bg-green-100 text-green-800' :
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${log.status === 'applied' ? 'bg-green-100 text-green-800' :
                           log.status === 'suggested' ? 'bg-yellow-100 text-yellow-800' :
-                          log.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
+                            log.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-50 text-gray-800'
+                          }`}>
                           {log.status}
                         </span>
                       </td>
@@ -289,7 +288,7 @@ const AutoTaggingManagement = () => {
                       <PencilIcon className="w-4 h-4" />
                     </button>
                   </div>
-                  
+
                   <div className="mt-4 space-y-2">
                     <div>
                       <p className="text-xs font-medium text-secondary-700">Domain Patterns:</p>
@@ -301,7 +300,7 @@ const AutoTaggingManagement = () => {
                         ))}
                       </div>
                     </div>
-                    
+
                     {pattern.title_patterns?.length > 0 && (
                       <div>
                         <p className="text-xs font-medium text-secondary-700">Title Patterns:</p>
@@ -317,11 +316,10 @@ const AutoTaggingManagement = () => {
                   </div>
 
                   <div className="mt-4 flex items-center justify-between">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      pattern.is_active 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${pattern.is_active
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                      }`}>
                       {pattern.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
@@ -379,7 +377,7 @@ const AutoTaggingManagement = () => {
                       <PencilIcon className="w-4 h-4" />
                     </button>
                   </div>
-                  
+
                   <div className="mt-4 space-y-2">
                     <div>
                       <p className="text-xs font-medium text-secondary-700">Keyword Patterns:</p>
@@ -391,7 +389,7 @@ const AutoTaggingManagement = () => {
                         ))}
                       </div>
                     </div>
-                    
+
                     {pattern.title_patterns?.length > 0 && (
                       <div>
                         <p className="text-xs font-medium text-secondary-700">Title Patterns:</p>
@@ -407,11 +405,10 @@ const AutoTaggingManagement = () => {
                   </div>
 
                   <div className="mt-4 flex items-center justify-between">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      pattern.is_active 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${pattern.is_active
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                      }`}>
                       {pattern.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
@@ -426,7 +423,7 @@ const AutoTaggingManagement = () => {
       {activeTab === 'logs' && (
         <div className="space-y-6">
           <h2 className="text-lg font-medium text-secondary-900">Tagging Logs</h2>
-          
+
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <table className="min-w-full divide-y divide-secondary-200">
               <thead className="bg-secondary-50">
@@ -463,12 +460,11 @@ const AutoTaggingManagement = () => {
                       {log.detected_category || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        log.status === 'applied' ? 'bg-green-100 text-green-800' :
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${log.status === 'applied' ? 'bg-green-100 text-green-800' :
                         log.status === 'suggested' ? 'bg-yellow-100 text-yellow-800' :
-                        log.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                          log.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-50 text-gray-800'
+                        }`}>
                         {log.status}
                       </span>
                     </td>

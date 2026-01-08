@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../lib/api'
 import { formatCompactNumber, formatPercentage, dateAgo } from '../../lib/format'
-import { Skeleton } from '../Loader/Skeleton'
+import { Skeleton } from '../ui/Skeleton'
 import { clsx } from 'clsx'
 
 export function UserStats({ userId, variant = 'full', className = '' }) {
@@ -101,11 +101,11 @@ export function UserStats({ userId, variant = 'full', className = '' }) {
               {stat.change !== undefined && (
                 <div className={clsx(
                   'text-xs px-2 py-1 rounded-full font-medium',
-                  stat.change > 0 
+                  stat.change > 0
                     ? 'bg-green-100 text-green-800'
                     : stat.change < 0
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-gray-100 text-gray-800'
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-gray-50 text-gray-800'
                 )}>
                   {stat.change > 0 ? '+' : ''}{stat.change}
                 </div>
@@ -164,7 +164,7 @@ export function UserStats({ userId, variant = 'full', className = '' }) {
                           key={`${weekIndex}-${dayIndex}`}
                           className={clsx(
                             'w-3 h-3 rounded-sm',
-                            day === 0 && 'bg-gray-100',
+                            day === 0 && 'bg-gray-50',
                             day > 0 && day <= 2 && 'bg-green-200',
                             day > 2 && day <= 5 && 'bg-green-400',
                             day > 5 && 'bg-green-600'
@@ -241,8 +241,8 @@ export function UserStats({ userId, variant = 'full', className = '' }) {
                       <span className="text-gray-600">{category}</span>
                       <div className="flex items-center space-x-2">
                         <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-blue-500" 
+                          <div
+                            className="h-full bg-blue-500"
                             style={{ width: `${(count / stats.deals_posted) * 100}%` }}
                           />
                         </div>

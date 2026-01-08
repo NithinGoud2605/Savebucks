@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { 
-  Search, 
-  Filter, 
-  SortAsc, 
-  Tag, 
-  Building2, 
+import {
+  Search,
+  Filter,
+  SortAsc,
+  Tag,
+  Building2,
   Folder,
   X,
   Grid,
@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { api } from '../lib/api'
 import { Container } from '../components/Layout/Container'
-import { Skeleton } from '../components/Loader/Skeleton'
+import { Skeleton } from '../components/ui/Skeleton'
 import NewDealCard from '../components/Deal/NewDealCard'
 import CouponCard from '../components/Coupon/CouponCard'
 import { formatPrice, dateAgo } from '../lib/format'
@@ -40,7 +40,7 @@ const UnifiedSearchResults = () => {
   const [couponsLoading, setCouponsLoading] = useState(false)
   const [dealsHasMore, setDealsHasMore] = useState(true)
   const [couponsHasMore, setCouponsHasMore] = useState(true)
-  
+
   const searchQuery = searchParams.get('q') || ''
   const type = searchParams.get('type') || 'all'
   const category = searchParams.get('category') || ''
@@ -98,7 +98,7 @@ const UnifiedSearchResults = () => {
   // Load more deals
   const loadMoreDeals = async () => {
     if (dealsLoading || !dealsHasMore) return
-    
+
     setDealsLoading(true)
     try {
       const nextPage = dealsPage + 1
@@ -108,7 +108,7 @@ const UnifiedSearchResults = () => {
         page: nextPage,
         limit: 9
       })
-      
+
       if (response.deals && response.deals.length > 0) {
         setDealsData(prev => [...prev, ...response.deals])
         setDealsPage(nextPage)
@@ -126,7 +126,7 @@ const UnifiedSearchResults = () => {
   // Load more coupons
   const loadMoreCoupons = async () => {
     if (couponsLoading || !couponsHasMore) return
-    
+
     setCouponsLoading(true)
     try {
       const nextPage = couponsPage + 1
@@ -136,7 +136,7 @@ const UnifiedSearchResults = () => {
         page: nextPage,
         limit: 9
       })
-      
+
       if (response.coupons && response.coupons.length > 0) {
         setCouponsData(prev => [...prev, ...response.coupons])
         setCouponsPage(nextPage)
@@ -217,7 +217,7 @@ const UnifiedSearchResults = () => {
   // Handle filter changes
   const updateFilter = (key, value) => {
     const newParams = new URLSearchParams(searchParams)
-    
+
     if (value && value !== '' && value !== false && value !== 'all') {
       if (Array.isArray(value)) {
         if (value.length > 0) {
@@ -231,7 +231,7 @@ const UnifiedSearchResults = () => {
     } else {
       newParams.delete(key)
     }
-    
+
     newParams.delete('page') // Reset to page 1 when filters change
     setCurrentPage(1)
     setSearchParams(newParams)
@@ -243,7 +243,7 @@ const UnifiedSearchResults = () => {
     newParams.set('page', newPage.toString())
     setCurrentPage(newPage)
     setSearchParams(newParams)
-    
+
     // Scroll to top of results
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -258,7 +258,7 @@ const UnifiedSearchResults = () => {
   const getPageNumbers = () => {
     const pages = []
     const maxVisiblePages = 5
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i)
@@ -266,22 +266,22 @@ const UnifiedSearchResults = () => {
     } else {
       const start = Math.max(1, page - 2)
       const end = Math.min(totalPages, start + maxVisiblePages - 1)
-      
+
       if (start > 1) {
         pages.push(1)
         if (start > 2) pages.push('...')
       }
-      
+
       for (let i = start; i <= end; i++) {
         pages.push(i)
       }
-      
+
       if (end < totalPages) {
         if (end < totalPages - 1) pages.push('...')
         pages.push(totalPages)
       }
     }
-    
+
     return pages
   }
 
@@ -336,7 +336,7 @@ const UnifiedSearchResults = () => {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             {searchQuery ? `Search results for "${searchQuery}"` : 'Search Results'}
           </h1>
-          
+
         </div>
 
         {/* Tabs */}
@@ -346,22 +346,20 @@ const UnifiedSearchResults = () => {
               <nav className="-mb-px flex space-x-8">
                 <button
                   onClick={() => setActiveTab('all')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'all'
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'all'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
                 >
                   All Results
                 </button>
                 {searchResults.total_deals > 0 && (
                   <button
                     onClick={() => setActiveTab('deals')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'deals'
-                        ? 'border-primary-500 text-primary-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'deals'
+                      ? 'border-primary-500 text-primary-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
                   >
                     Deals
                   </button>
@@ -369,11 +367,10 @@ const UnifiedSearchResults = () => {
                 {searchResults.total_coupons > 0 && (
                   <button
                     onClick={() => setActiveTab('coupons')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'coupons'
-                        ? 'border-primary-500 text-primary-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'coupons'
+                      ? 'border-primary-500 text-primary-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
                   >
                     Coupons
                   </button>
@@ -556,7 +553,7 @@ const UnifiedSearchResults = () => {
                 />
                 <span className="ml-2 text-sm text-gray-700">Has Coupon Code</span>
               </label>
-              
+
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -637,102 +634,100 @@ const UnifiedSearchResults = () => {
               <>
                 {/* Deals Section */}
                 {dealsData.length > 0 && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                      <TrendingUp className="w-6 h-6 text-primary-600" />
-                      Deals
-                    </h2>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Showing {dealsData.length} of {searchResults.total_deals}
-                  </div>
-                </div>
-                
-                <div className={`grid gap-6 ${
-                  viewMode === 'grid' 
-                    ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                    : 'grid-cols-1'
-                }`}>
-                  {dealsData.map((deal) => (
-                    <motion.div
-                      key={deal.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <NewDealCard
-                        deal={deal}
-                        variant={viewMode === 'list' ? 'compact' : 'default'}
-                      />
-                    </motion.div>
-                  ))}
-                </div>
-
-
-                {/* Infinite Scroll Loading Indicator */}
-                {dealsLoading && (
-                  <div className="mt-8 flex justify-center">
-                    <div className="bg-white border border-gray-200 rounded-lg px-6 py-4 shadow-sm">
-                      <div className="flex items-center gap-3 text-gray-700">
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-600 border-t-transparent"></div>
-                        <span className="font-medium">Loading more deals...</span>
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                          <TrendingUp className="w-6 h-6 text-primary-600" />
+                          Deals
+                        </h2>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Showing {dealsData.length} of {searchResults.total_deals}
                       </div>
                     </div>
+
+                    <div className={`grid gap-6 ${viewMode === 'grid'
+                      ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                      : 'grid-cols-1'
+                      }`}>
+                      {dealsData.map((deal) => (
+                        <motion.div
+                          key={deal.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <NewDealCard
+                            deal={deal}
+                            variant={viewMode === 'list' ? 'compact' : 'default'}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+
+
+                    {/* Infinite Scroll Loading Indicator */}
+                    {dealsLoading && (
+                      <div className="mt-8 flex justify-center">
+                        <div className="bg-white border border-gray-200 rounded-lg px-6 py-4 shadow-sm">
+                          <div className="flex items-center gap-3 text-gray-700">
+                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-600 border-t-transparent"></div>
+                            <span className="font-medium">Loading more deals...</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
-            )}
 
                 {/* Coupons Section */}
                 {couponsData.length > 0 && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                      <Tag className="w-6 h-6 text-green-600" />
-                      Coupons
-                    </h2>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Showing {couponsData.length} of {searchResults.total_coupons}
-                  </div>
-                </div>
-                
-                <div className={`grid gap-6 ${
-                  viewMode === 'grid' 
-                    ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                    : 'grid-cols-1'
-                }`}>
-                  {couponsData.map((coupon) => (
-                    <motion.div
-                      key={coupon.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <CouponCard
-                        coupon={coupon}
-                        variant={viewMode === 'list' ? 'compact' : 'default'}
-                      />
-                    </motion.div>
-                  ))}
-                </div>
-
-
-                {/* Infinite Scroll Loading Indicator */}
-                {couponsLoading && (
-                  <div className="mt-8 flex justify-center">
-                    <div className="bg-white border border-gray-200 rounded-lg px-6 py-4 shadow-sm">
-                      <div className="flex items-center gap-3 text-gray-700">
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-600 border-t-transparent"></div>
-                        <span className="font-medium">Loading more coupons...</span>
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                          <Tag className="w-6 h-6 text-green-600" />
+                          Coupons
+                        </h2>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Showing {couponsData.length} of {searchResults.total_coupons}
                       </div>
                     </div>
+
+                    <div className={`grid gap-6 ${viewMode === 'grid'
+                      ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                      : 'grid-cols-1'
+                      }`}>
+                      {couponsData.map((coupon) => (
+                        <motion.div
+                          key={coupon.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <CouponCard
+                            coupon={coupon}
+                            variant={viewMode === 'list' ? 'compact' : 'default'}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+
+
+                    {/* Infinite Scroll Loading Indicator */}
+                    {couponsLoading && (
+                      <div className="mt-8 flex justify-center">
+                        <div className="bg-white border border-gray-200 rounded-lg px-6 py-4 shadow-sm">
+                          <div className="flex items-center gap-3 text-gray-700">
+                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-600 border-t-transparent"></div>
+                            <span className="font-medium">Loading more coupons...</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
                 )}
               </>
             )}
@@ -751,12 +746,11 @@ const UnifiedSearchResults = () => {
                     Showing {dealsData.length} of {searchResults.total_deals}
                   </div>
                 </div>
-                
-                <div className={`grid gap-6 ${
-                  viewMode === 'grid' 
-                    ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                    : 'grid-cols-1'
-                }`}>
+
+                <div className={`grid gap-6 ${viewMode === 'grid'
+                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                  : 'grid-cols-1'
+                  }`}>
                   {dealsData.map((deal) => (
                     <motion.div
                       key={deal.id}
@@ -789,12 +783,11 @@ const UnifiedSearchResults = () => {
                     Showing {couponsData.length} of {searchResults.total_coupons}
                   </div>
                 </div>
-                
-                <div className={`grid gap-6 ${
-                  viewMode === 'grid' 
-                    ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                    : 'grid-cols-1'
-                }`}>
+
+                <div className={`grid gap-6 ${viewMode === 'grid'
+                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                  : 'grid-cols-1'
+                  }`}>
                   {couponsData.map((coupon) => (
                     <motion.div
                       key={coupon.id}
@@ -831,7 +824,7 @@ const UnifiedSearchResults = () => {
                     </button>
                     <button
                       onClick={() => window.history.back()}
-                      className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                      className="bg-gray-50 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm"
                     >
                       Go Back
                     </button>
@@ -890,11 +883,11 @@ const UnifiedSearchResults = () => {
               <div className="flex items-center gap-3 text-gray-700">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-600 border-t-transparent"></div>
                 <span className="font-medium">
-                  {dealsLoading && couponsLoading 
-                    ? 'Loading more content...' 
-                    : dealsLoading 
-                    ? 'Loading more deals...' 
-                    : 'Loading more coupons...'
+                  {dealsLoading && couponsLoading
+                    ? 'Loading more content...'
+                    : dealsLoading
+                      ? 'Loading more deals...'
+                      : 'Loading more coupons...'
                   }
                 </span>
               </div>

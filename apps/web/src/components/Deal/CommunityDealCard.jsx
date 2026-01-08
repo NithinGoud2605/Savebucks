@@ -15,10 +15,10 @@ export function CommunityDealCard({ deal, className, compact = false }) {
   const [showFullDescription, setShowFullDescription] = useState(false)
   const [imageError, setImageError] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-  
+
   const score = (deal.ups || 0) - (deal.downs || 0)
   const commentCount = deal.comments?.length || 0
-  
+
   // Get images array - prioritize deal_images, fallback to image_url
   const images = deal.deal_images?.length > 0 ? deal.deal_images : (deal.image_url ? [deal.image_url] : [])
   const currentImage = images[selectedImageIndex] || deal.image_url
@@ -59,7 +59,7 @@ export function CommunityDealCard({ deal, className, compact = false }) {
     )}>
       {/* Colorful top border */}
       <div className={`h-1 bg-gradient-to-r ${dealType.color}`} />
-      
+
       {/* Temperature indicator */}
       {temperature > 20 && (
         <div className={clsx(
@@ -95,11 +95,11 @@ export function CommunityDealCard({ deal, className, compact = false }) {
                 </div>
               )}
             </div>
-            
+
             {/* Submitter details */}
             <div>
               <div className="flex items-center space-x-2">
-                <Link 
+                <Link
                   to={`/user/${deal.submitter?.handle || 'unknown'}`}
                   className="font-semibold text-gray-900 hover:text-primary-600 transition-colors"
                 >
@@ -121,8 +121,8 @@ export function CommunityDealCard({ deal, className, compact = false }) {
           </div>
 
           {/* Vote button */}
-          <VoteButton 
-            dealId={deal.id} 
+          <VoteButton
+            dealId={deal.id}
             votes={score}
             userVote={deal.user_vote}
             className="flex-shrink-0"
@@ -133,7 +133,7 @@ export function CommunityDealCard({ deal, className, compact = false }) {
         <div className="space-y-4">
           {/* Title */}
           <h2 className="text-xl font-bold text-gray-900 leading-tight">
-            <Link 
+            <Link
               to={`/deal/${deal.id}`}
               className="hover:text-primary-600 transition-colors focus-ring rounded-lg"
             >
@@ -143,7 +143,7 @@ export function CommunityDealCard({ deal, className, compact = false }) {
 
           {/* Deal image */}
           {currentImage && !imageError && (
-            <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-video">
+            <div className="relative rounded-xl overflow-hidden bg-gray-50 aspect-video">
               <img
                 src={currentImage}
                 alt={deal.title}
@@ -151,7 +151,7 @@ export function CommunityDealCard({ deal, className, compact = false }) {
                 loading="lazy"
                 onError={() => setImageError(true)}
               />
-              
+
               {/* Image Navigation for multiple images */}
               {images.length > 1 && (
                 <>
@@ -168,7 +168,7 @@ export function CommunityDealCard({ deal, className, compact = false }) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                   </button>
-                  
+
                   {/* Next button */}
                   <button
                     onClick={(e) => {
@@ -182,18 +182,18 @@ export function CommunityDealCard({ deal, className, compact = false }) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </button>
-                  
+
                   {/* Image counter */}
                   <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded-full">
                     {selectedImageIndex + 1} / {images.length}
                   </div>
                 </>
               )}
-              
+
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
           )}
-          
+
           {/* Thumbnail navigation for multiple images */}
           {images.length > 1 && (
             <div className="flex space-x-2 overflow-x-auto mt-2">
@@ -226,7 +226,7 @@ export function CommunityDealCard({ deal, className, compact = false }) {
                   <span className="text-3xl font-black text-teal-600">
                     {deal.price === 0 ? 'FREE' : formatPrice(deal.price, deal.currency)}
                   </span>
-                  
+
                   {deal.list_price && deal.list_price > deal.price && (
                     <div className="flex items-center space-x-2">
                       <span className="text-lg text-gray-500 line-through">
@@ -238,7 +238,7 @@ export function CommunityDealCard({ deal, className, compact = false }) {
                     </div>
                   )}
                 </div>
-                
+
                 {deal.expires_at && (
                   <ExpirationTimer expiresAt={deal.expires_at} />
                 )}
@@ -284,9 +284,9 @@ export function CommunityDealCard({ deal, className, compact = false }) {
                 <Eye className="w-3 h-3 text-blue-500" />
                 <span>{(deal.views_count || deal.views || 0).toLocaleString()}</span>
               </div>
-              
+
               {commentCount > 0 && (
-                <Link 
+                <Link
                   to={`/deal/${deal.id}#comments`}
                   className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
                 >
@@ -296,7 +296,7 @@ export function CommunityDealCard({ deal, className, compact = false }) {
                   <span>{commentCount}</span>
                 </Link>
               )}
-              
+
               <div className="flex items-center space-x-1">
                 <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L10 4.414 4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
@@ -304,7 +304,7 @@ export function CommunityDealCard({ deal, className, compact = false }) {
                 <span>{Math.max(0, score)}</span>
               </div>
             </div>
-            
+
             <div className="text-xs text-gray-400">
               {dateAgo(deal.created_at)}
             </div>
@@ -312,21 +312,21 @@ export function CommunityDealCard({ deal, className, compact = false }) {
 
           {/* Action buttons */}
           <div className="flex items-center justify-between gap-3">
-            <AffiliateButton 
+            <AffiliateButton
               dealId={deal.id}
               className="flex-1 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
               🛒 Get This Deal
             </AffiliateButton>
-            
+
             <div className="flex items-center space-x-2">
-              <BookmarkButton 
+              <BookmarkButton
                 dealId={deal.id}
-                className="p-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                className="p-3 bg-gray-50 hover:bg-gray-200 rounded-xl transition-colors"
               />
-              <ShareButton 
+              <ShareButton
                 deal={deal}
-                className="p-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                className="p-3 bg-gray-50 hover:bg-gray-200 rounded-xl transition-colors"
               />
             </div>
           </div>

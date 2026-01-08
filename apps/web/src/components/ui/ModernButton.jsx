@@ -11,7 +11,7 @@ const buttonVariants = cva(
         primary: "bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-lg hover:shadow-xl",
         secondary: "bg-secondary-100 text-secondary-900 hover:bg-secondary-200 focus:ring-secondary-500",
         outline: "border-2 border-gray-300 bg-transparent hover:bg-gray-50 focus:ring-gray-500",
-        ghost: "bg-transparent hover:bg-gray-100 focus:ring-gray-500",
+        ghost: "bg-transparent hover:bg-gray-50 focus:ring-gray-500",
         danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-lg hover:shadow-xl",
         success: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-lg hover:shadow-xl",
         gradient: "bg-gradient-to-r from-primary-600 to-purple-600 text-white hover:from-primary-700 hover:to-purple-700 focus:ring-primary-500 shadow-lg hover:shadow-xl",
@@ -100,17 +100,17 @@ export const ModernButton = React.forwardRef(({
       {isLoading && (
         <Loader2 className={`${iconSize} animate-spin mr-2`} />
       )}
-      
+
       {!isLoading && leftIcon && (
         <span className={`${iconSize} mr-2`}>
           {leftIcon}
         </span>
       )}
-      
+
       <span className="relative z-10">
         {isLoading && loadingText ? loadingText : children}
       </span>
-      
+
       {!isLoading && rightIcon && (
         <span className={`${iconSize} ml-2`}>
           {rightIcon}
@@ -145,14 +145,13 @@ export const ButtonGroup = ({ children, className = '' }) => {
     <div className={`inline-flex rounded-xl shadow-sm ${className}`} role="group">
       {React.Children.map(children, (child, index) => {
         if (!React.isValidElement(child)) return null
-        
+
         const isFirst = index === 0
         const isLast = index === React.Children.count(children) - 1
-        
+
         return React.cloneElement(child, {
-          className: `${child.props.className || ''} ${
-            !isFirst && !isLast ? 'rounded-none border-x-0' : ''
-          } ${isFirst ? 'rounded-r-none' : ''} ${isLast ? 'rounded-l-none' : ''}`,
+          className: `${child.props.className || ''} ${!isFirst && !isLast ? 'rounded-none border-x-0' : ''
+            } ${isFirst ? 'rounded-r-none' : ''} ${isLast ? 'rounded-l-none' : ''}`,
         })
       })}
     </div>
@@ -197,7 +196,7 @@ export const IconButton = React.forwardRef(({
           {icon}
         </span>
       </ModernButton>
-      
+
       {tooltip && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
           {tooltip}

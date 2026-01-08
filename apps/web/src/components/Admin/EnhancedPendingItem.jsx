@@ -17,15 +17,15 @@ import {
   PencilIcon
 } from '@heroicons/react/24/outline'
 
-export default function EnhancedPendingItem({ 
-  item, 
-  type, 
-  onApprove, 
-  onReject, 
-  onToggleSelection, 
-  isSelected, 
+export default function EnhancedPendingItem({
+  item,
+  type,
+  onApprove,
+  onReject,
+  onToggleSelection,
+  isSelected,
   isLoading,
-  onEdit 
+  onEdit
 }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showFullDescription, setShowFullDescription] = useState(false)
@@ -79,11 +79,11 @@ export default function EnhancedPendingItem({
 
   const karmaPoints = calculateKarmaPoints()
   const getKarmaColor = () => {
-    if (karmaPoints === 3) return 'text-gray-600 bg-gray-100'
+    if (karmaPoints === 3) return 'text-gray-600 bg-gray-50'
     if (karmaPoints === 5) return 'text-blue-600 bg-blue-100'
     if (karmaPoints === 8) return 'text-green-600 bg-green-100'
     if (karmaPoints === 10) return 'text-purple-600 bg-purple-100'
-    return 'text-gray-600 bg-gray-100'
+    return 'text-gray-600 bg-gray-50'
   }
 
   return (
@@ -110,8 +110,8 @@ export default function EnhancedPendingItem({
 
             {/* Submitter Info */}
             <div className="mb-4">
-              <SubmitterBadge 
-                submitter={item.profiles} 
+              <SubmitterBadge
+                submitter={item.profiles}
                 submitter_id={item.submitter_id}
                 created_at={item.created_at}
                 size="sm"
@@ -151,7 +151,7 @@ export default function EnhancedPendingItem({
                 <div className="flex items-center gap-2 text-sm">
                   <CurrencyDollarIcon className="w-4 h-4 text-green-600" />
                   <span className="font-medium text-gray-900">
-                    {item.coupon_type === 'percentage' 
+                    {item.coupon_type === 'percentage'
                       ? `${item.discount_value}% off`
                       : `$${item.discount_value} off`
                     }
@@ -244,7 +244,7 @@ export default function EnhancedPendingItem({
                     />
                   ))}
                   {item.deal_images.length > 3 && (
-                    <div className="w-16 h-16 bg-gray-100 rounded border flex items-center justify-center">
+                    <div className="w-16 h-16 bg-gray-50 rounded border flex items-center justify-center">
                       <span className="text-xs text-gray-600">
                         +{item.deal_images.length - 3}
                       </span>

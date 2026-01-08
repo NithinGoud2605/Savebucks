@@ -5,12 +5,12 @@
 
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { 
-  Search, 
-  Users, 
-  Tag, 
-  Building2, 
-  Grid3X3, 
+import {
+  Search,
+  Users,
+  Tag,
+  Building2,
+  Grid3X3,
   List,
   Filter,
   X,
@@ -29,16 +29,16 @@ import {
   ExternalLink
 } from 'lucide-react'
 import { NewDealCard } from '../Deal/NewDealCard'
-import { Skeleton } from '../Loader/Skeleton'
+import { Skeleton } from '../ui/Skeleton'
 import { formatPrice, dateAgo } from '../../lib/format'
 
-const EnterpriseSearchResults = ({ 
-  searchResults, 
-  isLoading, 
-  error, 
+const EnterpriseSearchResults = ({
+  searchResults,
+  isLoading,
+  error,
   query,
   onInteraction,
-  onFilterChange 
+  onFilterChange
 }) => {
   const [activeTab, setActiveTab] = useState('all')
   const [viewMode, setViewMode] = useState('grid')
@@ -192,11 +192,10 @@ const EnterpriseSearchResults = ({
         <nav className="flex space-x-8">
           <button
             onClick={() => handleTabChange('all')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === 'all'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'all'
+              ? 'border-primary-500 text-primary-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
           >
             <Search className="w-4 h-4 inline mr-2" />
             All ({total_results.toLocaleString()})
@@ -205,11 +204,10 @@ const EnterpriseSearchResults = ({
           {total_deals > 0 && (
             <button
               onClick={() => handleTabChange('deals')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'deals'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'deals'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               <Tag className="w-4 h-4 inline mr-2" />
               Deals ({total_deals.toLocaleString()})
@@ -219,11 +217,10 @@ const EnterpriseSearchResults = ({
           {total_coupons > 0 && (
             <button
               onClick={() => handleTabChange('coupons')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'coupons'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'coupons'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               <Tag className="w-4 h-4 inline mr-2" />
               Coupons ({total_coupons.toLocaleString()})
@@ -233,11 +230,10 @@ const EnterpriseSearchResults = ({
           {total_users > 0 && (
             <button
               onClick={() => handleTabChange('users')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'users'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'users'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               <Users className="w-4 h-4 inline mr-2" />
               Users ({total_users.toLocaleString()})
@@ -247,11 +243,10 @@ const EnterpriseSearchResults = ({
           {total_companies > 0 && (
             <button
               onClick={() => handleTabChange('companies')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'companies'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'companies'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               <Building2 className="w-4 h-4 inline mr-2" />
               Companies ({total_companies.toLocaleString()})
@@ -347,7 +342,7 @@ const EnterpriseSearchResults = ({
                           className="w-12 h-12 rounded-lg object-cover"
                         />
                       ) : (
-                        <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-lg bg-gray-50 flex items-center justify-center">
                           <Building2 className="w-6 h-6 text-gray-600" />
                         </div>
                       )}
@@ -429,11 +424,11 @@ const EnterpriseSearchResults = ({
                         )}
                       </div>
                     </div>
-                    
+
                     {coupon.description && (
                       <p className="text-xs text-gray-600 mb-3 line-clamp-2">{coupon.description}</p>
                     )}
-                    
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         {coupon.companies?.logo_url && (
@@ -448,7 +443,7 @@ const EnterpriseSearchResults = ({
                           <CheckCircle className="w-3 h-3 text-blue-500" />
                         )}
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
                         <span className="text-sm font-medium text-green-600">
                           {coupon.discount_value}% off
@@ -467,9 +462,9 @@ const EnterpriseSearchResults = ({
                           <span
                             key={tag.id}
                             className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                            style={{ 
-                              backgroundColor: `${tag.color}20`, 
-                              color: tag.color 
+                            style={{
+                              backgroundColor: `${tag.color}20`,
+                              color: tag.color
                             }}
                           >
                             <Tag className="w-2 h-2 mr-1" />
@@ -511,7 +506,7 @@ const EnterpriseSearchResults = ({
               <>Start typing to search for deals, coupons, users, and companies.</>
             )}
           </p>
-          
+
           {suggestions.length > 0 && (
             <div className="mb-6">
               <p className="text-sm text-gray-600 mb-3">Did you mean:</p>

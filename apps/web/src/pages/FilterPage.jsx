@@ -4,12 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { setPageMeta } from '../lib/head'
 import NewDealCard from '../components/Deal/NewDealCard'
-import Loading from '../components/ui/Loading'
-import { 
-  FireIcon, 
-  BoltIcon, 
-  StarIcon, 
-  GiftIcon, 
+import { Skeleton } from '../components/ui/Skeleton'
+import {
+  FireIcon,
+  BoltIcon,
+  StarIcon,
+  GiftIcon,
   ClockIcon,
   ArrowRightIcon,
   ChevronLeftIcon,
@@ -72,7 +72,7 @@ const FilterPage = () => {
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const [currentPage, setCurrentPage] = useState(1)
-  
+
   // Extract filter type from the current path
   const filterType = location.pathname.substring(1) // Remove leading slash
   const config = filterConfig[filterType]
@@ -132,7 +132,19 @@ const FilterPage = () => {
   }
 
   if (isLoading) {
-    return <Loading />
+    return (
+      <div className="min-h-screen bg-primary-50 pt-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Skeleton className="h-10 w-48 mb-4" />
+          <Skeleton className="h-6 w-96 mb-8" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <Skeleton key={i} className="h-64 w-full rounded-xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (error) {
@@ -141,7 +153,7 @@ const FilterPage = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-secondary-900 mb-2">Error Loading Deals</h1>
           <p className="text-secondary-600 mb-4">{error.message}</p>
-          <button 
+          <button
             onClick={() => refetch()}
             className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
           >
@@ -166,7 +178,7 @@ const FilterPage = () => {
               <p className="text-secondary-600">{config.description}</p>
             </div>
           </div>
-          
+
           {total > 0 && (
             <div className="flex items-center justify-between">
               <p className="text-sm text-secondary-500">
@@ -184,9 +196,9 @@ const FilterPage = () => {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
               {deals.map((deal, index) => (
-                <NewDealCard 
-                  key={deal.id} 
-                  deal={deal} 
+                <NewDealCard
+                  key={deal.id}
+                  deal={deal}
                   index={index}
                 />
               ))}
@@ -222,11 +234,10 @@ const FilterPage = () => {
                       <button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum)}
-                        className={`px-3 py-2 text-sm font-medium rounded-lg ${
-                          currentPage === pageNum
+                        className={`px-3 py-2 text-sm font-medium rounded-lg ${currentPage === pageNum
                             ? 'bg-primary-600 text-white'
                             : 'text-secondary-700 bg-white border border-secondary-300 hover:bg-secondary-50'
-                        }`}
+                          }`}
                       >
                         {pageNum}
                       </button>

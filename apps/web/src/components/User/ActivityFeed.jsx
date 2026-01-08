@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../lib/api'
 import { dateAgo, formatPrice, pluralize } from '../../lib/format'
-import { Skeleton } from '../Loader/Skeleton'
+import { Skeleton } from '../ui/Skeleton'
 import { clsx } from 'clsx'
 
 export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls = true }) {
@@ -12,9 +12,9 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
 
   const { data: activities = [], isLoading } = useQuery({
     queryKey: ['user-activity', userId, activeFilter, limit],
-    queryFn: () => api.getUserActivity(userId, { 
+    queryFn: () => api.getUserActivity(userId, {
       type: activeFilter !== 'all' ? activeFilter : undefined,
-      limit 
+      limit
     }),
     staleTime: 1 * 60 * 1000, // 1 minute
   })
@@ -49,7 +49,7 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
   const getActivityColor = (activity) => {
     const colors = {
       deal_posted: 'text-blue-600',
-      deal_voted: 'text-green-600', 
+      deal_voted: 'text-green-600',
       deal_commented: 'text-purple-600',
       deal_bookmarked: 'text-yellow-600',
       deal_shared: 'text-pink-600',
@@ -63,16 +63,16 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
 
   const renderActivity = (activity) => {
     const baseClass = "flex items-start space-x-4 p-4 hover:bg-gray-50 rounded-lg transition-colors"
-    
+
     return (
       <div key={`${activity.type}-${activity.id}`} className={baseClass}>
-        <div className={clsx("flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg", 
+        <div className={clsx("flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg",
           getActivityColor(activity).replace('text-', 'bg-').replace('-600', '-100'),
           getActivityColor(activity).replace('-600', '-800')
         )}>
           {getActivityIcon(activity)}
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -97,11 +97,11 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
                 )}
               </div>
             </div>
-            
+
             {/* Activity Actions */}
             <div className="flex items-center space-x-2 ml-4">
               {activity.can_react && (
-                <button 
+                <button
                   onClick={() => setShowReactions(!showReactions)}
                   className="p-1.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200"
                   title="React"
@@ -111,8 +111,8 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
                   </svg>
                 </button>
               )}
-              
-              <button 
+
+              <button
                 className="p-1.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200"
                 title="Share activity"
               >
@@ -122,7 +122,7 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
               </button>
             </div>
           </div>
-          
+
           {/* Reaction Panel */}
           {showReactions && activity.can_react && (
             <div className="mt-3 flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
@@ -151,7 +151,7 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
         return (
           <div>
             <span className="font-medium">Posted a new deal</span>
-            <Link 
+            <Link
               to={`/deal/${activity.deal.id}`}
               className="block mt-1 text-blue-600 hover:text-blue-700 font-medium"
             >
@@ -171,14 +171,14 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
             )}
           </div>
         )
-      
+
       case 'deal_voted':
         return (
           <div>
             <span className="font-medium">
               {activity.vote_type === 'up' ? 'Upvoted' : 'Downvoted'} a deal
             </span>
-            <Link 
+            <Link
               to={`/deal/${activity.deal.id}`}
               className="block mt-1 text-blue-600 hover:text-blue-700"
             >
@@ -186,30 +186,30 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
             </Link>
           </div>
         )
-      
+
       case 'deal_commented':
         return (
           <div>
             <span className="font-medium">Commented on</span>
-            <Link 
+            <Link
               to={`/deal/${activity.deal.id}#comment-${activity.comment.id}`}
               className="ml-1 text-blue-600 hover:text-blue-700 font-medium"
             >
               {activity.deal.title}
             </Link>
             {activity.comment.content && (
-              <blockquote className="mt-2 p-3 bg-gray-100 rounded-lg border-l-4 border-blue-500 italic">
+              <blockquote className="mt-2 p-3 bg-gray-50 rounded-lg border-l-4 border-blue-500 italic">
                 "{activity.comment.content.substring(0, 150)}{activity.comment.content.length > 150 ? '...' : ''}"
               </blockquote>
             )}
           </div>
         )
-      
+
       case 'user_followed':
         return (
           <div>
             <span className="font-medium">Started following</span>
-            <Link 
+            <Link
               to={`/u/${activity.target_user.handle}`}
               className="ml-1 text-blue-600 hover:text-blue-700 font-medium"
             >
@@ -217,7 +217,7 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
             </Link>
           </div>
         )
-      
+
       case 'badge_earned':
         return (
           <div className="flex items-center space-x-3">
@@ -228,12 +228,12 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
             </div>
           </div>
         )
-      
+
       case 'forum_posted':
         return (
           <div>
             <span className="font-medium">Created a forum post</span>
-            <Link 
+            <Link
               to={`/forums/${activity.forum.category}/${activity.post.id}`}
               className="block mt-1 text-blue-600 hover:text-blue-700 font-medium"
             >
@@ -241,12 +241,12 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
             </Link>
           </div>
         )
-      
+
       case 'price_alert_created':
         return (
           <div>
             <span className="font-medium">Set up price alert for</span>
-            <Link 
+            <Link
               to={`/deal/${activity.deal.id}`}
               className="ml-1 text-blue-600 hover:text-blue-700 font-medium"
             >
@@ -257,7 +257,7 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
             </div>
           </div>
         )
-      
+
       default:
         return (
           <div>
@@ -304,7 +304,7 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
                 'flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors',
                 activeFilter === type.key
                   ? 'bg-blue-100 text-blue-800'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-50 text-gray-700 hover:bg-gray-200'
               )}
             >
               <span>{type.icon}</span>
@@ -320,7 +320,7 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
           activities.map(renderActivity)
         ) : (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
@@ -329,8 +329,8 @@ export function ActivityFeed({ userId, filter = 'all', limit = 20, showControls 
               No Activity Yet
             </h3>
             <p className="text-gray-500">
-              {activeFilter === 'all' 
-                ? "This user hasn't been active recently." 
+              {activeFilter === 'all'
+                ? "This user hasn't been active recently."
                 : `No ${activeFilter} activity found.`}
             </p>
           </div>

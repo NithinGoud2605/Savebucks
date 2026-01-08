@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
-import { useToast } from '../components/ui/Toast'
+import { toast } from 'sonner'
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('')
@@ -10,7 +10,7 @@ export default function ResetPassword() {
   const [isValidToken, setIsValidToken] = useState(null) // null = checking, true = valid, false = invalid
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const toast = useToast()
+
 
   useEffect(() => {
     // Check if we have the required URL parameters from Supabase (both query params and hash)
@@ -30,7 +30,7 @@ export default function ResetPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!password) {
       toast.error('Please enter a new password')
       return
@@ -47,11 +47,11 @@ export default function ResetPassword() {
     }
 
     setIsLoading(true)
-    
+
     try {
       await api.updatePassword(password)
       toast.success('Password updated successfully! You can now sign in with your new password.')
-      
+
       // Clear the tokens and redirect to sign in
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
@@ -94,7 +94,7 @@ export default function ResetPassword() {
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
               Invalid Reset Link
             </h1>
-            
+
             <p className="text-gray-600 mb-6">
               This password reset link is invalid or has expired. Please request a new password reset.
             </p>
@@ -106,7 +106,7 @@ export default function ResetPassword() {
               >
                 Request New Reset Link
               </Link>
-              
+
               <Link
                 to="/signin"
                 className="w-full text-mint-600 hover:text-mint-700 font-medium py-2 flex items-center justify-center"

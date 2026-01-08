@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  StarIcon, 
-  SparklesIcon, 
+import {
+  StarIcon,
+  SparklesIcon,
   TrophyIcon,
-  InformationCircleIcon 
+  InformationCircleIcon
 } from '@heroicons/react/24/outline'
 
-export default function KarmaIndicator({ 
-  submissionType = 'deal', 
-  formData = {}, 
-  className = '' 
+export default function KarmaIndicator({
+  submissionType = 'deal',
+  formData = {},
+  className = ''
 }) {
   const [karmaPoints, setKarmaPoints] = useState(3)
   const [fieldCount, setFieldCount] = useState(0)
@@ -73,11 +73,11 @@ export default function KarmaIndicator({
   }
 
   const getKarmaLevel = () => {
-    if (karmaPoints === 3) return { level: 'Basic', color: 'text-gray-600', bg: 'bg-gray-100' }
+    if (karmaPoints === 3) return { level: 'Basic', color: 'text-gray-600', bg: 'bg-gray-50' }
     if (karmaPoints === 5) return { level: 'Good', color: 'text-blue-600', bg: 'bg-blue-100' }
     if (karmaPoints === 8) return { level: 'Great', color: 'text-green-600', bg: 'bg-green-100' }
     if (karmaPoints === 10) return { level: 'Excellent', color: 'text-purple-600', bg: 'bg-purple-100' }
-    return { level: 'Basic', color: 'text-gray-600', bg: 'bg-gray-100' }
+    return { level: 'Basic', color: 'text-gray-600', bg: 'bg-gray-50' }
   }
 
   const getIcon = () => {
@@ -106,7 +106,7 @@ export default function KarmaIndicator({
         </div>
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-1 hover:bg-gray-50 rounded-lg transition-colors"
         >
           <InformationCircleIcon className="w-5 h-5 text-gray-400" />
         </button>
@@ -170,6 +170,9 @@ export default function KarmaIndicator({
     </div>
   )
 }
+
+
+
 
 
 

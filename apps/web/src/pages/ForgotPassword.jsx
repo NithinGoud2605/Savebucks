@@ -1,17 +1,17 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
-import { useToast } from '../components/ui/Toast'
+import { toast } from 'sonner'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const toast = useToast()
+
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!email) {
       toast.error('Please enter your email address')
       return
@@ -25,7 +25,7 @@ export default function ForgotPassword() {
     }
 
     setIsLoading(true)
-    
+
     try {
       await api.requestPasswordReset(email)
       setIsSubmitted(true)
@@ -53,9 +53,9 @@ export default function ForgotPassword() {
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
               Check Your Email
             </h1>
-            
+
             <p className="text-gray-600 mb-6">
-              We've sent a password reset link to <strong>{email}</strong>. 
+              We've sent a password reset link to <strong>{email}</strong>.
               Please check your inbox and follow the instructions to reset your password.
             </p>
 
@@ -66,7 +66,7 @@ export default function ForgotPassword() {
               >
                 Back to Sign In
               </Link>
-              
+
               <button
                 onClick={() => {
                   setIsSubmitted(false)

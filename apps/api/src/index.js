@@ -33,10 +33,11 @@ import goRoutes from './routes/go.js';
 import tempDataRoutes from './routes/temp-data.js';
 import debugRoutes from './routes/debug.js';
 import feedRoutes from './routes/feed.js';
+import aiRoutes from './routes/ai.js';
 import { log } from './lib/logger.js';
 
 const app = express();
-app.use(helmet({ 
+app.use(helmet({
   crossOriginResourcePolicy: false,
   contentSecurityPolicy: false
 }));
@@ -69,6 +70,7 @@ app.use('/api/restaurants', restaurantsRoutes);
 app.use('/api/deals', makeAuth(), deals);
 app.use('/api/admin', adminRoutes);
 app.use('/api/feed', feedRoutes); // Unified feed endpoint
+app.use('/api/ai', makeAuth(), aiRoutes); // AI chat endpoint
 app.use('/api', tempDataRoutes);
 app.use('/api', debugRoutes); // Debug routes
 app.use(goRoutes);
@@ -92,12 +94,12 @@ app.get('*', (req, res) => {
   if (req.path.startsWith('/api/') || req.path.startsWith('/go/')) {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
-  
+
   // Check if the request is for a static file
   if (req.path.includes('.')) {
     return res.status(404).send('File not found');
   }
-  
+
   // Serve React app for all other routes
   res.sendFile(path.join(frontendPath, 'index.html'));
 });

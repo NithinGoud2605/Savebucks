@@ -8,18 +8,18 @@ import { clsx } from 'clsx'
 export function DealComparison({ deals = [], onRemove }) {
   const [comparisonView, setComparisonView] = useState('overview')
   const [highlightDifferences, setHighlightDifferences] = useState(true)
-  
+
   if (deals.length === 0) {
     return null
   }
-  
+
   const comparisonViews = [
     { key: 'overview', label: 'Overview', icon: '📊' },
     { key: 'pricing', label: 'Pricing', icon: '$' },
     { key: 'details', label: 'Details', icon: '📋' },
     { key: 'community', label: 'Community', icon: '👥' },
   ]
-  
+
   // Find best values for highlighting
   const bestValues = {
     lowestPrice: Math.min(...deals.map(d => d.price || Infinity)),
@@ -29,15 +29,15 @@ export function DealComparison({ deals = [], onRemove }) {
     highestRating: Math.max(...deals.map(d => d.average_rating || 0)),
     biggest_savings: Math.max(...deals.map(d => d.list_price && d.price ? d.list_price - d.price : 0)),
   }
-  
+
   const getBestClass = (value, bestValue, type = 'positive') => {
     if (!highlightDifferences || value !== bestValue || bestValue === 0) return ''
-    
-    return type === 'positive' 
+
+    return type === 'positive'
       ? 'bg-green-100 text-green-800 font-semibold'
       : 'bg-blue-100 text-blue-800 font-semibold'
   }
-  
+
   const ComparisonRow = ({ label, children, className = '' }) => (
     <div className={clsx('border-b border-gray-200 py-3', className)}>
       <div className="grid grid-cols-1 gap-4" style={{ gridTemplateColumns: `200px repeat(${deals.length}, 1fr)` }}>
@@ -48,7 +48,7 @@ export function DealComparison({ deals = [], onRemove }) {
       </div>
     </div>
   )
-  
+
   const ComparisonCell = ({ children, className = '', highlight = false }) => (
     <div className={clsx(
       'px-4 py-2 rounded-lg text-center',
@@ -58,7 +58,7 @@ export function DealComparison({ deals = [], onRemove }) {
       {children}
     </div>
   )
-  
+
   return (
     <div className="card">
       {/* Header */}
@@ -72,7 +72,7 @@ export function DealComparison({ deals = [], onRemove }) {
               Compare {deals.length} deals side by side
             </p>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <label className="flex items-center space-x-2">
               <input
@@ -85,7 +85,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 Highlight best values
               </span>
             </label>
-            
+
             <button
               onClick={() => onRemove && onRemove()}
               className="text-gray-400 hover:text-gray-600"
@@ -97,7 +97,7 @@ export function DealComparison({ deals = [], onRemove }) {
             </button>
           </div>
         </div>
-        
+
         {/* View Tabs */}
         <nav className="flex space-x-1 mt-4">
           {comparisonViews.map((view) => (
@@ -108,7 +108,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 'px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2',
                 comparisonView === view.key
                   ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               )}
             >
               <span>{view.icon}</span>
@@ -117,7 +117,7 @@ export function DealComparison({ deals = [], onRemove }) {
           ))}
         </nav>
       </div>
-      
+
       {/* Comparison Content */}
       <div className="p-6">
         {comparisonView === 'overview' && (
@@ -137,10 +137,10 @@ export function DealComparison({ deals = [], onRemove }) {
                         ×
                       </button>
                     )}
-                    
+
                     {/* Get images array - prioritize deal_images, fallback to image_url */}
                     {(deal.deal_images?.length > 0 ? deal.deal_images[0] : deal.image_url) && (
-                      <div className="w-24 h-24 mx-auto mb-3 rounded-lg overflow-hidden bg-gray-100">
+                      <div className="w-24 h-24 mx-auto mb-3 rounded-lg overflow-hidden bg-gray-50">
                         <img
                           src={deal.deal_images?.length > 0 ? deal.deal_images[0] : deal.image_url}
                           alt={deal.title}
@@ -148,13 +148,13 @@ export function DealComparison({ deals = [], onRemove }) {
                         />
                       </div>
                     )}
-                    
+
                     <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
                       <Link to={`/deal/${deal.id}`} className="hover:text-blue-600">
                         {deal.title}
                       </Link>
                     </h3>
-                    
+
                     <p className="text-sm text-gray-600">
                       {deal.merchant}
                     </p>
@@ -162,7 +162,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 </div>
               ))}
             </div>
-            
+
             {/* Price Comparison */}
             <ComparisonRow label="Price">
               {deals.map((deal) => (
@@ -181,7 +181,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 </ComparisonCell>
               ))}
             </ComparisonRow>
-            
+
             {/* Savings */}
             <ComparisonRow label="You Save">
               {deals.map((deal) => {
@@ -203,7 +203,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 )
               })}
             </ComparisonRow>
-            
+
             {/* Community Score */}
             <ComparisonRow label="Community Score">
               {deals.map((deal) => {
@@ -216,8 +216,8 @@ export function DealComparison({ deals = [], onRemove }) {
                     <div className={clsx(
                       'font-semibold',
                       score > 0 ? 'text-green-600' :
-                      score < 0 ? 'text-red-600' :
-                      'text-gray-600'
+                        score < 0 ? 'text-red-600' :
+                          'text-gray-600'
                     )}>
                       {score > 0 ? `+${score}` : score}
                     </div>
@@ -225,13 +225,13 @@ export function DealComparison({ deals = [], onRemove }) {
                 )
               })}
             </ComparisonRow>
-            
+
             {/* Actions */}
             <ComparisonRow label="Actions">
               {deals.map((deal) => (
                 <ComparisonCell key={deal.id}>
                   <div className="space-y-2">
-                    <AffiliateButton 
+                    <AffiliateButton
                       dealId={deal.id}
                       className="w-full text-sm py-2"
                     >
@@ -249,7 +249,7 @@ export function DealComparison({ deals = [], onRemove }) {
             </ComparisonRow>
           </div>
         )}
-        
+
         {comparisonView === 'pricing' && (
           <div className="space-y-0">
             <ComparisonRow label="Current Price">
@@ -264,7 +264,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 </ComparisonCell>
               ))}
             </ComparisonRow>
-            
+
             <ComparisonRow label="Original Price">
               {deals.map((deal) => (
                 <ComparisonCell key={deal.id}>
@@ -274,7 +274,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 </ComparisonCell>
               ))}
             </ComparisonRow>
-            
+
             <ComparisonRow label="Discount Amount">
               {deals.map((deal) => {
                 const savings = deal.list_price && deal.price ? deal.list_price - deal.price : 0
@@ -290,7 +290,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 )
               })}
             </ComparisonRow>
-            
+
             <ComparisonRow label="Discount Percentage">
               {deals.map((deal) => {
                 const percentage = deal.list_price && deal.price && deal.list_price > deal.price
@@ -305,20 +305,20 @@ export function DealComparison({ deals = [], onRemove }) {
                 )
               })}
             </ComparisonRow>
-            
+
             <ComparisonRow label="Deal Type">
               {deals.map((deal) => (
                 <ComparisonCell key={deal.id}>
                   <div className="text-sm">
                     {deal.coupon_code ? 'Coupon Code' :
-                     deal.cashback ? 'Cashback' :
-                     deal.price === 0 ? 'Free' :
-                     'Direct Discount'}
+                      deal.cashback ? 'Cashback' :
+                        deal.price === 0 ? 'Free' :
+                          'Direct Discount'}
                   </div>
                 </ComparisonCell>
               ))}
             </ComparisonRow>
-            
+
             {deals.some(d => d.expires_at) && (
               <ComparisonRow label="Expiration">
                 {deals.map((deal) => (
@@ -332,7 +332,7 @@ export function DealComparison({ deals = [], onRemove }) {
             )}
           </div>
         )}
-        
+
         {comparisonView === 'details' && (
           <div className="space-y-0">
             <ComparisonRow label="Merchant">
@@ -347,7 +347,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 </ComparisonCell>
               ))}
             </ComparisonRow>
-            
+
             <ComparisonRow label="Category">
               {deals.map((deal) => (
                 <ComparisonCell key={deal.id}>
@@ -355,7 +355,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 </ComparisonCell>
               ))}
             </ComparisonRow>
-            
+
             <ComparisonRow label="Posted Date">
               {deals.map((deal) => (
                 <ComparisonCell key={deal.id}>
@@ -365,11 +365,11 @@ export function DealComparison({ deals = [], onRemove }) {
                 </ComparisonCell>
               ))}
             </ComparisonRow>
-            
+
             <ComparisonRow label="Author">
               {deals.map((deal) => (
                 <ComparisonCell key={deal.id}>
-                  <Link 
+                  <Link
                     to={`/u/${deal.author}`}
                     className="text-sm text-blue-600 hover:text-blue-700"
                   >
@@ -378,7 +378,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 </ComparisonCell>
               ))}
             </ComparisonRow>
-            
+
             <ComparisonRow label="Verification">
               {deals.map((deal) => (
                 <ComparisonCell key={deal.id}>
@@ -392,14 +392,14 @@ export function DealComparison({ deals = [], onRemove }) {
                 </ComparisonCell>
               ))}
             </ComparisonRow>
-            
+
             {deals.some(d => d.tags?.length > 0) && (
               <ComparisonRow label="Tags">
                 {deals.map((deal) => (
                   <ComparisonCell key={deal.id}>
                     <div className="flex flex-wrap gap-1 justify-center">
                       {deal.tags?.slice(0, 3).map(tag => (
-                        <span key={tag} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                        <span key={tag} className="text-xs bg-gray-50 px-2 py-1 rounded">
                           {tag}
                         </span>
                       )) || <span className="text-gray-500 text-sm">No tags</span>}
@@ -410,7 +410,7 @@ export function DealComparison({ deals = [], onRemove }) {
             )}
           </div>
         )}
-        
+
         {comparisonView === 'community' && (
           <div className="space-y-0">
             <ComparisonRow label="Community Score">
@@ -424,8 +424,8 @@ export function DealComparison({ deals = [], onRemove }) {
                     <div className={clsx(
                       'text-xl font-bold',
                       score > 0 ? 'text-green-600' :
-                      score < 0 ? 'text-red-600' :
-                      'text-gray-600'
+                        score < 0 ? 'text-red-600' :
+                          'text-gray-600'
                     )}>
                       {score > 0 ? `+${score}` : score}
                     </div>
@@ -433,7 +433,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 )
               })}
             </ComparisonRow>
-            
+
             <ComparisonRow label="Upvotes">
               {deals.map((deal) => (
                 <ComparisonCell key={deal.id}>
@@ -443,7 +443,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 </ComparisonCell>
               ))}
             </ComparisonRow>
-            
+
             <ComparisonRow label="Downvotes">
               {deals.map((deal) => (
                 <ComparisonCell key={deal.id}>
@@ -453,7 +453,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 </ComparisonCell>
               ))}
             </ComparisonRow>
-            
+
             <ComparisonRow label="Comments">
               {deals.map((deal) => {
                 const count = deal.comments?.length || 0
@@ -469,7 +469,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 )
               })}
             </ComparisonRow>
-            
+
             <ComparisonRow label="Views">
               {deals.map((deal) => {
                 const views = deal.views || 0
@@ -485,7 +485,7 @@ export function DealComparison({ deals = [], onRemove }) {
                 )
               })}
             </ComparisonRow>
-            
+
             {deals.some(d => d.average_rating > 0) && (
               <ComparisonRow label="Average Rating">
                 {deals.map((deal) => {
@@ -505,7 +505,7 @@ export function DealComparison({ deals = [], onRemove }) {
             )}
           </div>
         )}
-        
+
         {/* Summary */}
         <div className="mt-8 p-4 bg-gray-50 rounded-lg">
           <h3 className="font-semibold text-gray-900 mb-3">

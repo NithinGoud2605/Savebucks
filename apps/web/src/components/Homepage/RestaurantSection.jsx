@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { 
-  MapPin, 
-  Star, 
-  Clock, 
-  Phone, 
-  Globe, 
+import {
+  MapPin,
+  Star,
+  Clock,
+  Phone,
+  Globe,
   Navigation,
   ChevronRight,
   Utensils,
@@ -48,7 +48,7 @@ const RestaurantSection = () => {
   })
 
   const restaurants = restaurantsData?.data || []
-  
+
   console.log('🍽️ RestaurantSection: restaurants data:', restaurants)
   console.log('🍽️ RestaurantSection: isLoading:', isLoading)
   console.log('🍽️ RestaurantSection: error:', error)
@@ -151,7 +151,7 @@ const RestaurantSection = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Link 
+              <Link
                 to={`/company/${restaurant.slug}`}
                 className="block bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 overflow-hidden group"
               >
@@ -168,7 +168,7 @@ const RestaurantSection = () => {
                       <Utensils className="w-10 h-10 text-white" />
                     </div>
                   )}
-                  
+
                   {/* Distance Badge */}
                   <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-700 flex items-center gap-1">
                     <Navigation className="w-3 h-3" />
@@ -199,7 +199,7 @@ const RestaurantSection = () => {
                       </span>
                     )}
                     {restaurant.price_range && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-800">
                         {restaurant.price_range}
                       </span>
                     )}
@@ -219,7 +219,7 @@ const RestaurantSection = () => {
                         <Gift className="w-4 h-4 text-green-600" />
                         <span className="text-sm font-medium text-gray-900">Current Offers</span>
                       </div>
-                      
+
                       {/* Show recent deals */}
                       {restaurant.deals?.slice(0, 1).map((deal, dealIndex) => (
                         <div key={`deal-${dealIndex}`} className="bg-green-50 border border-green-200 rounded-lg p-2 mb-2">

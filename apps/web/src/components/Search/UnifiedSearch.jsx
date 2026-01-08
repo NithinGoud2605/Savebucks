@@ -6,7 +6,7 @@ import { Search, X, Tag, Building2, Folder, Filter, SortAsc } from 'lucide-react
 import { api } from '../../lib/api'
 import { useDebounce } from '../../hooks/useDebounce'
 
-const UnifiedSearch = ({ 
+const UnifiedSearch = ({
   placeholder = "Search deals, coupons, companies, or tags...",
   showFilters = true,
   autoFocus = false,
@@ -31,7 +31,7 @@ const UnifiedSearch = ({
   })
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
-  
+
   const debouncedQuery = useDebounce(query, 300)
   const inputRef = useRef(null)
   const suggestionsRef = useRef(null)
@@ -70,11 +70,11 @@ const UnifiedSearch = ({
     if (!searchQuery.trim()) return
 
     setIsSearching(true)
-    
+
     try {
       const params = new URLSearchParams()
       params.set('q', searchQuery.trim())
-      
+
       // Add filters to URL
       Object.entries(selectedFilters).forEach(([key, value]) => {
         if (value && value !== '' && value !== false) {
@@ -90,7 +90,7 @@ const UnifiedSearch = ({
 
       setSearchParams(params)
       setShowSuggestions(false)
-      
+
       // Navigate to search results
       if (onResultClick) {
         onResultClick(searchQuery.trim(), selectedFilters)
@@ -213,11 +213,10 @@ const UnifiedSearch = ({
         <button
           onClick={() => handleSearch()}
           disabled={isSearching}
-          className={`absolute right-1 top-1/2 transform -translate-y-1/2 text-white p-1.5 rounded-md transition-colors ${
-            isSearching 
-              ? 'bg-primary-400 cursor-not-allowed' 
-              : 'bg-primary-600 hover:bg-primary-700'
-          }`}
+          className={`absolute right-1 top-1/2 transform -translate-y-1/2 text-white p-1.5 rounded-md transition-colors ${isSearching
+            ? 'bg-primary-400 cursor-not-allowed'
+            : 'bg-primary-600 hover:bg-primary-700'
+            }`}
           title="Search"
         >
           {isSearching ? (
@@ -244,7 +243,7 @@ const UnifiedSearch = ({
                 </span>
               )}
             </button>
-            
+
             {activeFiltersCount > 0 && (
               <button
                 onClick={clearFilters}
@@ -356,7 +355,7 @@ const UnifiedSearch = ({
                     />
                     <span className="ml-2 text-sm text-gray-700">Has Coupon Code</span>
                   </label>
-                  
+
                   <label className="flex items-center">
                     <input
                       type="checkbox"

@@ -81,12 +81,12 @@ export function ReputationBadges({ userId, variant = 'full', className = '', lim
             </span>
           </div>
         )}
-        
+
         <div className="flex items-center space-x-1">
           {visibleBadges.slice(0, 3).map(badge => (
             <div
               key={badge.id}
-              className="w-6 h-6 flex items-center justify-center text-sm bg-gray-100 rounded-full"
+              className="w-6 h-6 flex items-center justify-center text-sm bg-gray-50 rounded-full"
               title={badge.name}
             >
               {badge.icon}
@@ -115,7 +115,7 @@ export function ReputationBadges({ userId, variant = 'full', className = '', lim
               {getReputationLevel(reputation.points).icon}
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between mb-2">
             <span className={clsx('text-lg font-bold', getReputationLevel(reputation.points).color)}>
               {getReputationLevel(reputation.points).level}
@@ -124,7 +124,7 @@ export function ReputationBadges({ userId, variant = 'full', className = '', lim
               {formatCompactNumber(reputation.points)} points
             </span>
           </div>
-          
+
           {/* Progress to next level */}
           <div className="space-y-2">
             <div className="flex justify-between text-xs text-gray-500">
@@ -132,8 +132,8 @@ export function ReputationBadges({ userId, variant = 'full', className = '', lim
               <span>{reputation.progress_to_next}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className={clsx('h-2 rounded-full transition-all duration-500', 
+              <div
+                className={clsx('h-2 rounded-full transition-all duration-500',
                   getReputationLevel(reputation.points).color.replace('text-', 'bg-')
                 )}
                 style={{ width: `${reputation.progress_to_next}%` }}
@@ -203,7 +203,7 @@ export function ReputationBadges({ userId, variant = 'full', className = '', lim
                     <div className="text-xs text-gray-600 mt-1">
                       {dateAgo(badge.earned_at)}
                     </div>
-                    
+
                     {/* Rarity indicator */}
                     <div className="mt-2">
                       <span className={clsx(
@@ -212,7 +212,7 @@ export function ReputationBadges({ userId, variant = 'full', className = '', lim
                         rarity === 'epic' && 'bg-purple-100 text-purple-800',
                         rarity === 'rare' && 'bg-blue-100 text-blue-800',
                         rarity === 'uncommon' && 'bg-green-100 text-green-800',
-                        rarity === 'common' && 'bg-gray-100 text-gray-800'
+                        rarity === 'common' && 'bg-gray-50 text-gray-800'
                       )}>
                         {rarity}
                       </span>
@@ -229,7 +229,7 @@ export function ReputationBadges({ userId, variant = 'full', className = '', lim
       {selectedBadge && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div 
+            <div
               className="fixed inset-0 transition-opacity bg-black bg-opacity-50"
               onClick={() => setSelectedBadge(null)}
             />
@@ -243,28 +243,28 @@ export function ReputationBadges({ userId, variant = 'full', className = '', lim
                 <p className="text-gray-600 mb-4">
                   {selectedBadge.description}
                 </p>
-                
+
                 {/* Badge stats */}
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-500">Earned:</span>
                     <span className="font-medium">{dateAgo(selectedBadge.earned_at)}</span>
                   </div>
-                  
+
                   {selectedBadge.total_holders && (
                     <div className="flex justify-between">
                       <span className="text-gray-500">Holders:</span>
                       <span className="font-medium">{formatCompactNumber(selectedBadge.total_holders)}</span>
                     </div>
                   )}
-                  
+
                   {selectedBadge.points_awarded && (
                     <div className="flex justify-between">
                       <span className="text-gray-500">Awarded:</span>
                       <span className="font-medium text-green-600">+{selectedBadge.points_awarded}</span>
                     </div>
                   )}
-                  
+
                   <div className="flex justify-between">
                     <span className="text-gray-500">Rarity:</span>
                     <span className={clsx(
@@ -295,7 +295,7 @@ export function ReputationBadges({ userId, variant = 'full', className = '', lim
       {/* Empty state */}
       {earnedBadges.length === 0 && (
         <div className="card p-8 text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
             </svg>
