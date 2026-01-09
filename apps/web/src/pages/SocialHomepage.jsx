@@ -66,8 +66,8 @@ export default function SocialHomepage() {
       {/* Command Palette - ⌘K */}
       <CommandPalette onFilterChange={setFilter} onAskAI={handleAskAI} />
 
-      {/* Main Content - Fluid width with 10% gaps (80% occupied) */}
-      <div className="h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-4rem)] w-[80%] mx-auto">
+      {/* Main Content - Fluid width: Full on mobile, 96% on laptop, 90% on desktop (5% gaps) */}
+      <div className="h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-4rem)] w-full lg:w-[96%] xl:w-[90%] mx-auto transition-all duration-300">
         <div className="flex h-full">
           {/* Left Sidebar - Compact, no scrollbar */}
           <aside className="hidden lg:block w-[260px] flex-shrink-0">

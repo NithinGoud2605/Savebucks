@@ -52,25 +52,25 @@ export function SocialDealCard({ deal, index = 0 }) {
       <Link to={`/deal/${deal.id}`} className="block h-full">
         {/* Ultra-compact card with fixed height */}
         <div
-          className="relative bg-white rounded-lg p-2.5 border border-gray-100 h-full
+          className="relative bg-white rounded-lg p-2 border border-gray-100 h-full
                      transition-all duration-200 hover:shadow-md hover:border-gray-200"
         >
-          <div className="flex gap-2.5 h-full">
-            {/* Product Image - No padded box */}
+          <div className="flex gap-3 h-full">
+            {/* Product Image - Larger */}
             <div className="flex-shrink-0">
               {currentImage && !imageError ? (
-                <div className="w-14 h-14 rounded-md overflow-hidden bg-gray-50">
+                <div className="w-[72px] h-[72px] rounded-md overflow-hidden bg-gray-50">
                   <img
                     src={currentImage}
                     alt=""
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     loading="lazy"
                     onError={() => setImageError(true)}
                   />
                 </div>
               ) : (
-                <div className="w-14 h-14 bg-gray-100 rounded-md flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-gray-300" />
+                <div className="w-[72px] h-[72px] bg-gray-100 rounded-md flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-gray-300" />
                 </div>
               )}
             </div>

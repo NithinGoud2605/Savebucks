@@ -116,7 +116,7 @@ export function InfiniteFeed({ filter = 'all', category = null, location = null 
   if (isLoading) {
     return (
       <div className="p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[...Array(4)].map((_, i) => (
             <SkeletonCard key={`skeleton-${i}`} />
           ))}
@@ -232,7 +232,7 @@ export function InfiniteFeed({ filter = 'all', category = null, location = null 
       )}
 
       {/* Feed Items Grid - 2 Cards Per Row with Auto-animate */}
-      <div ref={animateRef} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div ref={animateRef} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {allItems.map((item, index) => (
           <FeedItemCard
             key={item.content_id || item.id || `item-${index}`}
