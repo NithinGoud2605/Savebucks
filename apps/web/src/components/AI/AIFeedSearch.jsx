@@ -619,6 +619,12 @@ function AIMessage({ content, thinking, deals, coupons, isStreaming, copiedId, o
     } catch (e) { }
   }
 
+  // Fallback: If no text but we have deals/coupons, show a default message
+  // This prevents "invisible" replies where only cards would show without the AI avatar
+  if (!displayContent && ((deals && deals.length > 0) || (coupons && coupons.length > 0))) {
+    displayContent = "Here's what I found for you:"
+  }
+
   return (
     <div className="space-y-4">
       {/* Thinking section - Compact, no scroll */}
