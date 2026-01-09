@@ -15,13 +15,15 @@ import {
   Heart,
   PawPrint,
   Percent,
-  Coffee
+  Coffee,
+  Star
 } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../ui/Tooltip';
 import { Separator } from '../ui/Separator';
 
 const FILTERS = [
   { id: 'all', label: 'All Deals', icon: Sparkles, hint: 'Browse all available deals' },
+  { id: 'for-you', label: 'For You', icon: Star, hint: 'Personalized recommendations based on your activity', special: true },
   { id: 'trending', label: 'Trending', icon: Flame, hint: 'Hot deals right now' },
   { id: '50-off', label: '50%+ Off', icon: Percent, hint: 'Half price or more' },
   { id: 'under-20', label: 'Under $20', icon: DollarSign, hint: 'Budget-friendly finds' },
@@ -31,6 +33,7 @@ const FILTERS = [
   { id: 'new-arrivals', label: 'New', icon: Zap, hint: 'Latest additions' },
   { id: 'freebies', label: 'Free Stuff', icon: Gift, hint: 'Completely free items' },
 ];
+
 
 const CATEGORIES = [
   { id: 'electronics', label: 'Electronics', icon: Smartphone },
@@ -56,6 +59,7 @@ export function FilterSidebar({ activeFilter = 'all', onFilterChange, activeCate
             {FILTERS.map((filter) => {
               const Icon = filter.icon;
               const isActive = activeFilter === filter.id;
+              const isForYou = filter.id === 'for-you';
 
               return (
                 <Tooltip key={filter.id}>
@@ -66,13 +70,23 @@ export function FilterSidebar({ activeFilter = 'all', onFilterChange, activeCate
                         w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium 
                         transition-all duration-200 transform-gpu
                         ${isActive
-                          ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-md shadow-violet-500/20'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-white hover:shadow-sm hover:translate-x-0.5'
+                          ? isForYou
+                            ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-md shadow-amber-500/25'
+                            : 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-md shadow-violet-500/20'
+                          : isForYou
+                            ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-50 hover:shadow-sm hover:translate-x-0.5'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-white hover:shadow-sm hover:translate-x-0.5'
                         }
                       `}
                     >
-                      <Icon className="w-3.5 h-3.5" />
+                      <Icon className={`w-3.5 h-3.5 ${isForYou && !isActive ? 'text-amber-500' : ''}`} />
                       <span>{filter.label}</span>
+                      {isForYou && (
+                        <span className={`ml-auto text-[9px] px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/20' : 'bg-amber-100 text-amber-600'
+                          }`}>
+                          ✨
+                        </span>
+                      )}
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="right" className="text-xs">

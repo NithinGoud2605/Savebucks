@@ -864,3 +864,265 @@
     padding: 10px 14px;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   AI Response Animations - Premium Effects
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Streaming glow effect for AI messages */
+@keyframes streamingGlow {
+
+  0%,
+  100% {
+    box-shadow:
+      0 0 20px rgba(139, 92, 246, 0.15),
+      0 4px 24px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  50% {
+    box-shadow:
+      0 0 35px rgba(139, 92, 246, 0.25),
+      0 8px 32px rgba(139, 92, 246, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+}
+
+.streaming-glow {
+  animation: streamingGlow 2s ease-in-out infinite;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+/* AI message streaming indicator */
+.ai-streaming .message-text::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(139, 92, 246, 0.6),
+      rgba(59, 130, 246, 0.6),
+      transparent);
+  background-size: 200% 100%;
+  animation: streamingBar 1.5s linear infinite;
+}
+
+@keyframes streamingBar {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* AI message entrance animation */
+@keyframes aiMessageReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+    filter: blur(4px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.assistant .message-text {
+  animation: aiMessageReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  position: relative;
+}
+
+/* Enhanced deal card cascade animation */
+@keyframes dealCardCascade {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) rotateX(-10deg) scale(0.95);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translateY(-5px) rotateX(2deg) scale(1.02);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0) scale(1);
+  }
+}
+
+.deal-card-wrapper {
+  animation: dealCardCascade 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  perspective: 1000px;
+}
+
+.deal-card-wrapper:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.deal-card-wrapper:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.deal-card-wrapper:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.deal-card-wrapper:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.deal-card-wrapper:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+/* Sparkle particle effect styles */
+.sparkle-effect-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 10;
+}
+
+/* AI avatar enhanced pulse during streaming */
+.assistant.streaming .ai-avatar {
+  animation: aiAvatarPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes aiAvatarPulse {
+
+  0%,
+  100% {
+    box-shadow:
+      0 4px 16px rgba(17, 153, 142, 0.3),
+      0 0 20px rgba(56, 239, 125, 0.2);
+    transform: scale(1);
+  }
+
+  50% {
+    box-shadow:
+      0 4px 24px rgba(17, 153, 142, 0.5),
+      0 0 40px rgba(56, 239, 125, 0.4);
+    transform: scale(1.05);
+  }
+}
+
+/* Cursor blink enhanced */
+.cursor-blink {
+  display: inline-block;
+  margin-left: 2px;
+  color: #8b5cf6;
+  font-weight: 500;
+  text-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+}
+
+/* Message content relative positioning for sparkles */
+.message-content {
+  position: relative;
+}
+
+/* Enhanced feedback button hover */
+.feedback-btn {
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.feedback-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Coupon card enhanced animation */
+.inline-coupon-card {
+  animation: couponReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes couponReveal {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px) scale(0.95);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Keyboard Hints - UX Enhancement
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.keyboard-hints {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .keyboard-hints {
+    display: flex;
+  }
+}
+
+.keyboard-hints .hint {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.keyboard-hints kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-family: inherit;
+  background: linear-gradient(180deg, #ffffff, #f3f4f6);
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  color: #6b7280;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Scroll to bottom button (for future use) */
+.scroll-to-bottom {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  background: rgba(139, 92, 246, 0.95);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+  z-index: 20;
+}
+
+.scroll-to-bottom:hover {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+}

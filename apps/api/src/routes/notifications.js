@@ -1,18 +1,19 @@
 import express from 'express'
 import { makeAdminClient } from '../lib/supa.js'
+import pushService from '../lib/pushService.js'
 
 const router = express.Router()
 const supabase = makeAdminClient()
 
 // Helper function to check authentication
 const requireAuth = (req, res, next) => {
-  console.log('🔐 Auth check:', { 
-    hasUser: !!req.user, 
+  console.log('🔐 Auth check:', {
+    hasUser: !!req.user,
     userId: req.user?.id,
     endpoint: req.path,
-    method: req.method 
+    method: req.method
   })
-  
+
   if (!req.user) {
     console.log('❌ No user in request')
     return res.status(401).json({ error: 'Authentication required' })
@@ -162,7 +163,7 @@ router.put('/:id/read', requireAuth, async (req, res) => {
 
     const { data: notification, error } = await supabase
       .from('notification_queue')
-      .update({ 
+      .update({
         status: 'sent',
         sent_at: new Date().toISOString()
       })
@@ -197,7 +198,7 @@ router.post('/mark-read', requireAuth, async (req, res) => {
 
     const { data: notifications, error } = await supabase
       .from('notification_queue')
-      .update({ 
+      .update({
         status: 'sent',
         sent_at: new Date().toISOString()
       })
@@ -209,8 +210,8 @@ router.post('/mark-read', requireAuth, async (req, res) => {
       return res.status(400).json({ error: error.message })
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       updated_count: notifications?.length || 0,
       notifications: notifications || []
     })
@@ -252,6 +253,218 @@ router.get('/admin/queue', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error fetching notification queue:', error)
     res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// ===== WEB PUSH NOTIFICATION ENDPOINTS =====
+
+/**
+ * Get VAPID public key for push subscriptions
+ * This is a public endpoint (no auth required)
+ */
+router.get('/vapid-key', (req, res) => {
+  const publicKey = process.env.VAPID_PUBLIC_KEY
+
+  if (!publicKey) {
+    // Return a placeholder message if VAPID keys aren't configured
+    console.warn('⚠️ VAPID_PUBLIC_KEY not configured')
+    return res.status(503).json({
+      error: 'Push notifications not configured',
+      hint: 'Set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY environment variables'
+    })
+  }
+
+  res.json({ publicKey })
+})
+
+/**
+ * Save push subscription for a user
+ * Stores the endpoint and keys for sending push notifications
+ */
+router.post('/push-subscription', requireAuth, async (req, res) => {
+  try {
+    const { subscription } = req.body
+
+    if (!subscription || !subscription.endpoint) {
+      return res.status(400).json({ error: 'Invalid subscription data' })
+    }
+
+    // Store the subscription in the database
+    const { data, error } = await supabase
+      .from('push_subscriptions')
+      .upsert({
+        user_id: req.user.id,
+        endpoint: subscription.endpoint,
+        p256dh_key: subscription.keys?.p256dh,
+        auth_key: subscription.keys?.auth,
+        user_agent: req.headers['user-agent'],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'endpoint'
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error saving push subscription:', error)
+      // Check if table doesn't exist
+      if (error.code === '42P01') {
+        return res.status(503).json({
+          error: 'Push subscriptions table not set up',
+          hint: 'Run database migrations'
+        })
+      }
+      return res.status(400).json({ error: error.message })
+    }
+
+    console.log('✅ Push subscription saved for user:', req.user.id)
+    res.json({ success: true, subscription: data })
+
+  } catch (error) {
+    console.error('Error saving push subscription:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+/**
+ * Delete push subscription
+ * Used when user disables notifications or unsubscribes
+ */
+router.delete('/push-subscription', requireAuth, async (req, res) => {
+  try {
+    const { endpoint } = req.body
+
+    if (!endpoint) {
+      return res.status(400).json({ error: 'Endpoint is required' })
+    }
+
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .delete()
+      .eq('endpoint', endpoint)
+      .eq('user_id', req.user.id)
+
+    if (error) {
+      console.error('Error deleting push subscription:', error)
+      return res.status(400).json({ error: error.message })
+    }
+
+    console.log('✅ Push subscription deleted for user:', req.user.id)
+    res.json({ success: true })
+
+  } catch (error) {
+    console.error('Error deleting push subscription:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+/**
+ * Get user's push subscriptions (for debugging/admin)
+ */
+router.get('/push-subscriptions', requireAuth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('push_subscriptions')
+      .select('id, endpoint, user_agent, created_at, updated_at')
+      .eq('user_id', req.user.id)
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json(data || [])
+
+  } catch (error) {
+    console.error('Error fetching push subscriptions:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// ===== ADMIN PUSH SENDING ENDPOINTS =====
+
+/**
+ * Send a test push notification to yourself (admin)
+ */
+router.post('/admin/test-push', requireAdmin, async (req, res) => {
+  try {
+    const result = await pushService.sendPushToUser(req.user.id, {
+      title: '🧪 Test Notification',
+      body: 'Push notifications are working! This is a test from SaveBucks.',
+      url: '/',
+      type: 'test'
+    })
+
+    res.json({
+      success: true,
+      message: 'Test notification sent',
+      result
+    })
+
+  } catch (error) {
+    console.error('Error sending test push:', error)
+    res.status(500).json({ error: 'Failed to send test notification' })
+  }
+})
+
+/**
+ * Send a push notification to a specific user (admin)
+ */
+router.post('/admin/send-push', requireAdmin, async (req, res) => {
+  try {
+    const { user_id, title, body, url, type } = req.body
+
+    if (!user_id || !title || !body) {
+      return res.status(400).json({ error: 'user_id, title, and body are required' })
+    }
+
+    const result = await pushService.sendPushToUser(user_id, {
+      title,
+      body,
+      url: url || '/',
+      type: type || 'admin'
+    })
+
+    res.json({
+      success: true,
+      message: `Notification sent to user ${user_id}`,
+      result
+    })
+
+  } catch (error) {
+    console.error('Error sending push:', error)
+    res.status(500).json({ error: 'Failed to send notification' })
+  }
+})
+
+/**
+ * Broadcast a push notification to all users (admin) 
+ * Use with caution!
+ */
+router.post('/admin/broadcast', requireAdmin, async (req, res) => {
+  try {
+    const { title, body, url, type } = req.body
+
+    if (!title || !body) {
+      return res.status(400).json({ error: 'title and body are required' })
+    }
+
+    const result = await pushService.sendPushToAll({
+      title,
+      body,
+      url: url || '/',
+      type: type || 'announcement'
+    })
+
+    res.json({
+      success: true,
+      message: 'Broadcast sent',
+      result
+    })
+
+  } catch (error) {
+    console.error('Error broadcasting push:', error)
+    res.status(500).json({ error: 'Failed to broadcast notification' })
   }
 })
 

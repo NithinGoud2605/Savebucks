@@ -19,16 +19,17 @@ export function FeedItemCard({ item, index }) {
   switch (itemType) {
     case 'deal':
       return <SocialDealCard deal={item} index={index} />;
-    
+
     case 'coupon':
-      return <InlineCouponCard coupon={item} />;
-    
+      // Don't show coupons in the main feed
+      return null;
+
     case 'company':
       return <FeaturedCompanyCard company={item} />;
-    
+
     case 'restaurant_section':
       return <RestaurantSectionCard restaurants={item.items} />;
-    
+
     default:
       // Fallback to deal card for unknown types
       return <SocialDealCard deal={item} index={index} />;
@@ -40,7 +41,7 @@ export function FeedItemCard({ item, index }) {
  */
 function InlineCouponCard({ coupon }) {
   const company = coupon.company || {};
-  
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 group hover:border-amber-300 h-24">
       <Link to={`/company/${company.slug}?tab=coupons`} className="block h-full p-3">

@@ -16,6 +16,7 @@ import {
   Tag,
   Zap,
   ShoppingBag,
+  Store,
   ExternalLink,
   Copy,
   Check
@@ -40,7 +41,7 @@ const LOADING_STAGES = [
   { stage: 'generating', text: 'Generating response...', duration: 0 }
 ]
 
-export default function AIFeedSearch({ onAIActive, isAIActive = false }) {
+export default function AIFeedSearch({ onAIActive, isAIActive = false, showInputBar = true, showOnlyInputBar = false, chatState }) {
   const [input, setInput] = useState('')
   const [isFocused, setIsFocused] = useState(false)
   const [copiedId, setCopiedId] = useState(null)
@@ -48,8 +49,8 @@ export default function AIFeedSearch({ onAIActive, isAIActive = false }) {
   const inputRef = useRef(null)
   const messagesEndRef = useRef(null)
 
-  const chatState = useChat({ streaming: true })
-  const { messages, deals, coupons, sendMessage, clear, isLoading, isStreaming, error, retry } = chatState
+  const internalChatState = useChat({ streaming: true })
+  const { messages, deals, coupons, sendMessage, clear, isLoading, isStreaming, error, retry } = chatState || internalChatState
 
   // Determine orb state
   const orbState = useMemo(() => {
@@ -125,196 +126,355 @@ export default function AIFeedSearch({ onAIActive, isAIActive = false }) {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
+  // Chat replaces the middle content area - uses parent's height
+  // If showOnlyInputBar, only render the input bar
+  // If showInputBar=false, hide the input bar (messages only)
   return (
-    <div className="flex flex-col relative">
-      {/* Subtle aurora glow background */}
-      <AnimatePresence>
-        {(isFocused || isAIActive) && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 -z-10 pointer-events-none"
-          >
-            <div
-              className="absolute inset-0"
-              style={{
-                background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.02) 0%, transparent 70%)',
-              }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Messages Content */}
-      <AnimatePresence>
-        {isAIActive && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="px-2 py-4 space-y-6">
-              {messages.map((msg, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 400,
-                    damping: 30,
-                    delay: i * 0.05
-                  }}
-                >
-                  {msg.role === 'user' ? (
-                    <UserMessage content={msg.content} />
-                  ) : (
-                    <AIMessage
-                      content={msg.content}
-                      thinking={msg.thinking}
-                      deals={i === messages.length - 1 ? deals : null}
-                      coupons={i === messages.length - 1 ? coupons : null}
-                      isStreaming={isStreaming && i === messages.length - 1}
-                      copiedId={copiedId}
-                      onCopyCode={copyCode}
-                    />
-                  )}
-                </motion.div>
-              ))}
-
-              {/* Loading State - Engaging */}
-              {isLoading && messages.length === 0 && (
-                <EngagingLoader />
-              )}
-
-              {/* Error */}
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white rounded-2xl p-4 border border-red-100"
-                >
-                  <p className="text-sm text-red-500 mb-2">{error}</p>
-                  <button
-                    onClick={retry}
-                    className="text-sm text-gray-600 font-medium hover:text-gray-900 transition-colors"
-                  >
-                    Try again
-                  </button>
-                </motion.div>
-              )}
-
-              <div ref={messagesEndRef} />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Suggestions - Clean minimal pills */}
-      <AnimatePresence>
-        {isFocused && !isAIActive && !input && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="px-2 pb-4"
-          >
-            <p className="text-[10px] text-gray-400 mb-3 font-medium uppercase tracking-wider">Quick actions</p>
-            <div className="flex flex-wrap gap-2">
-              {AI_SUGGESTIONS.map((s, i) => (
-                <SuggestionPill key={i} suggestion={s} index={i} onClick={() => handleSuggestionClick(s.query)} />
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Input Bar - Clean white floating design */}
-      <div className="px-4">
-        <form onSubmit={handleSubmit}>
-          <motion.div
-            animate={{
-              boxShadow: isFocused || isAIActive
-                ? '0 4px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04)'
-                : '0 2px 12px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02)'
-            }}
-            transition={{ duration: 0.2 }}
-            className="flex items-center gap-3 px-4 py-3 bg-white rounded-full"
-          >
-            {/* Pulse Orb - Always moving */}
-            <LiquidOrb state={orbState} size={40} />
-
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setTimeout(() => setIsFocused(false), 150)}
-              placeholder={isAIActive ? "Ask a follow-up..." : "Ask anything about deals..."}
-              disabled={isLoading || isStreaming}
-              className="flex-1 bg-transparent border-none outline-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:outline-none text-sm text-gray-900 placeholder:text-gray-400"
-            />
-
-            {/* Keyboard hint */}
-            {!isFocused && !isAIActive && !input && (
-              <div className="hidden sm:flex items-center">
-                <kbd className="px-2 py-1 bg-gray-50 rounded-md text-[10px] font-medium text-gray-400 border border-gray-100">⌘K</kbd>
-              </div>
-            )}
-
-            {/* Close button */}
-            {isAIActive && (
-              <motion.button
-                type="button"
-                onClick={handleClose}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
+    <div className={`flex flex-col relative ${isAIActive && !showOnlyInputBar ? 'h-full' : ''}`}>
+      {/* Only show full content if NOT showOnlyInputBar mode */}
+      {!showOnlyInputBar && (
+        <>
+          {/* Floating animated orbs background - ONLY when focused, NOT during active chat */}
+          <AnimatePresence>
+            {isFocused && !isAIActive && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.6 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-0 pointer-events-none overflow-hidden"
+                style={{ top: '100px' }}
               >
-                <X className="w-4 h-4" />
-              </motion.button>
-            )}
+                {/* Large floating orb - drifts left to right */}
+                <motion.div
+                  animate={{
+                    x: ['-200px', 'calc(100vw + 200px)'],
+                    y: ['50px', '150px', '50px'],
+                  }}
+                  transition={{
+                    x: { duration: 20, repeat: Infinity, ease: 'linear' },
+                    y: { duration: 6, repeat: Infinity, ease: 'easeInOut' },
+                  }}
+                  style={{
+                    position: 'absolute',
+                    width: '400px',
+                    height: '400px',
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, rgba(139, 92, 246, 0.2) 40%, transparent 70%)',
+                    filter: 'blur(80px)',
+                  }}
+                />
 
-            {/* Submit button */}
-            <motion.button
-              type="submit"
-              disabled={!input.trim() || isLoading || isStreaming}
-              whileHover={{ scale: input.trim() ? 1.05 : 1 }}
-              whileTap={{ scale: input.trim() ? 0.95 : 1 }}
-              className={`
+                {/* Medium orb - drifts right to left */}
+                <motion.div
+                  animate={{
+                    x: ['calc(100vw + 200px)', '-200px'],
+                    y: ['300px', '200px', '300px'],
+                  }}
+                  transition={{
+                    x: { duration: 25, repeat: Infinity, ease: 'linear' },
+                    y: { duration: 8, repeat: Infinity, ease: 'easeInOut' },
+                  }}
+                  style={{
+                    position: 'absolute',
+                    width: '350px',
+                    height: '350px',
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(59, 130, 246, 0.45) 0%, rgba(59, 130, 246, 0.15) 40%, transparent 70%)',
+                    filter: 'blur(70px)',
+                  }}
+                />
+
+                {/* Small accent orb - faster movement */}
+                <motion.div
+                  animate={{
+                    x: ['-150px', 'calc(100vw + 150px)'],
+                    y: ['500px', '350px', '500px'],
+                  }}
+                  transition={{
+                    x: { duration: 15, repeat: Infinity, ease: 'linear' },
+                    y: { duration: 5, repeat: Infinity, ease: 'easeInOut' },
+                  }}
+                  style={{
+                    position: 'absolute',
+                    width: '300px',
+                    height: '300px',
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(236, 72, 153, 0.4) 0%, rgba(168, 85, 247, 0.15) 40%, transparent 70%)',
+                    filter: 'blur(60px)',
+                  }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* OUTER FOG CLOUDS - ONLY when focused, NOT during active chat */}
+          <AnimatePresence>
+            {isFocused && !isAIActive && (
+              <>
+                {/* Top fog cloud - subtle */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.6 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute -top-10 left-1/2 -translate-x-1/2 w-[110%] h-32 pointer-events-none z-0"
+                  style={{
+                    background: 'radial-gradient(ellipse 100% 100% at 50% 100%, rgba(255, 255, 255, 0.8) 0%, transparent 70%)',
+                    filter: 'blur(20px)',
+                  }}
+                />
+                {/* Purple accent glow */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.5 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute -top-16 left-1/2 -translate-x-1/2 w-[120%] h-24 pointer-events-none z-0"
+                  style={{
+                    background: 'radial-gradient(ellipse 60% 100% at 50% 100%, rgba(139, 92, 246, 0.2) 0%, transparent 70%)',
+                    filter: 'blur(30px)',
+                  }}
+                />
+
+                {/* Bottom fog cloud - subtle */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.5 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[110%] h-28 pointer-events-none z-0"
+                  style={{
+                    background: 'radial-gradient(ellipse 100% 100% at 50% 0%, rgba(255, 255, 255, 0.7) 0%, transparent 70%)',
+                    filter: 'blur(20px)',
+                  }}
+                />
+                {/* Blue accent glow */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.4 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute -bottom-16 left-1/2 -translate-x-1/2 w-[120%] h-20 pointer-events-none z-0"
+                  style={{
+                    background: 'radial-gradient(ellipse 60% 100% at 50% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
+                    filter: 'blur(25px)',
+                  }}
+                />
+
+                {/* Left fog edge - subtle */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.4 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute left-[-40px] top-1/3 w-24 h-[50%] pointer-events-none z-0"
+                  style={{
+                    background: 'radial-gradient(ellipse 100% 80% at 100% 50%, rgba(255, 255, 255, 0.6) 0%, transparent 100%)',
+                    filter: 'blur(20px)',
+                  }}
+                />
+
+                {/* Right fog edge - subtle */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.4 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute right-[-40px] top-1/3 w-24 h-[50%] pointer-events-none z-0"
+                  style={{
+                    background: 'radial-gradient(ellipse 100% 80% at 0% 50%, rgba(255, 255, 255, 0.6) 0%, transparent 100%)',
+                    filter: 'blur(20px)',
+                  }}
+                />
+              </>
+            )}
+          </AnimatePresence>
+
+          {/* Messages Content - Clean container, no inner fog */}
+          <AnimatePresence>
+            {isAIActive && (
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 30 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 120,
+                  damping: 20,
+                  mass: 0.8
+                }}
+                className="flex-1 min-h-0 relative z-30"
+              >
+                {/* Messages scroll container - scrollable with auto-scroll to bottom */}
+                <div
+                  className="px-4 pt-4 pb-4 space-y-4 overflow-y-auto scrollbar-hide h-full flex flex-col"
+                  style={{ maxHeight: 'calc(100vh - 200px)' }}
+                >
+                  {/* Spacer to push content down when few messages */}
+                  <div className="flex-grow min-h-0" />
+                  {messages.map((msg, i) => (
+                    <motion.div
+                      key={msg.id || i}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 400,
+                        damping: 30,
+                        delay: i * 0.05
+                      }}
+                    >
+                      {msg.role === 'user' ? (
+                        <UserMessage content={msg.content} />
+                      ) : (
+                        <AIMessage
+                          content={msg.content}
+                          thinking={msg.thinking}
+                          deals={msg.deals}
+                          coupons={msg.coupons}
+                          isStreaming={isStreaming && i === messages.length - 1}
+                          copiedId={copiedId}
+                          onCopyCode={copyCode}
+                        />
+                      )}
+                    </motion.div>
+                  ))}
+
+                  {/* Loading State - Engaging */}
+                  {isLoading && messages.length === 0 && (
+                    <EngagingLoader />
+                  )}
+
+                  {/* Error */}
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="bg-white rounded-2xl p-4 border border-red-100"
+                    >
+                      <p className="text-sm text-red-500 mb-2">{error}</p>
+                      <button
+                        onClick={retry}
+                        className="text-sm text-gray-600 font-medium hover:text-gray-900 transition-colors"
+                      >
+                        Try again
+                      </button>
+                    </motion.div>
+                  )}
+
+                  <div ref={messagesEndRef} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Suggestions - Clean, no inner fog */}
+          <AnimatePresence>
+            {isFocused && !isAIActive && !input && (
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 25 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 100,
+                  damping: 16,
+                  mass: 0.8
+                }}
+                className="px-6 pb-5 pt-5"
+              >
+                <p className="text-[10px] text-gray-400 mb-3 font-medium uppercase tracking-wider">Quick actions</p>
+                <div className="flex flex-wrap gap-2">
+                  {AI_SUGGESTIONS.map((s, i) => (
+                    <SuggestionPill key={i} suggestion={s} index={i} onClick={() => handleSuggestionClick(s.query)} />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
+
+      {/* Input Bar - only show if showInputBar is true OR if showOnlyInputBar mode */}
+      {(showInputBar || showOnlyInputBar) && (
+        <div className="">
+          <form onSubmit={handleSubmit}>
+            <motion.div
+              animate={{
+                boxShadow: isFocused || isAIActive
+                  ? '0 4px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04)'
+                  : '0 2px 12px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02)'
+              }}
+              transition={{ duration: 0.2 }}
+              className="flex items-center gap-3 px-4 py-3 bg-white rounded-full"
+            >
+              {/* Pulse Orb - Always moving */}
+              <LiquidOrb state={orbState} size={40} />
+
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setTimeout(() => setIsFocused(false), 150)}
+                placeholder={isAIActive ? "Ask a follow-up..." : "Ask anything about deals..."}
+                disabled={isLoading || isStreaming}
+                className="flex-1 bg-transparent border-none outline-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:outline-none text-sm text-gray-900 placeholder:text-gray-400"
+              />
+
+              {/* Keyboard hint */}
+              {!isFocused && !isAIActive && !input && (
+                <div className="hidden sm:flex items-center">
+                  <kbd className="px-2 py-1 bg-gray-50 rounded-md text-[10px] font-medium text-gray-400 border border-gray-100">⌘K</kbd>
+                </div>
+              )}
+
+              {/* Close button */}
+              {isAIActive && (
+                <motion.button
+                  type="button"
+                  onClick={handleClose}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </motion.button>
+              )}
+
+              {/* Submit button */}
+              <motion.button
+                type="submit"
+                disabled={!input.trim() || isLoading || isStreaming}
+                whileHover={{ scale: input.trim() ? 1.05 : 1 }}
+                whileTap={{ scale: input.trim() ? 0.95 : 1 }}
+                className={`
                 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200
                 ${input.trim()
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-gray-100 text-gray-400'
-                }
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-gray-100 text-gray-400'
+                  }
                 disabled:opacity-50 disabled:cursor-not-allowed
               `}
-            >
-              {isLoading || isStreaming ? (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
-                />
-              ) : (
-                <ArrowUp className="w-4 h-4" />
-              )}
-            </motion.button>
-          </motion.div>
-        </form>
+              >
+                {isLoading || isStreaming ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+                  />
+                ) : (
+                  <ArrowUp className="w-4 h-4" />
+                )}
+              </motion.button>
+            </motion.div>
+          </form>
 
-        {/* Subtle footer text */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isFocused || isAIActive ? 0.5 : 0 }}
-          className="text-center text-[10px] text-gray-400 mt-2"
-        >
-          AI can make mistakes. Verify deal details before purchasing.
-        </motion.p>
-      </div>
+          {/* Subtle footer text */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isFocused || isAIActive ? 0.5 : 0 }}
+            className="text-center text-[10px] text-gray-400 mt-2"
+          >
+            AI can make mistakes. Verify deal details before purchasing.
+          </motion.p>
+        </div>
+      )}
     </div>
   )
 }
@@ -502,11 +662,11 @@ function SuggestionPill({ suggestion, index, onClick }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       onClick={onClick}
-      whileHover={{ scale: 1.02, y: -1 }}
+      whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}
-      className="flex items-center gap-2 px-3 py-2 bg-white rounded-full border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all text-left group"
+      className="flex items-center gap-2 px-3 py-2 bg-white rounded-full shadow-sm border border-gray-100 hover:border-gray-200 hover:shadow transition-all text-left group"
     >
-      <Icon className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+      <Icon className="w-3.5 h-3.5 text-gray-400 group-hover:text-violet-500 transition-colors" />
       <span className="text-xs text-gray-600 group-hover:text-gray-900 transition-colors">
         {suggestion.label}
       </span>
@@ -515,60 +675,67 @@ function SuggestionPill({ suggestion, index, onClick }) {
 }
 
 /**
- * Deal Card - Clean white design
+ * Deal Card - Compact design matching main feed
  */
 function DealCard({ deal }) {
   const [isHovered, setIsHovered] = useState(false)
   const discount = deal.discount_percentage ||
     (deal.original_price && deal.price ? Math.round(((deal.original_price - deal.price) / deal.original_price) * 100) : 0)
 
-  const springStyle = useSpring({
-    transform: isHovered
-      ? 'translateY(-2px)'
-      : 'translateY(0px)',
-    boxShadow: isHovered
-      ? '0 8px 24px rgba(0, 0, 0, 0.08)'
-      : '0 1px 3px rgba(0, 0, 0, 0.04)',
-    config: { tension: 300, friction: 20 }
-  })
-
   return (
-    <animated.a
+    <a
       href={`/deal/${deal.id}`}
-      style={springStyle}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="block bg-white rounded-xl p-3 border border-gray-100"
+      className={`block bg-white rounded-lg p-2.5 border border-gray-100 h-[80px]
+                  transition-all duration-200 ${isHovered ? 'shadow-md border-gray-200 -translate-y-0.5' : ''}`}
     >
-      <div className="flex gap-3">
-        <div className="w-14 h-14 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+      <div className="flex gap-2.5 h-full">
+        {/* Product Image - No padded box */}
+        <div className="flex-shrink-0">
           {deal.image_url ? (
-            <img src={deal.image_url} alt="" className="w-full h-full object-contain p-1.5" />
+            <div className="w-14 h-14 rounded-md overflow-hidden bg-gray-50">
+              <img src={deal.image_url} alt="" className="w-full h-full object-cover" />
+            </div>
           ) : (
-            <ShoppingBag className="w-5 h-5 text-gray-300" />
+            <div className="w-14 h-14 bg-gray-100 rounded-md flex items-center justify-center">
+              <ShoppingBag className="w-4 h-4 text-gray-300" />
+            </div>
           )}
         </div>
-        <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-medium text-gray-800 line-clamp-2">
+
+        {/* Content */}
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          {/* Store name */}
+          <p className="text-[10px] text-gray-400 mb-0.5 flex items-center gap-1">
+            <Store className="w-2.5 h-2.5" />
+            {deal.merchant || deal.company?.name || 'Store'}
+          </p>
+
+          {/* Title - Single line */}
+          <h4 className={`text-xs font-medium text-gray-800 line-clamp-1 mb-1 transition-colors ${isHovered ? 'text-violet-600' : ''}`}>
             {deal.title}
           </h4>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-sm font-semibold text-gray-900">
+
+          {/* Price Row */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-bold text-gray-900">
               {deal.price === 0 ? 'FREE' : formatPrice(deal.price)}
             </span>
+            {deal.original_price && deal.original_price > deal.price && (
+              <span className="text-[10px] text-gray-400 line-through">
+                {formatPrice(deal.original_price)}
+              </span>
+            )}
             {discount > 0 && (
-              <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-semibold text-red-500">
                 -{discount}%
               </span>
             )}
           </div>
-          <p className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
-            {deal.merchant || deal.company?.name}
-            <ExternalLink className="w-2.5 h-2.5" />
-          </p>
         </div>
       </div>
-    </animated.a>
+    </a>
   )
 }
 

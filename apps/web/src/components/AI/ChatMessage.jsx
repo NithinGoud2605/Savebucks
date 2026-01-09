@@ -3,12 +3,13 @@
  * Enhanced message rendering with rich markdown, deal cards, and animations
  */
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { parseMarkdown } from '../../lib/markdown'
 import { SocialDealCard } from '../Homepage/SocialDealCard'
 import { Copy, Check, ThumbsUp, ThumbsDown, ChevronDown, Brain } from 'lucide-react'
 import LoadingAnimation, { LoadingType, DealCardSkeletonPremium } from './LoadingAnimation'
+import SparkleEffect, { FloatingSparkles } from './SparkleEffect'
 
 // Mini coupon card (keeping this for now as it's compact)
 function InlineCouponCard({ coupon }) {
@@ -177,9 +178,24 @@ export default function ChatMessage({
 }) {
   const [feedback, setFeedback] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [showSparkle, setShowSparkle] = useState(false)
+  const [hasAnimated, setHasAnimated] = useState(false)
+  const prevContentRef = useRef('')
   const isUser = message.role === 'user'
   const isAssistant = message.role === 'assistant'
   const hasContent = message.content && message.content.trim()
+
+  // Trigger sparkle animation when AI message first receives content
+  useEffect(() => {
+    if (isAssistant && !isWelcome && hasContent && !hasAnimated) {
+      // First content arrived - trigger sparkle!
+      setShowSparkle(true)
+      setHasAnimated(true)
+      // Reset sparkle after animation
+      const timer = setTimeout(() => setShowSparkle(false), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [hasContent, isAssistant, isWelcome, hasAnimated])
 
   // Extract thinking process - prefer separate thinking property, fallback to content parsing
   let thinkingContent = message.thinking || null
@@ -308,7 +324,15 @@ export default function ChatMessage({
       </div>
 
       {/* Content */}
-      <div className="message-content">
+      <div className={`message-content ${isAssistant && isStreaming ? 'ai-streaming' : ''}`}>
+        {/* Sparkle effect on AI message arrival */}
+        {isAssistant && !isWelcome && (
+          <>
+            <SparkleEffect trigger={showSparkle} particleCount={10} />
+            <FloatingSparkles count={6} active={isStreaming && hasContent} />
+          </>
+        )}
+
         {/* Welcome message special styling */}
         {isWelcome ? (
           <motion.div
@@ -331,8 +355,13 @@ export default function ChatMessage({
               <ThoughtProcess content={thinkingContent} />
             )}
 
-            {/* Message text */}
-            <div className="message-text">
+            {/* Message text with enhanced animations */}
+            <motion.div
+              className={`message-text ${isAssistant && isStreaming ? 'streaming-glow' : ''}`}
+              initial={isAssistant ? { opacity: 0, scale: 0.98, filter: 'blur(4px)' } : {}}
+              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            >
               {isStreaming && !displayContent && !thinkingContent ? (
                 <LoadingAnimation type={LoadingType.THINKING} size={60} />
               ) : (
@@ -358,7 +387,7 @@ export default function ChatMessage({
                   )}
                 </>
               )}
-            </div>
+            </motion.div>
 
             {/* Loading skeletons for deals */}
             {isStreaming && !message.deals && (
@@ -477,9 +506,21 @@ export default function ChatMessage({
       <style jsx>{`
         .chat-message {
           display: flex;
-          gap: 12px;
-          padding: 16px 0;
+          gap: 16px;
+          padding: 20px 0;
           position: relative;
+          animation: messageSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes messageSlideIn {
+          from {
+            opacity: 0;
+            transform: translateY(16px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
         }
         
         .chat-message.user {
@@ -491,21 +532,39 @@ export default function ChatMessage({
         }
         
         .avatar {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
+          width: 42px;
+          height: 42px;
+          border-radius: 14px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 18px;
+          font-size: 20px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .avatar:hover {
+          transform: scale(1.1) rotate(-5deg);
         }
         
         .user-avatar {
-          background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border: 2px solid rgba(255, 255, 255, 0.3);
         }
         
         .ai-avatar {
-          background: linear-gradient(135deg, #10b981, #14b8a6);
+          background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          animation: aiPulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes aiPulse {
+          0%, 100% {
+            box-shadow: 0 4px 16px rgba(17, 153, 142, 0.3);
+          }
+          50% {
+            box-shadow: 0 4px 24px rgba(56, 239, 125, 0.5);
+          }
         }
         
         .message-content {
@@ -521,29 +580,57 @@ export default function ChatMessage({
         
         .message-text {
           display: inline-block;
-          padding: 12px 16px;
-          border-radius: 16px;
-          line-height: 1.6;
+          padding: 16px 20px;
+          border-radius: 20px;
+          line-height: 1.7;
           text-align: left;
-          background: #f9fafb;
-          color: #111827;
-          border-bottom-left-radius: 4px;
           position: relative;
+          backdrop-filter: blur(12px);
+          transition: all 0.3s ease;
         }
         
+        /* AI Message - Glassmorphic */
+        .assistant .message-text {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+          color: #1f2937;
+          border: 1px solid rgba(255, 255, 255, 0.5);
+          border-bottom-left-radius: 6px;
+          box-shadow: 
+            0 4px 24px rgba(0, 0, 0, 0.06),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        
+        .assistant .message-text:hover {
+          box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+          transform: translateY(-2px);
+        }
+        
+        /* User Message - Premium Gradient */
         .user .message-text {
-          background: linear-gradient(135deg, #3b82f6, #4f46e5);
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
-          border-bottom-right-radius: 4px;
-          border-bottom-left-radius: 16px;
+          border-bottom-right-radius: 6px;
+          border-bottom-left-radius: 20px;
+          border: none;
+          box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .user .message-text:hover {
+          box-shadow: 0 8px 32px rgba(102, 126, 234, 0.5);
+          transform: translateY(-2px);
         }
         
         .welcome-card {
-          background: linear-gradient(135deg, #fef3c7, #fde68a);
-          border: 2px solid #fbbf24;
-          border-radius: 16px;
-          padding: 20px;
-          box-shadow: 0 4px 12px rgba(251, 191, 36, 0.15);
+          background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(253, 224, 71, 0.1));
+          border: 1px solid rgba(251, 191, 36, 0.3);
+          border-radius: 20px;
+          padding: 24px;
+          backdrop-filter: blur(12px);
+          box-shadow: 
+            0 4px 20px rgba(251, 191, 36, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
         
         .welcome-text {
@@ -653,22 +740,73 @@ export default function ChatMessage({
           font-weight: 400;
         }
         
-        /* Deal cards grid */
+        /* Deal cards grid - Premium */
         .deals-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 12px;
-          margin-top: 16px;
+          grid-template-columns: 1fr;
+          gap: 16px;
+          margin-top: 20px;
+          padding: 4px;
         }
         
         @media (min-width: 768px) {
           .deals-grid {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
           }
         }
         
         .deal-card-wrapper {
           width: 100%;
+          border-radius: 16px;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+          border: 1px solid rgba(255, 255, 255, 0.5);
+          backdrop-filter: blur(12px);
+          box-shadow: 
+            0 4px 20px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          animation: dealCardReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .deal-card-wrapper::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.4),
+            transparent
+          );
+          transition: left 0.5s ease;
+        }
+        
+        .deal-card-wrapper:hover::before {
+          left: 100%;
+        }
+        
+        .deal-card-wrapper:hover {
+          transform: translateY(-6px) scale(1.02);
+          box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.12),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+          border-color: rgba(102, 126, 234, 0.3);
+        }
+        
+        @keyframes dealCardReveal {
+          from {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
         }
         
         /* Coupons */

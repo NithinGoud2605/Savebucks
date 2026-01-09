@@ -5,7 +5,7 @@
 
 import { Redis } from '@upstash/redis';
 import crypto from 'crypto';
-import { AI_CONFIG } from './config.js';
+import { FEATURES, CACHE_CONFIG, RATE_LIMITS } from './config.js';
 
 // Redis client for distributed caching
 let redis = null;
@@ -106,7 +106,7 @@ class AICache {
      * @returns {Promise<Object|null>} Cached response or null
      */
     async get(query, type = 'exact') {
-        if (!AI_CONFIG.features.cachingEnabled) return null;
+        if (!FEATURES.cachingEnabled) return null;
 
         const key = `${this.prefix}${type}:${hash(query)}`;
 
@@ -143,12 +143,12 @@ class AICache {
      * @param {number} [ttl] - TTL in seconds (uses config default if not specified)
      */
     async set(query, response, type = 'exact', ttl = null) {
-        if (!AI_CONFIG.features.cachingEnabled) return;
+        if (!FEATURES.cachingEnabled) return;
 
         const key = `${this.prefix}${type}:${hash(query)}`;
         const actualTtl = ttl || (type === 'exact'
-            ? AI_CONFIG.cache.exactMatch
-            : AI_CONFIG.cache.toolResults);
+            ? CACHE_CONFIG.exactMatchTTL
+            : CACHE_CONFIG.toolResultsTTL);
 
         try {
             const value = JSON.stringify(response);
@@ -175,7 +175,7 @@ class AICache {
      */
     async setToolResult(toolName, args, result) {
         const key = `${toolName}:${JSON.stringify(args)}`;
-        await this.set(key, result, 'tool', AI_CONFIG.cache.toolResults);
+        await this.set(key, result, 'tool', CACHE_CONFIG.toolResultsTTL);
     }
 
     /**
@@ -208,8 +208,8 @@ class AICache {
 
                 const isGuest = userId.startsWith('ip:');
                 const limits = isGuest
-                    ? AI_CONFIG.rateLimits.guest
-                    : AI_CONFIG.rateLimits.authenticated;
+                    ? RATE_LIMITS.guest
+                    : RATE_LIMITS.authenticated;
                 const limit = period === 'minute' ? limits.perMinute : limits.perDay;
 
                 return {
@@ -231,8 +231,8 @@ class AICache {
 
             const isGuest = userId.startsWith('ip:');
             const limits = isGuest
-                ? AI_CONFIG.rateLimits.guest
-                : AI_CONFIG.rateLimits.authenticated;
+                ? RATE_LIMITS.guest
+                : RATE_LIMITS.authenticated;
             const limit = period === 'minute' ? limits.perMinute : limits.perDay;
 
             return {
@@ -263,8 +263,8 @@ class AICache {
 
         const isGuest = userId.startsWith('ip:');
         const limits = isGuest
-            ? AI_CONFIG.rateLimits.guest
-            : AI_CONFIG.rateLimits.authenticated;
+            ? RATE_LIMITS.guest
+            : RATE_LIMITS.authenticated;
 
         if (minute.count >= limits.perMinute) {
             return {

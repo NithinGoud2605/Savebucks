@@ -4,7 +4,7 @@
  */
 
 import { createChatCompletion, AIError } from './client.js';
-import { AI_CONFIG } from './config.js';
+import { INTENTS, COMPLEXITY, MODELS, LIMITS } from './config.js';
 import { CLASSIFICATION_PROMPT, FAQ_RESPONSES } from './prompts.js';
 
 /**
@@ -12,33 +12,36 @@ import { CLASSIFICATION_PROMPT, FAQ_RESPONSES } from './prompts.js';
  * Returns intent if confident, null otherwise
  */
 const KEYWORD_PATTERNS = {
-    [AI_CONFIG.intents.SEARCH]: [
+    [INTENTS.SEARCH]: [
         /\b(find|search|looking for|show me|get me|deals?|products?|where to buy)\b/i,
+        /\b(suggest|recommend|give me|any|some)\s+\w+/i,  // "suggest me shoes", "any shirts", "some laptops"
+        /\b(suggest|recommend)\b/i,  // Just "suggest" or "recommend"
         /\b(under|below|less than|cheaper than)\s*\$?\d+/i,
-        /\b(best|top|good)\s+(deals?|prices?|offers?)/i
+        /\b(best|top|good)\s+(deals?|prices?|offers?)/i,
+        /\b(shirt|shoes?|laptop|phone|tv|headphones?|watch|dress|jacket|bag|home|kitchen|clean)/i  // Common product words
     ],
-    [AI_CONFIG.intents.COUPON]: [
+    [INTENTS.COUPON]: [
         /\b(coupon|promo|discount)\s*(code)?s?\b/i,
         /\b(code|codes)\s+(for|at)\b/i,
         /\boff\s+code\b/i
     ],
-    [AI_CONFIG.intents.COMPARE]: [
+    [INTENTS.COMPARE]: [
         /\b(compare|vs|versus|or|better|difference between)\b/i,
         /\bwhich\s+(is|one|should)\b/i
     ],
-    [AI_CONFIG.intents.ADVICE]: [
+    [INTENTS.ADVICE]: [
         /\b(should i|is it|good time|worth|wait|buy now)\b/i,
         /\b(price (drop|going|will)|when to buy)\b/i
     ],
-    [AI_CONFIG.intents.TRENDING]: [
+    [INTENTS.TRENDING]: [
         /\b(trending|popular|hot|best|top)\s*(deals?|today|now|this week)?\b/i,
         /\bwhat'?s?\s+(hot|trending|popular)\b/i
     ],
-    [AI_CONFIG.intents.STORE_INFO]: [
+    [INTENTS.STORE_INFO]: [
         /\b(tell me about|info about|how is|is .+ (good|reliable|legit))\b/i,
         /\b(store|company|retailer)\s+(info|information|details)\b/i
     ],
-    [AI_CONFIG.intents.HELP]: [
+    [INTENTS.HELP]: [
         /\b(how (do i|to|can i)|what can you|help|tutorial)\b/i,
         /\b(features?|capabilities|functions?)\b/i
     ]
@@ -135,8 +138,8 @@ function classifyByKeywords(query) {
     const faqResponse = FAQ_RESPONSES.match(query);
     if (faqResponse) {
         return {
-            intent: AI_CONFIG.intents.HELP,
-            complexity: AI_CONFIG.complexity.SIMPLE,
+            intent: INTENTS.HELP,
+            complexity: COMPLEXITY.SIMPLE,
             entities: extractEntities(query),
             confidence: 1.0,
             faqResponse
@@ -159,10 +162,10 @@ function classifyByKeywords(query) {
         const intent = matches[0];
 
         // Determine complexity
-        let complexity = AI_CONFIG.complexity.SIMPLE;
+        let complexity = COMPLEXITY.SIMPLE;
         for (const pattern of COMPLEX_INDICATORS) {
             if (pattern.test(normalizedQuery)) {
-                complexity = AI_CONFIG.complexity.COMPLEX;
+                complexity = COMPLEXITY.COMPLEX;
                 break;
             }
         }
@@ -188,7 +191,7 @@ function classifyByKeywords(query) {
 async function classifyByLLM(query) {
     try {
         const response = await createChatCompletion({
-            model: AI_CONFIG.models.simple, // Use cheap model for classification
+            model: MODELS.simple, // Use cheap model for classification
             messages: [
                 { role: 'system', content: CLASSIFICATION_PROMPT + '\n\nRespond with JSON only, no markdown. Do not include reasoning or <think> blocks in the output if possible.' },
                 { role: 'user', content: query }
@@ -284,8 +287,8 @@ async function classifyByLLM(query) {
         }
 
         return {
-            intent: parsed.intent || AI_CONFIG.intents.GENERAL,
-            complexity: parsed.complexity || AI_CONFIG.complexity.SIMPLE,
+            intent: parsed.intent || INTENTS.GENERAL,
+            complexity: parsed.complexity || COMPLEXITY.SIMPLE,
             entities: {
                 ...extractEntities(query),
                 ...(parsed.entities || {})
@@ -304,8 +307,8 @@ async function classifyByLLM(query) {
 
         // Fallback to default
         return {
-            intent: AI_CONFIG.intents.SEARCH,
-            complexity: AI_CONFIG.complexity.SIMPLE,
+            intent: INTENTS.SEARCH,
+            complexity: COMPLEXITY.SIMPLE,
             entities: extractEntities(query),
             confidence: 0.5,
             faqResponse: null,
@@ -324,8 +327,8 @@ async function classifyByLLM(query) {
 export async function classifyIntent(query, forceLLM = false) {
     if (!query || typeof query !== 'string') {
         return {
-            intent: AI_CONFIG.intents.GENERAL,
-            complexity: AI_CONFIG.complexity.SIMPLE,
+            intent: INTENTS.GENERAL,
+            complexity: COMPLEXITY.SIMPLE,
             entities: {},
             confidence: 0,
             error: 'Invalid query'
@@ -335,10 +338,10 @@ export async function classifyIntent(query, forceLLM = false) {
     const trimmedQuery = query.trim();
 
     // Check length
-    if (trimmedQuery.length > AI_CONFIG.limits.maxInputLength) {
+    if (trimmedQuery.length > LIMITS.maxInputLength) {
         return {
-            intent: AI_CONFIG.intents.GENERAL,
-            complexity: AI_CONFIG.complexity.SIMPLE,
+            intent: INTENTS.GENERAL,
+            complexity: COMPLEXITY.SIMPLE,
             entities: {},
             confidence: 0,
             error: 'Query too long'
@@ -389,8 +392,8 @@ export async function classifyIntent(query, forceLLM = false) {
 
     // Final fallback: SEARCH intent
     return {
-        intent: AI_CONFIG.intents.SEARCH,
-        complexity: AI_CONFIG.complexity.SIMPLE,
+        intent: INTENTS.SEARCH,
+        complexity: COMPLEXITY.SIMPLE,
         entities: extractEntities(trimmedQuery),
         confidence: 0.4,
         faqResponse: null,
@@ -406,19 +409,19 @@ export async function classifyIntent(query, forceLLM = false) {
 export function selectModel(classification) {
     // Always use complex model for these intents
     const complexIntents = [
-        AI_CONFIG.intents.COMPARE,
-        AI_CONFIG.intents.ADVICE
+        INTENTS.COMPARE,
+        INTENTS.ADVICE
     ];
 
     if (complexIntents.includes(classification.intent)) {
-        return AI_CONFIG.models.complex;
+        return MODELS.complex;
     }
 
-    if (classification.complexity === AI_CONFIG.complexity.COMPLEX) {
-        return AI_CONFIG.models.complex;
+    if (classification.complexity === COMPLEXITY.COMPLEX) {
+        return MODELS.complex;
     }
 
-    return AI_CONFIG.models.simple;
+    return MODELS.simple;
 }
 
 export default {

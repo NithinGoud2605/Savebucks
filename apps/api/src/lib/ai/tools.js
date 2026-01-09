@@ -47,6 +47,11 @@ export const TOOL_DEFINITIONS = [
                         description: 'How to sort results',
                         enum: ['relevance', 'price_low', 'price_high', 'discount', 'newest', 'popular'],
                         default: 'relevance'
+                    },
+                    exclude_ids: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        description: 'Array of deal IDs to exclude (already shown deals)'
                     }
                 },
                 required: ['query']
@@ -157,7 +162,7 @@ const TOOL_EXECUTORS = {
     /**
      * Search for deals
      */
-    async search_deals({ query, category, max_price, min_discount, store, sort_by = 'relevance' }) {
+    async search_deals({ query, category, max_price, min_discount, store, sort_by = 'relevance', exclude_ids = [] }) {
         try {
             let dbQuery = supabase
                 .from('deals')
@@ -182,6 +187,15 @@ const TOOL_EXECUTORS = {
             // Store filter
             if (store) {
                 dbQuery = dbQuery.ilike('merchant', `%${store}%`);
+            }
+
+            // Exclude already shown deals
+            if (exclude_ids && exclude_ids.length > 0) {
+                // Ensure IDs are valid format (UUIDs usually)
+                const safeIds = exclude_ids.filter(id => typeof id === 'string' && id.length > 0);
+                if (safeIds.length > 0) {
+                    dbQuery = dbQuery.not('id', 'in', `(${safeIds.map(id => `"${id}"`).join(',')})`);
+                }
             }
 
             // Sorting

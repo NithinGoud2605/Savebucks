@@ -24,6 +24,10 @@ const chatSchema = z.object({
     message: z.string()
         .min(1, 'Message is required')
         .max(AI_CONFIG.limits.maxInputLength, 'Message too long'),
+    history: z.array(z.object({
+        role: z.enum(['user', 'assistant', 'system']),
+        content: z.string()
+    })).optional(),
     conversationId: z.string().uuid().optional(),
     context: z.object({
         currentPage: z.string().optional(),
@@ -97,7 +101,7 @@ router.post('/chat', aiRateLimit, async (req, res) => {
         });
     }
 
-    const { message, conversationId, context } = parseResult.data;
+    const { message, history: clientHistory, conversationId, context } = parseResult.data;
     const userId = req.user?.id || null;
 
     log(`[AI] Chat request: "${message.slice(0, 50)}..." (user: ${userId || 'guest'})`);
@@ -105,10 +109,16 @@ router.post('/chat', aiRateLimit, async (req, res) => {
     try {
         const orchestrator = getOrchestrator();
 
-        // Get conversation history if continuing
+        // Get conversation history - prefer client history, fall back to DB
         let history = [];
-        if (conversationId) {
+        if (clientHistory && clientHistory.length > 0) {
+            // Use history from client (for same-session context)
+            history = clientHistory.slice(-AI_CONFIG.limits.maxConversationHistory);
+            log(`[AI] Using ${history.length} messages from client history`);
+        } else if (conversationId) {
+            // Fall back to database for persistent conversations
             history = await getConversationHistory(conversationId, userId);
+            log(`[AI] Loaded ${history.length} messages from database`);
         }
 
         // Check if streaming is requested
@@ -188,11 +198,41 @@ router.post('/chat', aiRateLimit, async (req, res) => {
 
             // Save to conversation history
             if (conversationId || userId) {
-                // Fire and forget - don't wait
-                saveMessage(conversationId, userId, message, 'user').catch(console.error);
+                // Wait for save to ensure persistence
+                await saveMessage(conversationId, userId, message, 'user').catch(console.error);
+                res.end();
+
+                // Also save assistant message with complete deals/coupons data
+                if (streamResult) {
+                    const assistantMetadata = {
+                        // Store full deal data for cross-device retrieval
+                        deals: streamResult.deals?.map(d => ({
+                            id: d.id,
+                            title: d.title,
+                            price: d.price,
+                            original_price: d.original_price,
+                            discount_percentage: d.discount_percentage,
+                            merchant: d.merchant,
+                            image_url: d.image_url,
+                            url: d.url
+                        })) || [],
+                        // Store full coupon data
+                        coupons: streamResult.coupons?.map(c => ({
+                            id: c.id,
+                            title: c.title,
+                            coupon_code: c.coupon_code,
+                            discount_type: c.discount_type,
+                            discount_value: c.discount_value,
+                            company: c.company
+                        })) || [],
+                        // Also keep dealIds for quick lookup
+                        dealIds: streamResult.deals?.map(d => d.id) || []
+                    };
+                    await saveMessage(conversationId, userId, streamResult.content || streamedContent, 'assistant', assistantMetadata).catch(console.error);
+                }
             }
 
-            res.end();
+            // res.end() moved up
         } else {
             // Non-streaming response
             const response = await orchestrator.chat({
@@ -229,7 +269,29 @@ router.post('/chat', aiRateLimit, async (req, res) => {
             // Save to conversation history
             if (conversationId || userId) {
                 saveMessage(conversationId, userId, message, 'user').catch(console.error);
-                saveMessage(conversationId, userId, response.content, 'assistant').catch(console.error);
+                // Save assistant message with complete deals/coupons data
+                const assistantMetadata = {
+                    deals: response.deals?.map(d => ({
+                        id: d.id,
+                        title: d.title,
+                        price: d.price,
+                        original_price: d.original_price,
+                        discount_percentage: d.discount_percentage,
+                        merchant: d.merchant,
+                        image_url: d.image_url,
+                        url: d.url
+                    })) || [],
+                    coupons: response.coupons?.map(c => ({
+                        id: c.id,
+                        title: c.title,
+                        coupon_code: c.coupon_code,
+                        discount_type: c.discount_type,
+                        discount_value: c.discount_value,
+                        company: c.company
+                    })) || [],
+                    dealIds: response.deals?.map(d => d.id) || []
+                };
+                saveMessage(conversationId, userId, response.content, 'assistant', assistantMetadata).catch(console.error);
             }
 
             res.json(response);
@@ -239,10 +301,31 @@ router.post('/chat', aiRateLimit, async (req, res) => {
         log(`[AI] Error: ${error.message}`);
         console.error('[AI Route] Error:', error);
 
-        res.status(500).json({
+        // Surface specific error messages for known error types
+        let errorMessage = 'Something went wrong. Please try again.';
+        let statusCode = 500;
+
+        if (error.code === 'RATE_LIMIT') {
+            errorMessage = 'AI is busy right now. Please wait a moment and try again.';
+            statusCode = error.statusCode || 429;
+        } else if (error.code === 'TIMEOUT') {
+            errorMessage = 'Request took too long. Please try again.';
+            statusCode = 504;
+        } else if (error.code === 'AUTH_ERROR') {
+            errorMessage = 'AI service is temporarily unavailable.';
+            statusCode = 503;
+        } else if (error.code === 'INVALID_REQUEST') {
+            errorMessage = error.message || 'Invalid request. Please try rephrasing your question.';
+            statusCode = 400;
+        } else if (error.retryable) {
+            errorMessage = 'AI service hiccup. Please try again in a moment.';
+        }
+
+        res.status(statusCode).json({
             success: false,
-            error: 'Something went wrong. Please try again.',
-            requestId
+            error: errorMessage,
+            requestId,
+            retryable: error.retryable || false
         });
     }
 });
@@ -335,8 +418,21 @@ router.get('/chat', aiRateLimit, async (req, res) => {
 
     } catch (error) {
         console.error('[AI Route] SSE Error:', error);
-        sendEvent({ type: 'error', error: 'Something went wrong.' });
-        
+
+        // Surface specific error messages for known error types
+        let errorMessage = 'Something went wrong.';
+        if (error.code === 'RATE_LIMIT') {
+            errorMessage = 'AI is busy right now. Please wait a moment and try again.';
+        } else if (error.code === 'TIMEOUT') {
+            errorMessage = 'Request took too long. Please try again.';
+        } else if (error.code === 'AUTH_ERROR') {
+            errorMessage = 'AI service is temporarily unavailable.';
+        } else if (error.retryable) {
+            errorMessage = 'AI service hiccup. Please try again in a moment.';
+        }
+
+        sendEvent({ type: 'error', error: errorMessage });
+
         // Log error
         logStreamingEnd({
             requestId,
@@ -430,10 +526,36 @@ router.get('/conversations/:id', async (req, res) => {
 
         if (msgError) throw msgError;
 
+        // Use deals from metadata directly, or fallback to DB lookup for older messages
+        const messagesWithDeals = await Promise.all((messages || []).map(async (msg) => {
+            // If metadata already has full deal objects (new format), use them directly
+            if (msg.metadata?.deals?.length > 0) {
+                return {
+                    ...msg,
+                    deals: msg.metadata.deals,
+                    coupons: msg.metadata.coupons || []
+                };
+            }
+            // Fallback: fetch from DB for older messages that only have dealIds
+            if (msg.metadata?.dealIds?.length > 0) {
+                try {
+                    const { data: deals } = await supabase
+                        .from('deals')
+                        .select('id, title, price, original_price, discount_percentage, merchant, image_url, url')
+                        .in('id', msg.metadata.dealIds);
+                    return { ...msg, deals: deals || [] };
+                } catch (e) {
+                    console.error('[AI Route] Failed to fetch deals for message:', e);
+                    return msg;
+                }
+            }
+            return msg;
+        }));
+
         res.json({
             success: true,
             conversation,
-            messages: messages || []
+            messages: messagesWithDeals
         });
     } catch (error) {
         console.error('[AI Route] Get conversation error:', error);
@@ -620,7 +742,7 @@ router.get('/stats', async (req, res) => {
  */
 router.get('/logs', async (req, res) => {
     // TODO: Add admin check in production
-    
+
     try {
         const limit = parseInt(req.query.limit) || 50;
         const cursor = req.query.cursor || null;
@@ -636,6 +758,58 @@ router.get('/logs', async (req, res) => {
             logFile: LOG_FILE
         });
     } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * DELETE /api/ai/cleanup
+ * Clean up old messages (30-day retention)
+ * This should be called by a scheduled job or admin
+ */
+router.delete('/cleanup', async (req, res) => {
+    // TODO: Add admin check in production
+
+    try {
+        const cutoffDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const cutoffISO = cutoffDate.toISOString();
+
+        // Delete old messages
+        const { count: messagesDeleted, error: msgError } = await supabase
+            .from('ai_messages')
+            .delete()
+            .lt('created_at', cutoffISO)
+            .select('count');
+
+        if (msgError) {
+            console.error('[AI Cleanup] Messages delete error:', msgError);
+        }
+
+        // Delete empty/old conversations
+        const { count: convsDeleted, error: convError } = await supabase
+            .from('ai_conversations')
+            .delete()
+            .eq('message_count', 0)
+            .lt('updated_at', cutoffISO)
+            .select('count');
+
+        if (convError) {
+            console.error('[AI Cleanup] Conversations delete error:', convError);
+        }
+
+        console.log(`[AI Cleanup] Deleted ${messagesDeleted || 0} messages, ${convsDeleted || 0} empty conversations`);
+
+        res.json({
+            success: true,
+            messagesDeleted: messagesDeleted || 0,
+            conversationsDeleted: convsDeleted || 0,
+            cutoffDate: cutoffISO
+        });
+    } catch (error) {
+        console.error('[AI Cleanup] Error:', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -685,8 +859,13 @@ async function getConversationHistory(conversationId, userId) {
 
 /**
  * Save a message to conversation history
+ * @param {string} conversationId - Conversation ID (optional)
+ * @param {string} userId - User ID
+ * @param {string} content - Message content
+ * @param {string} role - 'user' or 'assistant'
+ * @param {Object} metadata - Optional metadata (dealIds, coupons, etc.)
  */
-async function saveMessage(conversationId, userId, content, role) {
+async function saveMessage(conversationId, userId, content, role, metadata = null) {
     try {
         // Create conversation if needed
         let convId = conversationId;
@@ -706,13 +885,14 @@ async function saveMessage(conversationId, userId, content, role) {
 
         if (!convId) return;
 
-        // Save message
+        // Save message with optional metadata
         await supabase
             .from('ai_messages')
             .insert({
                 conversation_id: convId,
                 role,
-                content
+                content,
+                metadata: metadata || null
             });
 
         // Get current message count

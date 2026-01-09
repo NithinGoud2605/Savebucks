@@ -3,6 +3,7 @@ import { makeAdminClient } from '../lib/supa.js'
 import { makeUserClientFromToken } from '../lib/supaUser.js'
 import { createSafeUserClient } from '../lib/authUtils.js'
 import { requireAdmin } from '../middleware/requireAdmin.js'
+import savedSearchAlerts from '../lib/savedSearchAlerts.js'
 
 const router = express.Router()
 const supabase = makeAdminClient()
@@ -20,9 +21,9 @@ const requireAuth = async (req, res, next) => {
 
     const supaUser = await createSafeUserClient(token, res)
     if (!supaUser) return; // Exit if client creation failed
-    
+
     const { data: { user } } = await supaUser.auth.getUser()
-    
+
     if (!user) return res.status(401).json({ error: 'Invalid token' })
 
     req.user = user
@@ -254,7 +255,7 @@ router.get('/notification-preferences', requireAuth, async (req, res) => {
         followed_category_alerts: true,
         push_tokens: []
       }
-      
+
       res.json(defaultPreferences)
       return
     }
@@ -334,7 +335,7 @@ router.put('/notifications/:id/read', requireAuth, async (req, res) => {
 
     const { data: notification, error } = await supabase
       .from('notification_queue')
-      .update({ 
+      .update({
         status: 'sent',
         sent_at: new Date().toISOString()
       })
@@ -369,7 +370,7 @@ router.post('/notifications/mark-read', requireAuth, async (req, res) => {
 
     const { data: notifications, error } = await supabase
       .from('notification_queue')
-      .update({ 
+      .update({
         status: 'sent',
         sent_at: new Date().toISOString()
       })
@@ -381,8 +382,8 @@ router.post('/notifications/mark-read', requireAuth, async (req, res) => {
       return res.status(400).json({ error: error.message })
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       updated_count: notifications?.length || 0,
       notifications: notifications || []
     })
@@ -509,4 +510,24 @@ router.get('/admin/saved-searches/list', requireAuth, requireAdmin, async (req, 
   }
 })
 
+// Admin: Trigger saved search alert processing
+router.post('/admin/process-alerts', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { minutes = 30 } = req.body
+
+    console.log('🔔 Admin triggered saved search alert processing')
+    const result = await savedSearchAlerts.processNewDealAlerts(minutes)
+
+    res.json({
+      success: true,
+      message: `Processed ${result.processed} deals, found ${result.matches} matches, sent ${result.notifications} notifications`,
+      ...result
+    })
+  } catch (error) {
+    console.error('Error processing alerts:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 export default router
+

@@ -16,7 +16,10 @@ import {
   X,
   Home,
   Building2,
-  Sparkles
+  Sparkles,
+  Gift,
+  BarChart3,
+  Bell
 } from 'lucide-react'
 import NotificationBell from '../User/NotificationBell'
 import { Avatar } from '../ui/Avatar'
@@ -132,6 +135,36 @@ const Navbar = () => {
                     >
                       <User className="w-4 h-4" />
                       Profile
+                    </Link>
+                  </DropdownMenu.Item>
+
+                  <DropdownMenu.Item asChild>
+                    <Link
+                      to="/referrals"
+                      className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-900/5 rounded-xl outline-none cursor-pointer transition-colors"
+                    >
+                      <Gift className="w-4 h-4" />
+                      Referrals
+                    </Link>
+                  </DropdownMenu.Item>
+
+                  <DropdownMenu.Item asChild>
+                    <Link
+                      to="/analytics"
+                      className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-900/5 rounded-xl outline-none cursor-pointer transition-colors"
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                      Analytics
+                    </Link>
+                  </DropdownMenu.Item>
+
+                  <DropdownMenu.Item asChild>
+                    <Link
+                      to="/notification-settings"
+                      className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-900/5 rounded-xl outline-none cursor-pointer transition-colors"
+                    >
+                      <Bell className="w-4 h-4" />
+                      Notifications
                     </Link>
                   </DropdownMenu.Item>
 

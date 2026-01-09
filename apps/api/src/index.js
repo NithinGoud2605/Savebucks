@@ -33,6 +33,10 @@ import goRoutes from './routes/go.js';
 import tempDataRoutes from './routes/temp-data.js';
 import debugRoutes from './routes/debug.js';
 import feedRoutes from './routes/feed.js';
+import forYouRoutes from './routes/for-you.js';
+import referralsRoutes from './routes/referrals.js';
+import userAnalyticsRoutes from './routes/user-analytics.js';
+import reactionsRoutes from './routes/reactions.js';
 import aiRoutes from './routes/ai.js';
 import { log } from './lib/logger.js';
 
@@ -70,10 +74,15 @@ app.use('/api/restaurants', restaurantsRoutes);
 app.use('/api/deals', makeAuth(), deals);
 app.use('/api/admin', adminRoutes);
 app.use('/api/feed', feedRoutes); // Unified feed endpoint
+app.use('/api/for-you', forYouRoutes); // Personalized For You recommendations
+app.use('/api/referrals', referralsRoutes); // Referral system
+app.use('/api/user-analytics', userAnalyticsRoutes); // User analytics dashboard
+app.use('/api/reactions', reactionsRoutes); // Comment reactions
 app.use('/api/ai', makeAuth(), aiRoutes); // AI chat endpoint
 app.use('/api', tempDataRoutes);
 app.use('/api', debugRoutes); // Debug routes
 app.use(goRoutes);
+
 
 // Serve static files from the built frontend
 const __filename = fileURLToPath(import.meta.url);

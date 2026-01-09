@@ -26,14 +26,19 @@ export const ChatState = {
  * @param {Object} options - Hook options
  * @param {string} [options.conversationId] - Existing conversation ID
  * @param {boolean} [options.streaming=true] - Enable streaming responses
+ * @param {boolean} [options.isAuthenticated=false] - Whether user is logged in
  * @param {Function} [options.onError] - Error callback
  * @returns {Object} Chat state and functions
  */
 export function useChat({
     conversationId: initialConversationId = null,
     streaming = true,
+    isAuthenticated: isAuthenticatedOverride = null,
     onError = null
 } = {}) {
+    // Auto-detect authentication from localStorage token if not explicitly provided
+    const isAuthenticated = isAuthenticatedOverride ?? Boolean(localStorage.getItem('access_token'))
+
     // State
     const [messages, setMessages] = useState([])
     const [state, setState] = useState(ChatState.IDLE)
@@ -46,6 +51,7 @@ export function useChat({
     const abortRef = useRef(null)
     const streamCleanupRef = useRef(null)
     const currentMessageRef = useRef('')
+    const currentStreamingIdRef = useRef(null)  // Track which message is currently streaming
 
     // Cleanup on unmount
     useEffect(() => {
@@ -59,10 +65,126 @@ export function useChat({
         }
     }, [])
 
+    // localStorage key for chat persistence (guest users only)
+    const CHAT_STORAGE_KEY = 'savebucks_chat_history'
+
+    // Load chat from database if logged in and conversationId provided
+    useEffect(() => {
+        if (isAuthenticated && initialConversationId) {
+            // Load specific conversation from database
+            const loadFromDatabase = async () => {
+                try {
+                    const response = await api.getAIConversation(initialConversationId)
+                    if (response.success && response.messages?.length > 0) {
+                        const loadedMessages = response.messages.map(msg => ({
+                            id: msg.id,
+                            role: msg.role,
+                            content: msg.content,
+                            createdAt: msg.created_at,
+                            // Load actual deals from the response
+                            deals: msg.deals || [],
+                            coupons: msg.coupons || []
+                        }))
+                        setMessages(loadedMessages)
+                    }
+                } catch (e) {
+                    console.error('[useChat] Failed to load conversation from DB:', e)
+                    loadFromLocalStorage()
+                }
+            }
+            loadFromDatabase()
+        } else if (isAuthenticated && !initialConversationId) {
+            // Auto-load most recent conversation for logged-in users (cross-device support)
+            const loadRecentConversation = async () => {
+                try {
+                    const response = await api.getAIConversations()
+                    if (response.success && response.conversations?.length > 0) {
+                        // Load the most recent conversation
+                        const recent = response.conversations[0]
+                        console.log(`[useChat] Auto-loading recent conversation: ${recent.id}`)
+
+                        const convResponse = await api.getAIConversation(recent.id)
+                        if (convResponse.success && convResponse.messages?.length > 0) {
+                            const loadedMessages = convResponse.messages.map(msg => ({
+                                id: msg.id,
+                                role: msg.role,
+                                content: msg.content,
+                                createdAt: msg.created_at,
+                                // Load actual deals from the response
+                                deals: msg.deals || [],
+                                coupons: msg.coupons || []
+                            }))
+                            setMessages(loadedMessages)
+                            setConversationId(recent.id)
+                        }
+                    }
+                } catch (e) {
+                    console.error('[useChat] Failed to load recent conversation:', e)
+                    // Silent fail - start fresh conversation
+                }
+            }
+            loadRecentConversation()
+        } else if (!isAuthenticated) {
+            // Guest user - load from localStorage
+            loadFromLocalStorage()
+        }
+    }, [initialConversationId, isAuthenticated])
+
+    // Helper function to load from localStorage
+    const loadFromLocalStorage = () => {
+        try {
+            const saved = localStorage.getItem(CHAT_STORAGE_KEY)
+            if (saved) {
+                const { messages: savedMsgs, timestamp } = JSON.parse(saved)
+                // Only load if less than 24 hours old
+                if (Date.now() - timestamp < 24 * 60 * 60 * 1000 && savedMsgs?.length) {
+                    setMessages(savedMsgs)
+                } else {
+                    localStorage.removeItem(CHAT_STORAGE_KEY)
+                }
+            }
+        } catch (e) {
+            // Ignore localStorage errors
+        }
+    }
+
+    // Save to localStorage for guest users only
+    useEffect(() => {
+        if (!isAuthenticated && messages.length > 0 && state !== ChatState.STREAMING) {
+            try {
+                localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({
+                    messages,
+                    timestamp: Date.now()
+                }))
+            } catch (e) {
+                // Ignore localStorage errors (quota exceeded, etc.)
+            }
+        }
+    }, [messages, state, isAuthenticated])
+
+    // Auto-create conversation for logged-in users on first message
+    const ensureConversation = useCallback(async () => {
+        if (isAuthenticated && !conversationId) {
+            try {
+                const response = await api.createAIConversation()
+                if (response.success && response.conversation?.id) {
+                    setConversationId(response.conversation.id)
+                    return response.conversation.id
+                }
+            } catch (e) {
+                console.error('[useChat] Failed to create conversation:', e)
+            }
+        }
+        return conversationId
+    }, [isAuthenticated, conversationId])
+
     /**
      * Send a message (non-streaming)
      */
     const sendMessageNonStreaming = useCallback(async (content) => {
+        // Auto-create conversation for logged-in users
+        const activeConversationId = await ensureConversation()
+
         // Add user message optimistically
         const userMessage = {
             id: `temp-${Date.now()}`,
@@ -78,9 +200,21 @@ export function useChat({
         setCoupons([])
 
         try {
+            // Build history from previous messages (last 10, including deals context)
+            const history = messages
+                .filter(m => m.content && m.content.trim())
+                .slice(-10)
+                .map(m => ({
+                    role: m.role,
+                    content: m.content,
+                    // Include deals context for AI to reference in follow-ups
+                    deals: m.deals?.slice(0, 4).map(d => ({ id: d.id, title: d.title, price: d.price, store: d.merchant })) || []
+                }))
+
             const response = await api.aiChat({
                 message: content,
-                conversationId,
+                history,
+                conversationId: activeConversationId,
                 context: {
                     currentPage: window.location.pathname
                 }
@@ -114,12 +248,15 @@ export function useChat({
             setState(ChatState.ERROR)
             if (onError) onError(err)
         }
-    }, [conversationId, onError])
+    }, [messages, onError, ensureConversation])
 
     /**
      * Send a message with streaming
      */
     const sendMessageStreaming = useCallback(async (content) => {
+        // Auto-create conversation for logged-in users
+        const activeConversationId = await ensureConversation()
+
         // Add user message
         const userMessage = {
             id: `user-${Date.now()}`,
@@ -128,26 +265,68 @@ export function useChat({
             createdAt: new Date().toISOString()
         }
 
-        // Add placeholder for assistant message
+        // Add placeholder for assistant message with unique ID
+        const currentAssistantId = `assistant-${Date.now()}`
         const assistantMessage = {
-            id: `assistant-${Date.now()}`,
+            id: currentAssistantId,
             role: MessageRole.ASSISTANT,
             content: '',
             createdAt: new Date().toISOString(),
             isStreaming: true
         }
 
+        // Store the current streaming message ID for proper deal attachment
+        currentStreamingIdRef.current = currentAssistantId
+
         setMessages(prev => [...prev, userMessage, assistantMessage])
         setState(ChatState.STREAMING)
         setError(null)
-        setDeals([])
-        setCoupons([])
+        // Don't clear deals/coupons - they should remain attached to their original message objects
         currentMessageRef.current = ''
 
-        // Start SSE stream
+        // Build history from previous messages (last 10, including deals context)
+        const history = messages
+            .filter(m => m.content && m.content.trim())
+            .slice(-10)
+            .map(m => ({
+                role: m.role,
+                content: m.content,
+                // Include deals context for AI to reference in follow-ups
+                deals: m.deals?.slice(0, 4).map(d => ({ id: d.id, title: d.title, price: d.price, store: d.merchant })) || []
+            }))
+
+        // Set up timeout handler
+        const timeoutId = setTimeout(() => {
+            if (streamCleanupRef.current) {
+                streamCleanupRef.current()
+            }
+            setError('Request timed out. Please try again.')
+            setState(ChatState.ERROR)
+            // Update the assistant message to show timeout error
+            setMessages(prev => {
+                const updated = [...prev]
+                const lastIndex = updated.length - 1
+                if (updated[lastIndex]?.role === MessageRole.ASSISTANT && updated[lastIndex]?.isStreaming) {
+                    updated[lastIndex] = {
+                        ...updated[lastIndex],
+                        content: updated[lastIndex].content || 'Request timed out.',
+                        isStreaming: false,
+                        hasError: true
+                    }
+                }
+                return updated
+            })
+        }, 30000) // 30 second timeout
+
+        // Start SSE stream with history
         streamCleanupRef.current = api.aiChatStream(
-            { message: content, conversationId },
+            { message: content, history, conversationId: activeConversationId },
             (event) => {
+                // Clear timeout on any successful event
+                if (event.type !== 'error') {
+                    clearTimeout(timeoutId)
+                }
+
                 switch (event.type) {
                     case 'start':
                         // Stream started
@@ -186,39 +365,39 @@ export function useChat({
                         break
 
                     case 'deals':
-                        // Received deal cards
+                        // Received deal cards - attach to the CURRENT streaming message by ID
                         setDeals(event.deals)
                         setMessages(prev => {
-                            const updated = [...prev]
-                            const lastIndex = updated.length - 1
-                            if (updated[lastIndex]?.role === MessageRole.ASSISTANT) {
-                                updated[lastIndex] = {
-                                    ...updated[lastIndex],
-                                    deals: event.deals
+                            // Find the specific message by ID to attach deals
+                            const targetId = currentStreamingIdRef.current
+                            // Deep clone with map to ensure complete immutability
+                            return prev.map(msg => {
+                                if (msg.id === targetId && msg.role === MessageRole.ASSISTANT) {
+                                    return { ...msg, deals: event.deals }
                                 }
-                            }
-                            return updated
+                                // Ensure we return a NEW object for React to detect changes
+                                return { ...msg }
+                            })
                         })
                         break
 
                     case 'coupons':
-                        // Received coupon cards
+                        // Received coupon cards - attach to the CURRENT streaming message by ID
                         setCoupons(event.coupons)
                         setMessages(prev => {
-                            const updated = [...prev]
-                            const lastIndex = updated.length - 1
-                            if (updated[lastIndex]?.role === MessageRole.ASSISTANT) {
-                                updated[lastIndex] = {
-                                    ...updated[lastIndex],
-                                    coupons: event.coupons
+                            const targetId = currentStreamingIdRef.current
+                            return prev.map(msg => {
+                                if (msg.id === targetId && msg.role === MessageRole.ASSISTANT) {
+                                    return { ...msg, coupons: event.coupons }
                                 }
-                            }
-                            return updated
+                                return { ...msg }
+                            })
                         })
                         break
 
                     case 'done':
                         // Stream complete
+                        clearTimeout(timeoutId)
                         setMessages(prev => {
                             const updated = [...prev]
                             const lastIndex = updated.length - 1
@@ -234,19 +413,85 @@ export function useChat({
                         break
 
                     case 'error':
-                        setError(event.error)
+                        clearTimeout(timeoutId)
+                        // Parse error type for better messaging
+                        let errorMessage = event.error || 'Something went wrong'
+                        let errorType = 'unknown'
+
+                        if (errorMessage.includes('rate limit') || errorMessage.includes('too many')) {
+                            errorType = 'rate_limit'
+                            errorMessage = 'Too many requests. Please wait a moment and try again.'
+                        } else if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+                            errorType = 'timeout'
+                            errorMessage = 'Request timed out. Please try again.'
+                        } else if (errorMessage.includes('network') || errorMessage.includes('connection')) {
+                            errorType = 'network'
+                            errorMessage = 'Network error. Please check your connection.'
+                        } else if (errorMessage.includes('unavailable') || errorMessage.includes('disabled')) {
+                            errorType = 'service_unavailable'
+                            errorMessage = 'AI service is temporarily unavailable. Please try again later.'
+                        }
+
+                        setError(errorMessage)
                         setState(ChatState.ERROR)
-                        if (onError) onError(new Error(event.error))
+
+                        // Update assistant message with error
+                        setMessages(prev => {
+                            const updated = [...prev]
+                            const lastIndex = updated.length - 1
+                            if (updated[lastIndex]?.role === MessageRole.ASSISTANT) {
+                                updated[lastIndex] = {
+                                    ...updated[lastIndex],
+                                    content: updated[lastIndex].content || errorMessage,
+                                    isStreaming: false,
+                                    hasError: true,
+                                    errorType
+                                }
+                            }
+                            return updated
+                        })
+
+                        if (onError) onError(new Error(errorMessage))
                         break
                 }
             },
             (error) => {
-                setError('Connection lost. Please try again.')
+                clearTimeout(timeoutId)
+                // Categorize connection errors
+                let errorMessage = 'Connection lost. Please try again.'
+                let errorType = 'connection'
+
+                if (error?.message?.includes('abort')) {
+                    errorType = 'cancelled'
+                    errorMessage = 'Request was cancelled.'
+                } else if (error?.message?.includes('timeout')) {
+                    errorType = 'timeout'
+                    errorMessage = 'Connection timed out. Please try again.'
+                }
+
+                setError(errorMessage)
                 setState(ChatState.ERROR)
+
+                // Update assistant message
+                setMessages(prev => {
+                    const updated = [...prev]
+                    const lastIndex = updated.length - 1
+                    if (updated[lastIndex]?.role === MessageRole.ASSISTANT && updated[lastIndex]?.isStreaming) {
+                        updated[lastIndex] = {
+                            ...updated[lastIndex],
+                            content: updated[lastIndex].content || errorMessage,
+                            isStreaming: false,
+                            hasError: true,
+                            errorType
+                        }
+                    }
+                    return updated
+                })
+
                 if (onError) onError(error)
             }
         )
-    }, [conversationId, onError])
+    }, [messages, onError, ensureConversation])
 
     /**
      * Send a message

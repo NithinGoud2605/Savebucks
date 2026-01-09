@@ -45,6 +45,11 @@ const Settings = React.lazy(() => import('./pages/Settings'))
 const Chat = React.lazy(() => import('./pages/Chat'))
 const AILogs = React.lazy(() => import('./pages/AILogs'))
 
+// New feature pages
+const ReferralDashboard = React.lazy(() => import('./components/Referral/ReferralDashboard'))
+const AnalyticsDashboard = React.lazy(() => import('./components/Analytics/AnalyticsDashboard'))
+const NotificationSettings = React.lazy(() => import('./pages/NotificationSettings'))
+
 const PageLoader = () => (
   <div className="container mx-auto px-4 py-8">
     <Skeleton className="h-8 w-48 mb-4" />
@@ -362,6 +367,30 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <AILogs />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'referrals',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ReferralDashboard />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'analytics',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <AnalyticsDashboard />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'notification-settings',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <NotificationSettings />
           </Suspense>
         ),
       },

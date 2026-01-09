@@ -3,54 +3,25 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { api } from '../../lib/api';
-import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 import {
-  TrendingUp,
-  TrendingDown,
   ArrowRight,
   Trophy,
   Building2,
-  Sparkles,
   Crown,
-  Users
+  Users,
+  Ticket
 } from 'lucide-react';
 import { Skeleton } from '../ui/Skeleton';
 import { Separator } from '../ui/Separator';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../ui/Tooltip';
 
-// Mini sparkline component
-function MiniSparkline({ data, color, trend }) {
-  const chartData = data.map((value, index) => ({ value, index }));
-  const gradientId = `gradient-${Math.random().toString(36).substr(2, 9)}`;
 
-  return (
-    <div className="w-12 h-6">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.4} />
-              <stop offset="100%" stopColor={color} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke={color}
-            strokeWidth={1.5}
-            fill={`url(#${gradientId})`}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
 
 export function RightSidebar() {
   return (
     <TooltipProvider delayDuration={300}>
       <aside className="space-y-4">
-        <TrendingTagsWidget />
+        <CouponsWidget />
         <Separator className="bg-slate-200" />
         <LeaderboardWidget />
       </aside>
@@ -59,14 +30,12 @@ export function RightSidebar() {
 }
 
 
-function TrendingTagsWidget() {
-  // Simulated trend data (could come from API)
-  const tags = [
-    { name: 'Electronics', count: 124, trend: 'up', data: [45, 52, 38, 65, 78, 85, 95], color: '#8b5cf6' },
-    { name: 'Fashion', count: 89, trend: 'up', data: [30, 42, 55, 48, 62, 70, 68], color: '#ec4899' },
-    { name: 'Home', count: 67, trend: 'down', data: [80, 72, 68, 55, 45, 40, 35], color: '#ef4444' },
-    { name: 'Beauty', count: 45, trend: 'up', data: [20, 25, 32, 38, 42, 48, 55], color: '#f59e0b' },
-  ];
+function CouponsWidget() {
+  const { data: coupons, isLoading } = useQuery({
+    queryKey: ['coupons', 'latest'],
+    queryFn: () => api.listCoupons({ limit: 5, sort: 'newest', include: 'company' }),
+    staleTime: 5 * 60 * 1000,
+  });
 
   return (
     <motion.div
@@ -77,38 +46,73 @@ function TrendingTagsWidget() {
     >
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-violet-500" />
-          Trending
+          <Ticket className="w-3.5 h-3.5 text-violet-500" />
+          Latest Coupons
         </h3>
-        <Link to="/tags" className="text-[10px] text-violet-600 hover:text-violet-700 flex items-center gap-0.5 font-medium">
-          All <ArrowRight className="w-2.5 h-2.5" />
+        <Link to="/coupons" className="text-[10px] text-violet-600 hover:text-violet-700 flex items-center gap-0.5 font-medium">
+          View All <ArrowRight className="w-2.5 h-2.5" />
         </Link>
       </div>
 
-      <div className="space-y-1.5">
-        {tags.map((tag, index) => (
-          <motion.div
-            key={tag.name}
-            initial={{ opacity: 0, x: -5 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 + index * 0.03 }}
-          >
-            <Link
-              to={`/tag/${tag.name.toLowerCase()}`}
-              className="flex items-center gap-2 px-2.5 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-xs font-medium text-slate-700 transition-all duration-200"
+      {isLoading ? (
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      ) : coupons?.length > 0 ? (
+        <div className="space-y-2">
+          {coupons.slice(0, 5).map((coupon, index) => (
+            <motion.div
+              key={coupon.id}
+              initial={{ opacity: 0, x: -5 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 + index * 0.05 }}
             >
-              <span className="flex-1 truncate">{tag.name}</span>
-              <MiniSparkline data={tag.data} color={tag.color} trend={tag.trend} />
-              <span className="text-slate-400 text-[10px] min-w-[24px] text-right">{tag.count}</span>
-              {tag.trend === 'up' ? (
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-              ) : (
-                <TrendingDown className="w-3.5 h-3.5 text-red-400" />
-              )}
-            </Link>
-          </motion.div>
-        ))}
-      </div>
+              <Link
+                to={`/coupon/${coupon.id}`}
+                className="flex items-center gap-2.5 p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all duration-200 group border border-transparent hover:border-violet-100 hover:shadow-sm"
+              >
+                {/* Company Logo */}
+                <div className="w-8 h-8 rounded-md bg-white border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+                  {coupon.company?.logo_url ? (
+                    <img
+                      src={coupon.company.logo_url}
+                      alt={coupon.company.name}
+                      className="w-full h-full object-contain p-0.5"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-violet-50 text-violet-600 flex items-center justify-center text-xs font-bold">
+                      {coupon.company?.name?.[0] || 'C'}
+                    </div>
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-slate-800 truncate group-hover:text-violet-700 transition-colors">
+                      {coupon.company?.name || 'Unknown Store'}
+                    </span>
+                    {coupon.discount_value && (
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full shrink-0">
+                        {coupon.discount_type === 'percentage' ? `${coupon.discount_value}% OFF` : `$${coupon.discount_value} OFF`}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-slate-500 truncate mt-0.5">
+                    {coupon.title}
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-6 text-xs text-slate-400">
+          No active coupons
+        </div>
+      )}
     </motion.div>
   );
 }

@@ -299,6 +299,14 @@ export const api = {
     return apiRequest(`/api/personalization/recommendations?${params}`)
   },
 
+  // For You personalized feed (smart backend algorithm)
+  getForYouFeed: (options = {}) => {
+    const params = new URLSearchParams()
+    if (options.limit) params.append('limit', options.limit.toString())
+    if (options.cursor) params.append('cursor', options.cursor.toString())
+    return apiRequest(`/api/for-you?${params}`)
+  },
+
   generateRecommendations: () => apiRequest('/api/personalization/recommendations/generate', {
     method: 'POST',
   }),
@@ -1466,13 +1474,15 @@ export const api = {
    * Send a chat message to the AI (non-streaming)
    * @param {Object} params - Chat parameters
    * @param {string} params.message - User message
+   * @param {Array} [params.history] - Previous messages for context
    * @param {string} [params.conversationId] - Continue existing conversation
    * @param {Object} [params.context] - Additional context
    * @returns {Promise<Object>} AI response with content and optional deals
    */
-  aiChat: ({ message, conversationId, context }) => {
+  aiChat: ({ message, history, conversationId, context }) => {
     // Build body - only include optional fields if they have values
     const body = { message }
+    if (history && history.length > 0) body.history = history
     if (conversationId) body.conversationId = conversationId
     if (context) body.context = context
 
@@ -1487,22 +1497,22 @@ export const api = {
    * Uses fetch with ReadableStream for proper auth support
    * @param {Object} params - Chat parameters
    * @param {string} params.message - User message
+   * @param {Array} [params.history] - Previous messages for context
    * @param {string} [params.conversationId] - Continue existing conversation
    * @param {Function} onEvent - Callback for each SSE event
    * @param {Function} [onError] - Error callback
    * @returns {Function} Cleanup function to abort the connection
    */
-  aiChatStream: ({ message, conversationId }, onEvent, onError) => {
+  aiChatStream: ({ message, history, conversationId }, onEvent, onError) => {
     const controller = new AbortController()
     const token = localStorage.getItem('access_token')
 
     async function startStream() {
       try {
-        // Build request body - only include conversationId if it has a value
+        // Build request body - include history for context
         const requestBody = { message }
-        if (conversationId) {
-          requestBody.conversationId = conversationId
-        }
+        if (history && history.length > 0) requestBody.history = history
+        if (conversationId) requestBody.conversationId = conversationId
 
         const response = await fetch(`${API_BASE}/api/ai/chat`, {
           method: 'POST',
