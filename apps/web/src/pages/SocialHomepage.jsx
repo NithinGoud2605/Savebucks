@@ -74,15 +74,44 @@ export default function SocialHomepage() {
             <div className="sticky top-20 px-3 py-4 h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide">
               <FilterSidebar
                 activeFilter={filter}
-                onFilterChange={setFilter}
+                onFilterChange={(f) => {
+                  setFilter(f);
+                  setIsAIActive(false); // Minimize AI to show results
+                }}
                 activeCategory={category}
-                onCategoryChange={setCategory}
+                onCategoryChange={(c) => {
+                  setCategory(c);
+                  setIsAIActive(false); // Minimize AI to show results
+                }}
               />
             </div>
           </aside>
 
           {/* Main Feed / AI Chat */}
-          <main className="flex-1 min-w-0 flex flex-col h-full">
+          <main className="relative flex-1 min-w-0 flex flex-col h-full">
+            {/* Persistent Compact Chat Toggle */}
+            <AnimatePresence>
+              {!isAIActive && chatState?.messages?.length > 0 && (
+                <motion.button
+                  initial={{ opacity: 0, y: -10, x: 20 }}
+                  animate={{ opacity: 1, y: 0, x: 0 }}
+                  exit={{ opacity: 0, y: -10, x: 20 }}
+                  onClick={() => setIsAIActive(true)}
+                  className="absolute top-6 right-6 z-50 flex items-center gap-2.5 bg-white/90 backdrop-blur-md border border-violet-100 shadow-[0_4px_20px_-4px_rgba(124,58,237,0.15)] pl-3 pr-4 py-2 rounded-full group hover:border-violet-200 transition-all cursor-pointer"
+                >
+                  <div className="relative flex items-center justify-center w-5 h-5">
+                    <Sparkles className={`w-4 h-4 ${chatState.isStreaming ? 'text-violet-600 animate-pulse' : 'text-gray-400 group-hover:text-violet-600 transition-colors'}`} />
+                    {chatState.isStreaming && (
+                      <span className="absolute inset-0 bg-violet-500/30 rounded-full animate-ping" />
+                    )}
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700 group-hover:text-violet-700 transition-colors">
+                    {chatState.isStreaming ? 'AI Thinking...' : 'Return to Chat'}
+                  </span>
+                </motion.button>
+              )}
+            </AnimatePresence>
+
             {/* Content Area - Feed OR Chat Messages */}
             <div
               ref={feedRef}
@@ -103,6 +132,8 @@ export default function SocialHomepage() {
                     transition={{ duration: 0.2 }}
                     className="px-4 lg:px-8 py-6"
                   >
+
+
                     {isForYouActive ? (
                       <PersonalizedRecommendations
                         limit={24}

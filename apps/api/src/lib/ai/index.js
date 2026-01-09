@@ -326,6 +326,7 @@ class AIOrchestrator {
         let totalCost = firstResponse.cost || 0;
         let toolResults = null;
         let allDeals = [];  // Store all deals for later filtering
+        let sentDeals = []; // Track which deals were actually sent
 
         // Handle tool calls
         if (firstResponse.toolCalls?.length > 0) {
@@ -383,29 +384,26 @@ class AIOrchestrator {
 
                     if (filteredDeals.length > 0) {
                         console.log(`[AI] 📦 Sending ${filteredDeals.length} AI-selected deals`);
+                        sentDeals = filteredDeals;
                         onChunk({ type: 'deals', deals: filteredDeals });
                     } else {
                         // AI returned IDs that don't match -> Send all deals as fallback
                         console.log(`[AI] ⚠️ AI returned invalid dealIds, sending all ${allDeals.length} found deals`);
+                        sentDeals = allDeals;
                         onChunk({ type: 'deals', deals: allDeals });
                     }
                 } else {
                     // AI didn't return any IDs -> Send all deals found by tools
                     console.log(`[AI] 📦 Sending all ${allDeals.length} found deals (AI didn't select specific ones)`);
+                    sentDeals = allDeals;
                     onChunk({ type: 'deals', deals: allDeals });
                 }
             }
 
-            // Determine which deals were sent
-            let sentDeals = [];
-            if (allDeals.length > 0) {
-                if (streamed.dealIds?.length > 0) {
-                    const filteredDeals = allDeals.filter(deal => streamed.dealIds.includes(deal.id));
-                    sentDeals = filteredDeals.length > 0 ? filteredDeals : allDeals;
-                } else {
-                    sentDeals = allDeals;
-                }
-            }
+
+
+            // Send done event
+            onChunk({ type: 'done', cached: false });
 
             return {
                 content: streamed.content,

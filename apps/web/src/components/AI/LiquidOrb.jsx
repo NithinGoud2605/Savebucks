@@ -108,6 +108,7 @@ export default function LiquidOrb({
                 <motion.path
                     fill="url(#orbGradient)"
                     filter="url(#softShadow)"
+                    d={blobPaths[0]}
                     animate={{
                         d: blobPaths,
                     }}

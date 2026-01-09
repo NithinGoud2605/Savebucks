@@ -29,7 +29,7 @@ if (!OPENAI_API_KEY) {
  */
 export const MODELS = {
   // Ultra-cheap nano model for most queries
-  simple: process.env.AI_MODEL_SIMPLE || 'gpt-5-nano',
+  simple: process.env.AI_MODEL_SIMPLE || 'gpt-4o-mini',
 
   // More capable model for complex reasoning (fallback)
   complex: process.env.AI_MODEL_COMPLEX || 'gpt-4o-mini',
@@ -61,7 +61,7 @@ export const TOKEN_COSTS = {
 export const RATE_LIMITS = {
   guest: {
     perMinute: parseInt(process.env.AI_RATE_LIMIT_GUEST_MIN || '10', 10),
-    perDay: parseInt(process.env.AI_RATE_LIMIT_GUEST_DAY || '50', 10)
+    perDay: parseInt(process.env.AI_RATE_LIMIT_GUEST_DAY || '2', 10)
   },
   authenticated: {
     perMinute: parseInt(process.env.AI_RATE_LIMIT_USER_MIN || '30', 10),

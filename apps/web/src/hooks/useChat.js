@@ -602,7 +602,8 @@ export function useChat({
 
         // Setters for external control
         setMessages,
-        setConversationId
+        setConversationId,
+        isAuthenticated
     }
 }
 

@@ -19,7 +19,8 @@ import {
   Store,
   ExternalLink,
   Copy,
-  Check
+  Check,
+  Square
 } from 'lucide-react'
 import { formatPrice } from '../../lib/format'
 import LiquidOrb, { OrbState, SimpleThinkingIndicator } from './LiquidOrb'
@@ -50,7 +51,30 @@ export default function AIFeedSearch({ onAIActive, isAIActive = false, showInput
   const messagesEndRef = useRef(null)
 
   const internalChatState = useChat({ streaming: true })
-  const { messages, deals, coupons, sendMessage, clear, isLoading, isStreaming, error, retry } = chatState || internalChatState
+  const { messages, deals, coupons, sendMessage, clear, isLoading, isStreaming, error, retry, isAuthenticated } = chatState || internalChatState
+  const [guestUsage, setGuestUsage] = useState(0)
+  const [showLimitWarning, setShowLimitWarning] = useState(false)
+
+  // Track guest usage
+  useEffect(() => {
+    if (!isAuthenticated) {
+      try {
+        const stored = localStorage.getItem('guest_ai_usage')
+        if (stored) {
+          const { count, date } = JSON.parse(stored)
+          const today = new Date().toDateString()
+          if (date === today) {
+            setGuestUsage(count)
+          } else {
+            localStorage.setItem('guest_ai_usage', JSON.stringify({ count: 0, date: today }))
+            setGuestUsage(0)
+          }
+        }
+      } catch (e) {
+        console.error('Error reading guest usage:', e)
+      }
+    }
+  }, [isAuthenticated])
 
   // Determine orb state
   const orbState = useMemo(() => {
@@ -105,18 +129,52 @@ export default function AIFeedSearch({ onAIActive, isAIActive = false, showInput
   const handleSubmit = (e) => {
     e?.preventDefault()
     if (!input.trim() || isLoading || isStreaming) return
+
+    // Guest limit check
+    if (!isAuthenticated) {
+      if (guestUsage >= 2) {
+        setShowLimitWarning(true)
+        setTimeout(() => setShowLimitWarning(false), 5000)
+        return
+      }
+
+      const newCount = guestUsage + 1
+      setGuestUsage(newCount)
+      localStorage.setItem('guest_ai_usage', JSON.stringify({
+        count: newCount,
+        date: new Date().toDateString()
+      }))
+    }
+
     if (onAIActive) onAIActive(true)
     sendMessage(input.trim())
     setInput('')
   }
 
   const handleSuggestionClick = (query) => {
+    // Guest limit check for suggestions
+    if (!isAuthenticated) {
+      if (guestUsage >= 2) {
+        setShowLimitWarning(true)
+        setTimeout(() => setShowLimitWarning(false), 5000)
+        return
+      }
+
+      const newCount = guestUsage + 1
+      setGuestUsage(newCount)
+      localStorage.setItem('guest_ai_usage', JSON.stringify({
+        count: newCount,
+        date: new Date().toDateString()
+      }))
+    }
+
     if (onAIActive) onAIActive(true)
     sendMessage(query)
   }
 
   const handleClose = () => {
-    clear()
+    // We do NOT clear() here anymore to allow background persistence
+    // clear()
     if (onAIActive) onAIActive(false)
   }
 
@@ -389,6 +447,21 @@ export default function AIFeedSearch({ onAIActive, isAIActive = false, showInput
         </>
       )}
 
+      {/* Limit Warning Toast */}
+      <AnimatePresence>
+        {showLimitWarning && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-xs font-medium"
+          >
+            <span className="bg-white/20 p-1 rounded-full"><LockIcon className="w-3 h-3" /></span>
+            Guest limit reached (2/2). Sign in for unlimited AI.
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Input Bar - only show if showInputBar is true OR if showOnlyInputBar mode */}
       {(showInputBar || showOnlyInputBar) && (
         <div className="">
@@ -400,25 +473,33 @@ export default function AIFeedSearch({ onAIActive, isAIActive = false, showInput
                   : '0 2px 12px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02)'
               }}
               transition={{ duration: 0.2 }}
-              className="flex items-center gap-3 px-4 py-3 bg-white rounded-full"
+              className={`flex items-center gap-3 px-4 py-3 bg-white rounded-full ${!isAuthenticated && guestUsage >= 2 ? 'opacity-75' : ''}`}
             >
               {/* Pulse Orb - Always moving */}
               <LiquidOrb state={orbState} size={40} />
 
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setTimeout(() => setIsFocused(false), 150)}
-                placeholder={isAIActive ? "Ask a follow-up..." : "Ask anything about deals..."}
-                disabled={isLoading || isStreaming}
-                className="flex-1 bg-transparent border-none outline-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:outline-none text-sm text-gray-900 placeholder:text-gray-400"
-              />
+              <div className="flex-1 flex flex-col justify-center">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setTimeout(() => setIsFocused(false), 150)}
+                  placeholder={!isAuthenticated && guestUsage >= 2 ? "Sign in to continue chatting..." : (isAIActive ? "Ask a follow-up..." : "Ask anything about deals...")}
+                  disabled={isLoading || isStreaming || (!isAuthenticated && guestUsage >= 2)}
+                  className="w-full bg-transparent border-none outline-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:outline-none text-sm text-gray-900 placeholder:text-gray-400"
+                />
+                {/* Guest Limit Status Text */}
+                {!isAuthenticated && (
+                  <span className={`text-[9px] font-medium ml-1 transition-colors ${guestUsage >= 2 ? 'text-red-500' : 'text-gray-400'}`}>
+                    {guestUsage >= 2 ? 'Guest limit reached' : `${2 - guestUsage} free search${2 - guestUsage !== 1 ? 'es' : ''} left`}
+                  </span>
+                )}
+              </div>
 
               {/* Keyboard hint */}
-              {!isFocused && !isAIActive && !input && (
+              {!isFocused && !isAIActive && !input && isAuthenticated && (
                 <div className="hidden sm:flex items-center">
                   <kbd className="px-2 py-1 bg-gray-50 rounded-md text-[10px] font-medium text-gray-400 border border-gray-100">⌘K</kbd>
                 </div>
@@ -440,12 +521,12 @@ export default function AIFeedSearch({ onAIActive, isAIActive = false, showInput
               {/* Submit button */}
               <motion.button
                 type="submit"
-                disabled={!input.trim() || isLoading || isStreaming}
+                disabled={!input.trim() || isLoading || isStreaming || (!isAuthenticated && guestUsage >= 2)}
                 whileHover={{ scale: input.trim() ? 1.05 : 1 }}
                 whileTap={{ scale: input.trim() ? 0.95 : 1 }}
                 className={`
                 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200
-                ${input.trim()
+                ${input.trim() && (!isAuthenticated ? guestUsage < 2 : true)
                     ? 'bg-gray-900 text-white'
                     : 'bg-gray-100 text-gray-400'
                   }
@@ -453,11 +534,19 @@ export default function AIFeedSearch({ onAIActive, isAIActive = false, showInput
               `}
               >
                 {isLoading || isStreaming ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
-                  />
+                  <motion.button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      chatState.cancel();
+                    }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="w-full h-full flex items-center justify-center bg-gray-900 text-white rounded-full"
+                  >
+                    <Square className="w-3 h-3 fill-current" />
+                  </motion.button>
                 ) : (
                   <ArrowUp className="w-4 h-4" />
                 )}
@@ -476,6 +565,26 @@ export default function AIFeedSearch({ onAIActive, isAIActive = false, showInput
         </div>
       )}
     </div>
+  )
+}
+
+function LockIcon(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
   )
 }
 
