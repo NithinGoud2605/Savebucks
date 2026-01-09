@@ -29,7 +29,7 @@ if (!OPENAI_API_KEY) {
  */
 export const MODELS = {
   // Ultra-cheap nano model for most queries
-  simple: process.env.AI_MODEL_SIMPLE || 'gpt-4o-mini',
+  simple: process.env.AI_MODEL_SIMPLE || 'gpt-5-nano',
 
   // More capable model for complex reasoning (fallback)
   complex: process.env.AI_MODEL_COMPLEX || 'gpt-4o-mini',

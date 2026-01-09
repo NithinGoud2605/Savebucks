@@ -216,7 +216,9 @@ class AIOrchestrator {
             return { content: '', error: rateCheck.message };
         }
 
-        // Send start event
+
+
+        // Send start event IMMEDIATELY to keep connection alive
         onChunk({ type: 'start', requestId });
 
         try {

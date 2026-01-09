@@ -108,7 +108,7 @@ export default function LiquidOrb({
                 <motion.path
                     fill="url(#orbGradient)"
                     filter="url(#softShadow)"
-                    d={blobPaths[0]}
+                    d={blobPaths[0] || "M 50 12 Q 50 12 50 12 Z"}
                     animate={{
                         d: blobPaths,
                     }}
@@ -124,8 +124,8 @@ export default function LiquidOrb({
                 <motion.ellipse
                     cx="42"
                     cy="38"
-                    rx="12"
-                    ry="8"
+                    rx={12}
+                    ry={8}
                     fill="white"
                     opacity="0.6"
                     animate={{

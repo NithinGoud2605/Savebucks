@@ -518,39 +518,39 @@ export default function AIFeedSearch({ onAIActive, isAIActive = false, showInput
                 </motion.button>
               )}
 
-              {/* Submit button */}
-              <motion.button
-                type="submit"
-                disabled={!input.trim() || isLoading || isStreaming || (!isAuthenticated && guestUsage >= 2)}
-                whileHover={{ scale: input.trim() ? 1.05 : 1 }}
-                whileTap={{ scale: input.trim() ? 0.95 : 1 }}
-                className={`
-                w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200
-                ${input.trim() && (!isAuthenticated ? guestUsage < 2 : true)
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-gray-100 text-gray-400'
-                  }
-                disabled:opacity-50 disabled:cursor-not-allowed
-              `}
-              >
-                {isLoading || isStreaming ? (
-                  <motion.button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      chatState.cancel();
-                    }}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="w-full h-full flex items-center justify-center bg-gray-900 text-white rounded-full"
-                  >
-                    <Square className="w-3 h-3 fill-current" />
-                  </motion.button>
-                ) : (
+              {/* Submit / Cancel button */}
+              {isLoading || isStreaming ? (
+                <motion.button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    chatState.cancel();
+                  }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 bg-gray-900 text-white"
+                >
+                  <Square className="w-3 h-3 fill-current" />
+                </motion.button>
+              ) : (
+                <motion.button
+                  type="submit"
+                  disabled={!input.trim() || (!isAuthenticated && guestUsage >= 2)}
+                  whileHover={{ scale: input.trim() ? 1.05 : 1 }}
+                  whileTap={{ scale: input.trim() ? 0.95 : 1 }}
+                  className={`
+                  w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200
+                  ${input.trim() && (!isAuthenticated ? guestUsage < 2 : true)
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-100 text-gray-400'
+                    }
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                `}
+                >
                   <ArrowUp className="w-4 h-4" />
-                )}
-              </motion.button>
+                </motion.button>
+              )}
             </motion.div>
           </form>
 
