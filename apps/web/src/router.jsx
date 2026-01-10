@@ -8,7 +8,7 @@ const ListPage = React.lazy(() => import('./pages/ListPage'))
 const SearchResults = React.lazy(() => import('./pages/SearchResults'))
 const UnifiedSearchResults = React.lazy(() => import('./pages/UnifiedSearchResults'))
 const SocialHomepage = React.lazy(() => import('./pages/SocialHomepage'))
-const ProfessionalDealPage = React.lazy(() => import('./pages/ProfessionalDealPage'))
+const CompactDealPage = React.lazy(() => import('./pages/CompactDealPage'))
 const PostItem = React.lazy(() => import('./pages/PostItem'))
 const AdminPage = React.lazy(() => import('./pages/Admin/AdminPage'))
 const TagManagement = React.lazy(() => import('./pages/Admin/TagManagement'))
@@ -22,6 +22,7 @@ const CategoryPage = React.lazy(() => import('./pages/CategoryPage'))
 const CategoriesPage = React.lazy(() => import('./pages/CategoriesPage'))
 const CompanyPage = React.lazy(() => import('./pages/CompanyPage'))
 const CompaniesPage = React.lazy(() => import('./pages/CompaniesPage'))
+const CouponsPage = React.lazy(() => import('./pages/CouponsPage'))
 const FilterPage = React.lazy(() => import('./pages/FilterPage'))
 
 const About = React.lazy(() => import('./pages/About'))
@@ -150,7 +151,7 @@ export const router = createBrowserRouter([
         path: 'deal/:id',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ProfessionalDealPage />
+            <CompactDealPage />
           </Suspense>
         ),
       },
@@ -175,6 +176,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <TagManagement />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'coupons',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <CouponsPage />
           </Suspense>
         ),
       },

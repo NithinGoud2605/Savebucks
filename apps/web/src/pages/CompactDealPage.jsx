@@ -1,79 +1,232 @@
-import React, { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { clsx } from 'clsx'
-import { formatPrice, dateAgo, truncate } from '../lib/format'
-import SubmitterBadge from '../components/Deal/SubmitterBadge'
+import React, { useState } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { toast } from '../lib/toast'
+import { formatPrice, dateAgo, truncate } from '../lib/format'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  EyeIcon,
-  CalendarDaysIcon,
-  BuildingStorefrontIcon,
-  SparklesIcon,
-  StarIcon,
-  GiftIcon,
-  TruckIcon,
-  CreditCardIcon,
-  ShieldCheckIcon,
-  HandThumbUpIcon,
-  HandThumbDownIcon,
-  BookmarkIcon,
-  ArrowTopRightOnSquareIcon,
-  ClockIcon
-} from '@heroicons/react/24/outline'
-import PriceAlert from '../components/PriceTracking/PriceAlert'
-import StoreInfoPanel from '../components/Deal/StoreInfoPanel'
+  ChevronRight,
+  Heart,
+  Share2,
+  Shield,
+  Truck,
+  RotateCcw,
+  ThumbsUp,
+  ThumbsDown,
+  Tag,
+  ExternalLink,
+  Copy,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Eye,
+  Bookmark,
+  BadgeCheck,
+  Sparkles,
+  Zap,
+  AlertTriangle
+} from 'lucide-react'
+import ImageWithFallback from '../components/ui/ImageWithFallback'
+import ReviewsAndRatings from '../components/Deal/ReviewsAndRatings'
 
-export default function CompactDealPage() {
+// Compact Image Gallery
+const CompactGallery = ({ images, title }) => {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const validImages = Array.isArray(images) ? images.filter(Boolean) : []
+
+  if (validImages.length === 0) {
+    return (
+      <div className="aspect-square bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl flex items-center justify-center">
+        <div className="text-center text-slate-400">
+          <Sparkles className="w-12 h-12 mx-auto mb-2 opacity-50" />
+          <span className="text-sm">No image</span>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      <motion.div
+        className="aspect-square bg-white rounded-xl border border-slate-200 p-3 overflow-hidden"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <ImageWithFallback
+          src={validImages[activeIndex]}
+          alt={title}
+          className="w-full h-full object-contain"
+        />
+      </motion.div>
+
+      {validImages.length > 1 && (
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {validImages.slice(0, 5).map((img, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveIndex(i)}
+              className={`w-12 h-12 flex-shrink-0 rounded-lg border-2 p-1 transition-all ${i === activeIndex
+                  ? 'border-violet-500 ring-2 ring-violet-200'
+                  : 'border-slate-200 hover:border-slate-300'
+                }`}
+            >
+              <ImageWithFallback src={img} alt="" className="w-full h-full object-contain" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Inline Price Badge
+const PriceBadge = ({ deal }) => {
+  const hasDiscount = deal.original_price && deal.original_price > deal.price
+  const discount = hasDiscount
+    ? Math.round(((deal.original_price - deal.price) / deal.original_price) * 100)
+    : deal.discount_percentage
+
+  return (
+    <div className="flex items-center gap-3 flex-wrap">
+      <span className="text-2xl font-bold text-emerald-600">
+        {formatPrice(deal.price)}
+      </span>
+
+      {hasDiscount && (
+        <span className="text-base text-slate-400 line-through">
+          {formatPrice(deal.original_price)}
+        </span>
+      )}
+
+      {discount > 0 && (
+        <motion.span
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className={`px-2.5 py-1 text-white text-sm font-bold rounded-full ${discount >= 50
+              ? 'bg-gradient-to-r from-red-500 to-pink-500'
+              : discount >= 30
+                ? 'bg-gradient-to-r from-orange-500 to-red-500'
+                : 'bg-gradient-to-r from-emerald-500 to-teal-500'
+            }`}
+        >
+          -{discount}%
+        </motion.span>
+      )}
+    </div>
+  )
+}
+
+// Coupon Code Component
+const CouponCode = ({ code }) => {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code)
+    setCopied(true)
+    toast.success('Code copied!')
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex items-center gap-2 bg-amber-50 border border-dashed border-amber-300 rounded-lg px-3 py-2"
+    >
+      <Tag className="w-4 h-4 text-amber-600" />
+      <code className="font-mono font-bold text-amber-900 flex-1">{code}</code>
+      <motion.button
+        onClick={handleCopy}
+        whileTap={{ scale: 0.95 }}
+        className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded font-medium transition-colors ${copied
+            ? 'bg-emerald-600 text-white'
+            : 'bg-amber-600 hover:bg-amber-700 text-white'
+          }`}
+      >
+        <Copy className="w-3 h-3" />
+        {copied ? 'Copied!' : 'Copy'}
+      </motion.button>
+    </motion.div>
+  )
+}
+
+// Vote Buttons
+const VoteButtons = ({ deal, onVote }) => (
+  <div className="flex items-center gap-2">
+    <motion.button
+      onClick={() => onVote('up')}
+      whileTap={{ scale: 0.9 }}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${deal?.userVote === 1
+          ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-200'
+          : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600'
+        }`}
+    >
+      <ThumbsUp className="w-4 h-4" />
+      <span>{deal.upvotes || 0}</span>
+    </motion.button>
+
+    <motion.button
+      onClick={() => onVote('down')}
+      whileTap={{ scale: 0.9 }}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${deal?.userVote === -1
+          ? 'bg-red-100 text-red-700 ring-2 ring-red-200'
+          : 'bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600'
+        }`}
+    >
+      <ThumbsDown className="w-4 h-4" />
+      <span>{deal.downvotes || 0}</span>
+    </motion.button>
+
+    <span className="text-sm text-slate-500 ml-2">
+      Score: <span className="font-bold text-slate-900">{(deal.upvotes || 0) - (deal.downvotes || 0)}</span>
+    </span>
+  </div>
+)
+
+// Trust Badges Inline
+const TrustBadges = () => (
+  <div className="flex items-center gap-4 text-xs text-slate-500">
+    <div className="flex items-center gap-1.5">
+      <Shield className="w-4 h-4 text-emerald-500" />
+      <span>Secure</span>
+    </div>
+    <div className="flex items-center gap-1.5">
+      <Truck className="w-4 h-4 text-blue-500" />
+      <span>Fast delivery</span>
+    </div>
+    <div className="flex items-center gap-1.5">
+      <RotateCcw className="w-4 h-4 text-purple-500" />
+      <span>Easy returns</span>
+    </div>
+  </div>
+)
+
+// Main Component
+export default function StreamlinedDealPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-  const [isBookmarked, setIsBookmarked] = useState(false)
-  const [showPriceAlert, setShowPriceAlert] = useState(false)
 
-  // Fetch deal data
+  const [isBookmarked, setIsBookmarked] = useState(false)
+  const [showFullDescription, setShowFullDescription] = useState(false)
+
+  // Fetch deal
   const { data: deal, isLoading, error } = useQuery({
     queryKey: ['deal', id],
     queryFn: () => api.getDeal(id),
     enabled: !!id
   })
 
-  // Fetch user's bookmark status
-  const { data: bookmarkData } = useQuery({
-    queryKey: ['bookmark', id],
-    queryFn: () => api.getBookmark(id),
-    enabled: !!id && !!user
-  })
-
-  // User's vote is now included in the deal data
-
-  useEffect(() => {
-    if (bookmarkData) {
-      setIsBookmarked(bookmarkData.isBookmarked)
-    }
-  }, [bookmarkData])
-
-  useEffect(() => {
-    if (voteData) {
-      setUserVote(voteData.vote)
-    }
-  }, [voteData])
-
   // Mutations
   const bookmarkMutation = useMutation({
     mutationFn: (dealId) => api.toggleBookmark(dealId),
     onSuccess: () => {
       setIsBookmarked(!isBookmarked)
-      queryClient.invalidateQueries(['bookmark', id])
-      toast.success(isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks')
-    },
-    onError: () => {
-      toast.error('Failed to update bookmark')
+      toast.success(isBookmarked ? 'Removed from saves' : 'Saved!')
     }
   })
 
@@ -84,428 +237,282 @@ export default function CompactDealPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['deal', id])
-      queryClient.invalidateQueries(['vote', id])
+      toast.success('Vote recorded')
     },
-    onError: (error) => {
-      console.error('Vote error:', error)
-      if (error.status === 401) {
-        toast.error('Session expired. Please login again.')
-      } else {
-        toast.error('Failed to vote. Please try again.')
-      }
-    }
+    onError: () => toast.error('Failed to vote')
   })
-
-  // Handlers
-  const handleBookmark = () => {
-    if (!user) {
-      toast.error('Please login to bookmark deals')
-      return
-    }
-    bookmarkMutation.mutate(id)
-  }
 
   const handleVote = (vote) => {
     if (!user) {
       toast.error('Please login to vote')
       return
     }
-
-    // Check if we have a valid token before making the request
-    const token = localStorage.getItem('access_token')
-    if (!token) {
-      toast.error('Session expired. Please login again.')
-      return
-    }
-
     const currentVote = deal?.userVote
     const newVote = currentVote === vote ? null : vote
     voteMutation.mutate({ dealId: id, vote: newVote })
   }
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (navigator.share) {
-      navigator.share({
-        title: deal?.title,
-        url: window.location.href
-      })
+      try {
+        await navigator.share({
+          title: deal.title,
+          url: window.location.href
+        })
+      } catch {
+        navigator.clipboard.writeText(window.location.href)
+        toast.success('Link copied!')
+      }
     } else {
       navigator.clipboard.writeText(window.location.href)
-      toast.success('Link copied to clipboard')
+      toast.success('Link copied!')
     }
   }
 
-  // Computed values
-  const images = deal?.deal_images || (deal?.image_url ? [deal.image_url] : [])
-  const discountBadge = deal?.discount_percentage ? `${deal.discount_percentage}% OFF` : null
-  const timeRemaining = deal?.expires_at ? 'Ends Soon' : null
-  const isExpired = deal?.expires_at && new Date(deal.expires_at) < new Date()
-
+  // Loading
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
-
-  if (error || !deal) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Deal Not Found</h1>
-          <p className="text-gray-600 mb-6">The deal you're looking for doesn't exist or has been removed.</p>
-          <Link to="/" className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            Go Home
-          </Link>
+      <div className="min-h-screen bg-slate-50 pt-16">
+        <div className="max-w-5xl mx-auto px-4 py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 animate-pulse">
+            <div className="lg:col-span-2">
+              <div className="aspect-square bg-slate-200 rounded-xl" />
+            </div>
+            <div className="lg:col-span-3 space-y-4">
+              <div className="h-6 bg-slate-200 rounded w-3/4" />
+              <div className="h-8 bg-slate-200 rounded w-1/2" />
+              <div className="h-32 bg-slate-200 rounded" />
+            </div>
+          </div>
         </div>
       </div>
     )
   }
 
+  // Error
+  if (error || !deal) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <h1 className="text-xl font-bold text-slate-900 mb-2">Deal Not Found</h1>
+          <p className="text-slate-600 mb-4">This deal doesn't exist or was removed.</p>
+          <button
+            onClick={() => navigate('/')}
+            className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"
+          >
+            Browse Deals
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const images = [
+    deal.featured_image,
+    ...(Array.isArray(deal.deal_images) ? deal.deal_images : []),
+    deal.image_url
+  ].filter(Boolean)
+
   return (
-    <div className="min-h-screen bg-gray-50 pt-16">
-      {/* Breadcrumb */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav className="flex items-center space-x-2 text-sm text-gray-600">
-            <Link to="/" className="hover:text-gray-900">Home</Link>
-            <ChevronRightIcon className="h-4 w-4 text-gray-400" />
+    <div className="min-h-screen bg-slate-50 pt-14">
+      {/* Compact Breadcrumb Header */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-5xl mx-auto px-4 py-2">
+          <nav className="flex items-center gap-1.5 text-xs text-slate-500">
+            <Link to="/" className="hover:text-violet-600">Home</Link>
+            <ChevronRight className="w-3 h-3" />
             {deal.categories && (
               <>
-                <Link to={`/category/${deal.categories.slug}`} className="hover:text-gray-900">
+                <Link to={`/category/${deal.categories.slug}`} className="hover:text-violet-600">
                   {deal.categories.name}
                 </Link>
-                <ChevronRightIcon className="h-4 w-4 text-gray-400" />
+                <ChevronRight className="w-3 h-3" />
               </>
             )}
-            <span className="text-gray-900 font-medium">{truncate(deal.title, 50)}</span>
+            <span className="text-slate-400 truncate max-w-[180px]">{truncate(deal.title, 35)}</span>
           </nav>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Column - Compact Images + Key Info */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Main Image - More Compact */}
-            <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden">
-              {discountBadge && (
-                <div className="absolute top-3 left-3 z-10">
-                  <span className="inline-flex items-center px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">
-                    <SparklesIcon className="h-3 w-3 mr-1" />
-                    {discountBadge}
-                  </span>
-                </div>
-              )}
+      {/* Main Content */}
+      <div className="max-w-5xl mx-auto px-4 py-5">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-              {timeRemaining && !isExpired && (
-                <div className="absolute top-3 right-3 z-10">
-                  <span className="inline-flex items-center px-2 py-1 bg-orange-500 text-white text-xs font-medium rounded-full">
-                    <ClockIcon className="h-3 w-3 mr-1" />
-                    {timeRemaining}
-                  </span>
-                </div>
-              )}
-
-              {isExpired && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
-                  <span className="text-white text-xl font-bold">EXPIRED</span>
-                </div>
-              )}
-
-              <div className="aspect-[4/3]">
-                {images.length > 0 ? (
-                  <img
-                    src={images[selectedImageIndex]}
-                    alt={deal.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-50 flex items-center justify-center">
-                    <GiftIcon className="h-20 w-20 text-gray-400" />
-                  </div>
-                )}
-              </div>
-
-              {/* Image Navigation */}
-              {images.length > 1 && (
-                <>
-                  <div className="absolute inset-y-0 left-0 flex items-center">
-                    <button
-                      onClick={() => setSelectedImageIndex(Math.max(0, selectedImageIndex - 1))}
-                      disabled={selectedImageIndex === 0}
-                      className="ml-2 p-1.5 bg-white bg-opacity-80 rounded-full shadow-lg disabled:opacity-50"
-                    >
-                      <ChevronLeftIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className="absolute inset-y-0 right-0 flex items-center">
-                    <button
-                      onClick={() => setSelectedImageIndex(Math.min(images.length - 1, selectedImageIndex + 1))}
-                      disabled={selectedImageIndex === images.length - 1}
-                      className="mr-2 p-1.5 bg-white bg-opacity-80 rounded-full shadow-lg disabled:opacity-50"
-                    >
-                      <ChevronRightIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Thumbnail Images - More Compact */}
-            {images.length > 1 && (
-              <div className="flex space-x-2 overflow-x-auto">
-                {images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImageIndex(index)}
-                    className={clsx(
-                      'flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all',
-                      selectedImageIndex === index
-                        ? 'border-blue-500 ring-2 ring-blue-200'
-                        : 'border-gray-200 hover:border-gray-300'
-                    )}
-                  >
-                    <img
-                      src={image}
-                      alt={`${deal.title} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Compact Deal Info Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-5">
-              <div className="space-y-4">
-                {/* Title and Merchant */}
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
-                    {deal.title}
-                  </h1>
-                  <div className="flex items-center text-sm text-gray-600 mb-2">
-                    <BuildingStorefrontIcon className="h-4 w-4 mr-1" />
-                    {deal.merchant}
-                  </div>
-
-                  {/* Submitter Info */}
-                  <SubmitterBadge
-                    submitter={deal.submitter}
-                    submitter_id={deal.submitter_id}
-                    created_at={deal.created_at}
-                    size="sm"
-                    showDate={true}
-                  />
-                </div>
-
-                {/* Price Section - Compact */}
-                <div className="flex items-center space-x-3">
-                  <div className="text-2xl font-bold text-green-600">
-                    {formatPrice(deal.price)}
-                  </div>
-                  {deal.original_price && deal.original_price > deal.price && (
-                    <div className="text-lg text-gray-500 line-through">
-                      {formatPrice(deal.original_price)}
-                    </div>
-                  )}
-                  {deal.discount_amount && (
-                    <div className="text-sm font-medium text-red-500 bg-red-50 px-2 py-1 rounded">
-                      Save {formatPrice(deal.discount_amount)}
-                    </div>
-                  )}
-                </div>
-
-                {/* Coupon Code - Compact */}
-                {deal.coupon_code && (
-                  <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-300 rounded-lg p-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-xs font-medium text-gray-700">Coupon Code</div>
-                        <div className="text-sm font-bold text-green-700">{deal.coupon_code}</div>
-                      </div>
-                      <button
-                        onClick={() => navigator.clipboard.writeText(deal.coupon_code)}
-                        className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
-                      >
-                        Copy
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Quick Stats */}
-                <div className="flex items-center justify-between text-sm text-gray-600 pt-3 border-t border-gray-100">
-                  <div className="flex items-center">
-                    <EyeIcon className="h-4 w-4 mr-1" />
-                    {deal.views_count || 0} views
-                  </div>
-                  <div className="flex items-center">
-                    <CalendarDaysIcon className="h-4 w-4 mr-1" />
-                    {dateAgo(deal.created_at)}
-                  </div>
-                  <div className="flex items-center">
-                    <StarIcon className="h-4 w-4 mr-1 text-yellow-500" />
-                    {deal.is_featured ? 'Featured' : 'Regular'}
-                  </div>
-                </div>
-              </div>
+          {/* Left: Image */}
+          <div className="lg:col-span-2">
+            <div className="sticky top-20">
+              <CompactGallery images={images} title={deal.title} />
             </div>
           </div>
 
-          {/* Right Column - Actions & Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Action Buttons & CTA */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center space-x-3 mb-4">
-                <button
-                  onClick={handleBookmark}
-                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  <BookmarkIcon className={`h-6 w-6 ${isBookmarked ? 'text-red-500 fill-current' : ''}`} />
-                </button>
+          {/* Right: Details */}
+          <div className="lg:col-span-3 space-y-4">
 
-                <button
-                  onClick={handleShare}
-                  className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
-                >
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                  </svg>
-                </button>
-              </div>
+            {/* Title & Meta */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-lg font-bold text-slate-900 leading-tight line-clamp-2">
+                    {deal.title}
+                  </h1>
 
-              {/* CTA Button */}
-              <div className="space-y-3">
-                <a
-                  href={deal.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={clsx(
-                    'w-full inline-flex items-center justify-center px-6 py-4 text-lg font-semibold rounded-xl transition-all',
-                    isExpired
-                      ? 'bg-gray-400 text-white cursor-not-allowed'
-                      : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:scale-105'
-                  )}
-                  disabled={isExpired}
-                >
-                  <ArrowTopRightOnSquareIcon className="h-5 w-5 mr-2" />
-                  {isExpired ? 'Deal Expired' : 'Get This Deal'}
-                </a>
-
-                {/* Trust Indicators */}
-                <div className="flex items-center justify-center space-x-6 text-xs text-gray-600">
-                  <div className="flex items-center">
-                    <ShieldCheckIcon className="h-4 w-4 mr-1 text-green-500" />
-                    Verified Deal
-                  </div>
-                  <div className="flex items-center">
-                    <TruckIcon className="h-4 w-4 mr-1 text-blue-500" />
-                    Free Shipping
-                  </div>
-                  <div className="flex items-center">
-                    <CreditCardIcon className="h-4 w-4 mr-1 text-purple-500" />
-                    Secure Payment
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <Link
+                      to={`/company/${deal.companies?.slug || deal.merchant}`}
+                      className="flex items-center gap-1.5 text-sm text-violet-600 hover:text-violet-700 font-medium"
+                    >
+                      {deal.companies?.logo_url ? (
+                        <img src={deal.companies.logo_url} alt="" className="w-4 h-4 rounded object-contain" />
+                      ) : (
+                        <div className="w-4 h-4 bg-violet-100 rounded flex items-center justify-center text-[10px] font-bold text-violet-700">
+                          {(deal.companies?.name || deal.merchant || 'S').charAt(0)}
+                        </div>
+                      )}
+                      {deal.companies?.name || deal.merchant}
+                      {deal.companies?.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-blue-500" />}
+                    </Link>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-xs text-slate-500 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {dateAgo(deal.created_at)}
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-xs text-slate-500 flex items-center gap-1">
+                      <Eye className="w-3 h-3" />
+                      {deal.views_count || 0}
+                    </span>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Voting Section */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Rate this Deal</h3>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={() => handleVote(1)}
-                    className={clsx(
-                      'flex items-center space-x-2 px-4 py-2 rounded-lg transition-all',
-                      deal?.userVote === 1
-                        ? 'bg-green-100 text-green-700 border-2 border-green-300'
-                        : 'bg-gray-50 text-gray-700 hover:bg-green-50 border border-gray-200'
-                    )}
+                {/* Actions */}
+                <div className="flex items-center gap-1">
+                  <motion.button
+                    onClick={() => user ? bookmarkMutation.mutate(id) : toast.error('Login to save')}
+                    whileTap={{ scale: 0.9 }}
+                    className={`p-2 rounded-lg transition-colors ${isBookmarked ? 'bg-red-50 text-red-500' : 'hover:bg-slate-100 text-slate-400'
+                      }`}
                   >
-                    <HandThumbUpIcon className={`h-5 w-5 ${deal?.userVote === 1 ? 'text-green-700' : ''}`} />
-                    <span>Helpful</span>
-                    <span className="font-semibold">{deal.upvotes || 0}</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleVote(-1)}
-                    className={clsx(
-                      'flex items-center space-x-2 px-4 py-2 rounded-lg transition-all',
-                      deal?.userVote === -1
-                        ? 'bg-red-100 text-red-700 border-2 border-red-300'
-                        : 'bg-gray-50 text-gray-700 hover:bg-red-50 border border-gray-200'
-                    )}
+                    <Heart className={`w-5 h-5 ${isBookmarked ? 'fill-current' : ''}`} />
+                  </motion.button>
+                  <motion.button
+                    onClick={handleShare}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-2 rounded-lg hover:bg-slate-100 text-slate-400"
                   >
-                    <HandThumbDownIcon className={`h-5 w-5 ${deal?.userVote === -1 ? 'text-red-700' : ''}`} />
-                    <span>Not Helpful</span>
-                    <span className="font-semibold">{deal.downvotes || 0}</span>
-                  </button>
-                </div>
-
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-900">
-                    {((deal.upvotes || 0) - (deal.downvotes || 0))}
-                  </div>
-                  <div className="text-sm text-gray-600">Net Score</div>
-                  <div className="mt-2 text-xs text-gray-500">
-                    <div className="flex items-center justify-end space-x-3">
-                      <span className="flex items-center">
-                        <HandThumbUpIcon className="w-3 h-3 mr-1 text-green-600" />
-                        {deal.upvotes || 0}
-                      </span>
-                      <span className="flex items-center">
-                        <HandThumbDownIcon className="w-3 h-3 mr-1 text-red-600" />
-                        {deal.downvotes || 0}
-                      </span>
-                    </div>
-                  </div>
+                    <Share2 className="w-5 h-5" />
+                  </motion.button>
                 </div>
               </div>
             </div>
 
-            {/* Price Tracking & Alerts */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Price Tracking</h3>
-                <button
-                  onClick={() => setShowPriceAlert(true)}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                >
-                  Set Alert
-                </button>
-              </div>
-              <p className="text-gray-600 text-sm">
-                Get notified when the price drops or when this deal is about to expire.
-              </p>
-            </div>
+            {/* Price & CTA */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <PriceBadge deal={deal} />
 
-            {/* Store Information Panel */}
-            <StoreInfoPanel company={deal.company} deal={deal} />
+              {deal.original_price && deal.original_price > deal.price && (
+                <p className="mt-2 text-sm text-emerald-700 font-medium flex items-center gap-1">
+                  <Zap className="w-4 h-4" />
+                  You save {formatPrice(deal.original_price - deal.price)}
+                </p>
+              )}
+
+              {deal.coupon_code && (
+                <div className="mt-3">
+                  <CouponCode code={deal.coupon_code} />
+                </div>
+              )}
+
+              <motion.a
+                href={deal.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => api.trackDealClick(deal.id).catch(() => { })}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                className="mt-4 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all"
+              >
+                Get This Deal
+                <ExternalLink className="w-4 h-4" />
+              </motion.a>
+
+              <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                <VoteButtons deal={deal} onVote={handleVote} />
+              </div>
+            </div>
 
             {/* Description */}
             {deal.description && (
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Description</h3>
-                <p className="text-gray-700 leading-relaxed">{deal.description}</p>
+              <div className="bg-white rounded-xl border border-slate-200 p-4">
+                <h3 className="text-sm font-semibold text-slate-900 mb-2">Details</h3>
+                <p className={`text-sm text-slate-600 leading-relaxed ${!showFullDescription && deal.description.length > 200 ? 'line-clamp-3' : ''
+                  }`}>
+                  {deal.description}
+                </p>
+                {deal.description.length > 200 && (
+                  <button
+                    onClick={() => setShowFullDescription(!showFullDescription)}
+                    className="mt-2 flex items-center gap-1 text-violet-600 hover:text-violet-700 text-xs font-medium"
+                  >
+                    {showFullDescription ? (
+                      <>Show less <ChevronUp className="w-3 h-3" /></>
+                    ) : (
+                      <>Read more <ChevronDown className="w-3 h-3" /></>
+                    )}
+                  </button>
+                )}
+
+                {deal.tags && deal.tags.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {deal.tags.slice(0, 6).map((tag, i) => (
+                      <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full">
+                        #{tag.name || tag.slug || tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
+            {/* Trust & Merchant */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <TrustBadges />
+
+              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                <Link
+                  to={`/company/${deal.companies?.slug || deal.merchant}`}
+                  className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-violet-600"
+                >
+                  {deal.companies?.logo_url ? (
+                    <img src={deal.companies.logo_url} alt="" className="w-6 h-6 rounded object-contain border border-slate-200" />
+                  ) : (
+                    <div className="w-6 h-6 bg-violet-100 rounded flex items-center justify-center text-xs font-bold text-violet-700">
+                      {(deal.companies?.name || deal.merchant || 'S').charAt(0)}
+                    </div>
+                  )}
+                  <span>{deal.companies?.name || deal.merchant}</span>
+                  {deal.companies?.is_verified && <BadgeCheck className="w-4 h-4 text-blue-500" />}
+                </Link>
+                <a
+                  href={deal.companies?.website_url || deal.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1"
+                >
+                  Visit Store <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Price Alert Modal */}
-      <PriceAlert
-        dealId={deal.id}
-        currentPrice={deal.price}
-        isOpen={showPriceAlert}
-        onClose={() => setShowPriceAlert(false)}
-      />
+        {/* Reviews */}
+        {deal?.id && (
+          <div className="mt-6">
+            <ReviewsAndRatings dealId={String(deal.id)} />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

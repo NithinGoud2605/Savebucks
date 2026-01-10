@@ -1,629 +1,447 @@
-import React, { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import React, { useState } from 'react'
+import { useParams, Link, Navigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  User,
+  Settings,
+  Calendar,
+  MapPin,
+  Link as LinkIcon,
+  Star,
+  MessageCircle,
+  TrendingUp,
+  Tag,
+  Heart,
+  Trophy,
+  Users,
+  ChevronRight,
+  ExternalLink,
+  Clock,
+  Award,
+  Flame,
+  Share2,
+  MoreHorizontal,
+  Edit3,
+  BadgeCheck
+} from 'lucide-react'
 import { Container } from '../components/Layout/Container'
-import { NewDealCard } from '../components/Deal/NewDealCard'
-import { ActivityFeed } from '../components/User/ActivityFeed'
-import { FollowButton } from '../components/User/FollowButton'
-import { MessageButton } from '../components/User/MessageButton'
-import { UserStats } from '../components/User/UserStats'
-import { ReputationBadges } from '../components/User/ReputationBadges'
-import { Skeleton } from '../components/ui/Skeleton'
-import { api } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
-import { setPageMeta } from '../lib/head'
-import { dateAgo, formatCompactNumber, pluralize } from '../lib/format'
-import { clsx } from 'clsx'
+import { api } from '../lib/api'
+import { Skeleton } from '../components/ui/Skeleton'
+import { formatCompactNumber, dateAgo } from '../lib/format'
 
-export default function Profile() {
+// Tab items
+const TABS = [
+  { id: 'overview', label: 'Overview', icon: User },
+  { id: 'deals', label: 'Deals', icon: Tag },
+  { id: 'activity', label: 'Activity', icon: TrendingUp },
+  { id: 'badges', label: 'Badges', icon: Award },
+]
+
+// Stats card
+const StatCard = ({ icon: Icon, value, label, color }) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.95 }}
+    animate={{ opacity: 1, scale: 1 }}
+    className="bg-white rounded-xl border border-slate-200 p-4 text-center hover:shadow-md transition-shadow"
+  >
+    <div className={`w-10 h-10 ${color} rounded-xl flex items-center justify-center mx-auto mb-2`}>
+      <Icon className="w-5 h-5 text-white" />
+    </div>
+    <div className="text-xl font-bold text-slate-900">{formatCompactNumber(value)}</div>
+    <div className="text-xs text-slate-500">{label}</div>
+  </motion.div>
+)
+
+// Deal card compact
+const DealCardCompact = ({ deal }) => (
+  <Link
+    to={`/deal/${deal.id}`}
+    className="group flex gap-3 p-3 bg-white rounded-xl border border-slate-200 hover:shadow-md hover:border-violet-200 transition-all"
+  >
+    <div className="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0">
+      {deal.image_url || deal.featured_image ? (
+        <img
+          src={deal.featured_image || deal.image_url}
+          alt={deal.title}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <Tag className="w-6 h-6 text-slate-300" />
+        </div>
+      )}
+    </div>
+    <div className="flex-1 min-w-0">
+      <h4 className="font-medium text-slate-900 text-sm line-clamp-1 group-hover:text-violet-700 transition-colors">
+        {deal.title}
+      </h4>
+      <p className="text-xs text-slate-500 mt-0.5">{dateAgo(deal.created_at)}</p>
+      <div className="flex items-center gap-2 mt-1">
+        <span className="text-emerald-600 font-semibold text-sm">${deal.price}</span>
+        <span className="flex items-center gap-0.5 text-xs text-slate-400">
+          <TrendingUp className="w-3 h-3" />
+          {deal.upvotes || 0}
+        </span>
+      </div>
+    </div>
+    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-violet-500 self-center transition-colors" />
+  </Link>
+)
+
+// Activity item
+const ActivityItem = ({ activity }) => {
+  const icons = {
+    deal: Tag,
+    comment: MessageCircle,
+    vote: TrendingUp,
+    follow: Users,
+  }
+  const Icon = icons[activity.type] || Star
+
+  return (
+    <div className="flex items-start gap-3 py-3">
+      <div className="w-8 h-8 bg-violet-100 rounded-full flex items-center justify-center flex-shrink-0">
+        <Icon className="w-4 h-4 text-violet-600" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-slate-700">{activity.description}</p>
+        <span className="text-xs text-slate-400">{dateAgo(activity.created_at)}</span>
+      </div>
+    </div>
+  )
+}
+
+// Badge component
+const BadgeCard = ({ badge }) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    className="text-center p-4"
+  >
+    <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+      <Trophy className="w-8 h-8 text-white" />
+    </div>
+    <h4 className="font-medium text-slate-900 text-sm">{badge.name}</h4>
+    <p className="text-xs text-slate-500 mt-0.5">{badge.description}</p>
+  </motion.div>
+)
+
+// Main Profile Component
+const Profile = () => {
   const { handle } = useParams()
+  const { user: currentUser } = useAuth()
   const [activeTab, setActiveTab] = useState('overview')
-  const [isOwnProfile, setIsOwnProfile] = useState(false)
-  const [dealStatusFilter, setDealStatusFilter] = useState('all')
-  const { user: currentUser } = useAuth() // Use proper auth system
 
-  // Fetch user profile data
+  // Fetch profile
   const { data: profile, isLoading, error } = useQuery({
-    queryKey: ['user-profile', handle],
-    queryFn: () => {
-      if (!handle) {
-        throw new Error('No user handle provided')
-      }
-      return api.getUserProfile(handle)
-    },
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    enabled: !!handle, // Only run query if handle exists
+    queryKey: ['profile', handle],
+    queryFn: () => api.getUser(handle),
+    enabled: !!handle
   })
 
-  // Fetch user deals with status filter
-  const { data: userDeals, isLoading: dealsLoading } = useQuery({
-    queryKey: ['user-deals', handle, dealStatusFilter],
-    queryFn: () => {
-      if (!handle) {
-        throw new Error('No user handle provided')
-      }
-      return api.getUserDeals(handle, dealStatusFilter)
-    },
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    enabled: !!handle && isOwnProfile, // Only run query if handle exists and viewing own profile
+  // Fetch user's deals
+  const { data: deals } = useQuery({
+    queryKey: ['user-deals', handle],
+    queryFn: () => api.getUserDeals(handle),
+    enabled: !!handle && activeTab === 'deals'
   })
 
-  // Check if viewing own profile
-  useEffect(() => {
-    if (profile && currentUser) {
-      setIsOwnProfile(profile.handle === currentUser || profile.id === currentUser)
-    }
-  }, [profile, currentUser])
-
-  // Set page meta
-  useEffect(() => {
-    if (profile) {
-      setPageMeta({
-        title: `${profile.handle} (@${profile.handle}) - SaveBucks Profile`,
-        description: `View ${profile.handle}'s deals, activity, and reputation on SaveBucks. ${profile.bio || 'Active community member sharing great deals.'}`,
-        image: profile.avatar_url,
-        keywords: `${profile.handle}, user profile, deals, savings, community`
-      })
-    }
-  }, [profile])
-
-  if (!handle) {
-    return (
-      <Container className="py-8">
-        <div className="text-center max-w-lg mx-auto">
-          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">No User Specified</h1>
-          <p className="text-gray-600 mb-8">
-            Please provide a valid username to view their profile.
-          </p>
-          <Link to="/" className="btn-primary">Browse Deals</Link>
-        </div>
-      </Container>
-    )
-  }
-
-  if (error) {
-    return (
-      <Container className="py-8">
-        <div className="text-center max-w-lg mx-auto">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">User Not Found</h1>
-          <p className="text-gray-600 mb-8">
-            This user doesn't exist or their profile is private.
-          </p>
-          <Link to="/" className="btn-primary">Browse Deals</Link>
-        </div>
-      </Container>
-    )
-  }
+  const isOwnProfile = currentUser?.handle === handle
 
   if (isLoading) {
     return (
-      <Container className="py-8">
-        <div className="max-w-6xl mx-auto space-y-8">
-          {/* Header Skeleton */}
-          <div className="card p-8">
-            <div className="flex items-start space-x-6">
+      <div className="min-h-screen bg-slate-50 pt-16">
+        <Container>
+          <div className="max-w-4xl mx-auto py-8">
+            <div className="flex gap-6 items-start mb-8">
               <Skeleton className="w-24 h-24 rounded-full" />
-              <div className="flex-1 space-y-4">
-                <Skeleton className="h-8 w-1/3" />
-                <div className="flex space-x-6">
-                  <Skeleton className="h-6 w-20" />
-                  <Skeleton className="h-6 w-20" />
-                  <Skeleton className="h-6 w-24" />
-                </div>
-                <div className="flex space-x-2">
-                  <Skeleton className="h-6 w-16 rounded-full" />
-                  <Skeleton className="h-6 w-20 rounded-full" />
-                  <Skeleton className="h-6 w-18 rounded-full" />
-                </div>
+              <div className="flex-1 space-y-3">
+                <Skeleton className="h-7 w-48" />
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-64" />
               </div>
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-            <div className="xl:col-span-3 space-y-6">
-              <Skeleton className="h-64" />
-            </div>
-            <div className="space-y-4">
-              <Skeleton className="h-32" />
-              <Skeleton className="h-48" />
+            <div className="grid grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-24 rounded-xl" />
+              ))}
             </div>
           </div>
-        </div>
-      </Container>
+        </Container>
+      </div>
     )
   }
 
-  const tabs = [
-    { key: 'overview', label: 'Overview', icon: '📊', count: null },
-    { key: 'deals', label: 'Deals', icon: '🎯', count: profile?.stats?.deals_posted },
-    { key: 'activity', label: 'Activity', icon: '📈', count: null },
-    { key: 'stats', label: 'Statistics', icon: '📋', count: null },
-    { key: 'badges', label: 'Badges', icon: '🏆', count: profile?.badges?.filter(b => b.earned_at).length },
-  ]
+  if (error || !profile) {
+    return (
+      <div className="min-h-screen bg-slate-50 pt-16">
+        <Container>
+          <div className="max-w-4xl mx-auto py-16 text-center">
+            <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="w-10 h-10 text-slate-400" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">User Not Found</h1>
+            <p className="text-slate-600 mb-6">This profile doesn't exist or was removed.</p>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
+            >
+              Go Home
+            </Link>
+          </div>
+        </Container>
+      </div>
+    )
+  }
+
+  // Overview content
+  const OverviewContent = () => (
+    <div className="space-y-6">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard icon={Tag} value={profile.deals_count || 0} label="Deals Posted" color="bg-gradient-to-br from-violet-500 to-purple-600" />
+        <StatCard icon={MessageCircle} value={profile.comments_count || 0} label="Comments" color="bg-gradient-to-br from-blue-500 to-cyan-600" />
+        <StatCard icon={Star} value={profile.karma || 0} label="Karma" color="bg-gradient-to-br from-amber-500 to-orange-600" />
+        <StatCard icon={Users} value={profile.followers_count || 0} label="Followers" color="bg-gradient-to-br from-emerald-500 to-teal-600" />
+      </div>
+
+      {/* Recent Deals */}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-900">Recent Deals</h3>
+          <button
+            onClick={() => setActiveTab('deals')}
+            className="text-sm text-violet-600 hover:text-violet-700 font-medium"
+          >
+            View All
+          </button>
+        </div>
+        <div className="p-4 space-y-3">
+          {profile.recent_deals && profile.recent_deals.length > 0 ? (
+            profile.recent_deals.slice(0, 3).map((deal) => (
+              <DealCardCompact key={deal.id} deal={deal} />
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <Tag className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+              <p className="text-slate-500 text-sm">No deals posted yet</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+
+  // Deals content
+  const DealsContent = () => (
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-100">
+        <h3 className="font-semibold text-slate-900">All Deals ({profile.deals_count || 0})</h3>
+      </div>
+      <div className="p-4 space-y-3">
+        {deals && deals.length > 0 ? (
+          deals.map((deal) => (
+            <DealCardCompact key={deal.id} deal={deal} />
+          ))
+        ) : (
+          <div className="text-center py-12">
+            <Tag className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-500">No deals posted yet</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  // Activity content
+  const ActivityContent = () => (
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-100">
+        <h3 className="font-semibold text-slate-900">Recent Activity</h3>
+      </div>
+      <div className="px-5 divide-y divide-slate-100">
+        {profile.recent_activity && profile.recent_activity.length > 0 ? (
+          profile.recent_activity.map((activity, i) => (
+            <ActivityItem key={i} activity={activity} />
+          ))
+        ) : (
+          <div className="text-center py-12">
+            <TrendingUp className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-500">No recent activity</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  // Badges content
+  const BadgesContent = () => (
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-100">
+        <h3 className="font-semibold text-slate-900">Earned Badges</h3>
+      </div>
+      <div className="p-4">
+        {profile.badges && profile.badges.length > 0 ? (
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+            {profile.badges.map((badge, i) => (
+              <BadgeCard key={i} badge={badge} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Award className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-500">No badges earned yet</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview': return <OverviewContent />
+      case 'deals': return <DealsContent />
+      case 'activity': return <ActivityContent />
+      case 'badges': return <BadgesContent />
+      default: return <OverviewContent />
+    }
+  }
 
   return (
-    <Container className="py-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Enhanced Profile Header */}
-        <div className="card p-8 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-start space-y-6 lg:space-y-0 lg:space-x-8">
-            {/* Avatar and Basic Info */}
-            <div className="flex items-start space-x-6">
-              <div className="relative">
-                {profile.avatar_url ? (
-                  <img
-                    src={profile.avatar_url}
-                    alt={`${profile.handle}'s avatar`}
-                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
-                  />
-                ) : (
-                  <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                    {profile.handle[0].toUpperCase()}
-                  </div>
-                )}
+    <div className="min-h-screen bg-slate-50 pt-14">
+      <Container>
+        <div className="max-w-4xl mx-auto py-8">
+          {/* Profile Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col md:flex-row gap-6 items-start md:items-center mb-8"
+          >
+            {/* Avatar */}
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 p-1">
+                <div className="w-full h-full rounded-full bg-white overflow-hidden">
+                  {profile.avatar_url ? (
+                    <img src={profile.avatar_url} alt={profile.display_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center">
+                      <span className="text-3xl font-bold text-violet-600">
+                        {(profile.display_name || profile.handle || 'U').charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {profile.is_verified && (
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center border-4 border-slate-50">
+                  <BadgeCheck className="w-4 h-4 text-white" />
+                </div>
+              )}
+            </div>
 
-                {/* Online status indicator */}
-                {profile.is_online && (
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
+            {/* Info */}
+            <div className="flex-1">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-2xl font-bold text-slate-900">
+                  {profile.display_name || profile.handle}
+                </h1>
+                {profile.role === 'admin' && (
+                  <span className="px-2.5 py-1 bg-violet-100 text-violet-700 text-xs font-semibold rounded-full">
+                    Admin
+                  </span>
                 )}
               </div>
+              <p className="text-slate-500 mt-1">@{profile.handle}</p>
 
-              <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-2">
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    {profile.display_name || profile.handle}
-                  </h1>
-                  {profile.is_verified && (
-                    <svg className="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20" title="Verified User">
-                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  )}
+              {profile.bio && (
+                <p className="text-slate-700 mt-3 max-w-lg">{profile.bio}</p>
+              )}
+
+              <div className="flex items-center gap-4 mt-4 flex-wrap text-sm text-slate-500">
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4" />
+                  Joined {dateAgo(profile.created_at)}
                 </div>
-
-                <div className="text-gray-600 mb-1">
-                  @{profile.handle}
-                </div>
-
-                {profile.bio && (
-                  <p className="text-gray-700 mb-4 max-w-2xl">
-                    {profile.bio}
-                  </p>
+                {profile.location && (
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4" />
+                    {profile.location}
+                  </div>
                 )}
-
-                {/* Quick Stats */}
-                <div className="flex flex-wrap items-center gap-6 text-gray-600 mb-4">
-                  <div className="flex items-center space-x-1">
-                    <span className="text-2xl font-bold text-green-600">
-                      {formatCompactNumber(profile.karma || 0)}
-                    </span>
-                    <span className="text-sm">karma</span>
-                  </div>
-
-                  <div className="flex items-center space-x-1">
-                    <span className="text-lg font-semibold text-blue-600">
-                      {formatCompactNumber(profile.stats?.deals_posted || 0)}
-                    </span>
-                    <span className="text-sm">{pluralize(profile.stats?.deals_posted || 0, 'deal')}</span>
-                  </div>
-
-                  <div className="flex items-center space-x-1">
-                    <span className="text-lg font-semibold text-purple-600">
-                      {formatCompactNumber(profile.stats?.comments_made || 0)}
-                    </span>
-                    <span className="text-sm">{pluralize(profile.stats?.comments_made || 0, 'comment')}</span>
-                  </div>
-
-                  {profile.stats?.followers && (
-                    <div className="flex items-center space-x-1">
-                      <span className="text-lg font-semibold text-indigo-600">
-                        {formatCompactNumber(profile.stats.followers)}
-                      </span>
-                      <span className="text-sm">{pluralize(profile.stats.followers, 'follower')}</span>
-                    </div>
-                  )}
-
-                  <div className="text-sm">
-                    <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Member since {dateAgo(profile.created_at)}
-                  </div>
-
-                  {profile.location && (
-                    <div className="text-sm">
-                      <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      {profile.location}
-                    </div>
-                  )}
-
-                  {profile.website && (
-                    <div className="text-sm">
-                      <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                      </svg>
-                      <a
-                        href={profile.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700"
-                      >
-                        {profile.website.replace(/^https?:\/\//, '')}
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                {/* Compact Reputation Display */}
-                <ReputationBadges userId={profile.handle} variant="compact" limit={5} />
+                {profile.website && (
+                  <a href={profile.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-violet-600 hover:text-violet-700">
+                    <LinkIcon className="w-4 h-4" />
+                    Website
+                  </a>
+                )}
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col space-y-3 lg:min-w-[200px]">
-              {!isOwnProfile && (
+            <div className="flex gap-2">
+              {isOwnProfile ? (
+                <Link
+                  to="/settings"
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  Settings
+                </Link>
+              ) : (
                 <>
-                  <FollowButton
-                    userId={profile.handle}
-                    size="lg"
-                    showFollowerCount={true}
-                    className="w-full"
-                  />
-                  <MessageButton
-                    userId={profile.id}
-                    userName={profile.handle}
-                    size="lg"
-                    variant="outline"
-                    className="w-full"
-                  />
+                  <button className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium transition-colors">
+                    <Users className="w-4 h-4" />
+                    Follow
+                  </button>
+                  <button className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors">
+                    <Share2 className="w-5 h-5" />
+                  </button>
                 </>
               )}
-
-              {isOwnProfile && (
-                <Link
-                  to="/settings/profile"
-                  className="btn-secondary text-center"
-                >
-                  <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Edit Profile
-                </Link>
-              )}
-
-              <button className="btn-ghost text-sm">
-                <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                </svg>
-                Share Profile
-              </button>
             </div>
-          </div>
-        </div>
+          </motion.div>
 
-        {/* Navigation Tabs */}
-        <div className="card p-0 mb-8">
-          <nav className="flex border-b border-gray-200 overflow-x-auto">
-            {tabs.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={clsx(
-                  'flex items-center space-x-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
-                  activeTab === tab.key
-                    ? 'border-blue-500 text-blue-600 bg-blue-50'
-                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
-                )}
-              >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
-                {tab.count > 0 && (
-                  <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">
-                    {formatCompactNumber(tab.count)}
-                  </span>
-                )}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Tab Content */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-          {/* Main Content */}
-          <div className="xl:col-span-3">
-            {activeTab === 'overview' && (
-              <div className="space-y-8">
-                {/* Recent Activity Preview */}
-                <div>
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      Recent Activity
-                    </h2>
-                    <button
-                      onClick={() => setActiveTab('activity')}
-                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                    >
-                      View All Activity →
-                    </button>
-                  </div>
-                  <ActivityFeed userId={profile.handle} limit={5} showControls={false} />
-                </div>
-
-                {/* Recent Deals */}
-                {profile.recent_deals && profile.recent_deals.length > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-2xl font-bold text-gray-900">
-                        Recent Deals
-                      </h2>
-                      <button
-                        onClick={() => setActiveTab('deals')}
-                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                      >
-                        View All Deals →
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {profile.recent_deals.slice(0, 4).map((deal, index) => (
-                        <NewDealCard key={deal.id} deal={deal} index={index} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Statistics Preview */}
-                <UserStats userId={profile.handle} variant="compact" />
-              </div>
-            )}
-
-            {activeTab === 'deals' && (
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    All Deals ({formatCompactNumber(profile.stats?.deals_posted || 0)})
-                  </h2>
-                  {isOwnProfile && (
-                    <Link to="/post" className="btn-primary">
-                      Post New Deal
-                    </Link>
-                  )}
-                </div>
-                {/* Deal Status Tabs */}
-                {isOwnProfile && (
-                  <div className="flex space-x-1 bg-gray-50 p-1 rounded-lg mb-6">
-                    <button
-                      onClick={() => setDealStatusFilter('all')}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${dealStatusFilter === 'all'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => setDealStatusFilter('pending')}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${dealStatusFilter === 'pending'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                    >
-                      Pending Review
-                    </button>
-                    <button
-                      onClick={() => setDealStatusFilter('approved')}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${dealStatusFilter === 'approved'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                    >
-                      Approved
-                    </button>
-                    <button
-                      onClick={() => setDealStatusFilter('rejected')}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${dealStatusFilter === 'rejected'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                    >
-                      Rejected
-                    </button>
-                  </div>
-                )}
-
-                {/* Would implement deal filtering and pagination here */}
-                {/* Loading State */}
-                {dealsLoading && (
-                  <div className="space-y-4">
-                    {[...Array(4)].map((_, i) => (
-                      <div key={i} className="animate-pulse">
-                        <div className="h-32 bg-gray-200 rounded-lg"></div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Deals Grid */}
-                {!dealsLoading && userDeals && userDeals.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {userDeals.map((deal, index) => (
-                      <NewDealCard key={deal.id} deal={deal} index={index} />
-                    ))}
-                  </div>
-                )}
-
-                {/* Fallback to profile deals if no filtered deals */}
-                {!dealsLoading && (!userDeals || userDeals.length === 0) && (profile.deals || []).length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {(profile.deals || []).map((deal, index) => (
-                      <NewDealCard key={deal.id} deal={deal} index={index} />
-                    ))}
-                  </div>
-                )}
-                {/* TODO: Update this to handle filtered deals properly */}
-                {(!profile.deals || profile.deals.length === 0) && (
-                  <div className="card p-12 text-center">
-                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 0a.5.5 0 11-1 0 .5.5 0 011 0z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No Deals Posted Yet
-                    </h3>
-                    <p className="text-gray-500 mb-6">
-                      {isOwnProfile
-                        ? "You haven't posted any deals yet. Share your first deal with the community!"
-                        : `${profile.handle} hasn't posted any deals yet.`}
-                    </p>
-                    {isOwnProfile && (
-                      <Link to="/post" className="btn-primary">
-                        Post Your First Deal
-                      </Link>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'activity' && (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  Activity Feed
-                </h2>
-                <ActivityFeed userId={profile.handle} />
-              </div>
-            )}
-
-            {activeTab === 'stats' && (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  Detailed Statistics
-                </h2>
-                <UserStats userId={profile.handle} />
-              </div>
-            )}
-
-            {activeTab === 'badges' && (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  Badges & Achievements
-                </h2>
-                <ReputationBadges userId={profile.handle} />
-              </div>
-            )}
+          {/* Tab Navigation */}
+          <div className="bg-white rounded-xl border border-slate-200 p-1.5 mb-6">
+            <nav className="flex gap-1">
+              {TABS.map((tab) => {
+                const Icon = tab.icon
+                const isActive = activeTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${isActive
+                      ? 'bg-violet-100 text-violet-700'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </button>
+                )
+              })}
+            </nav>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Stats Card */}
-            <UserStats userId={profile.handle} variant="compact" />
-
-            {/* Profile Details */}
-            <div className="card p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Profile Details</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Username</span>
-                  <span className="font-medium">@{profile.handle}</span>
-                </div>
-                {profile.display_name && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Display Name</span>
-                    <span className="font-medium">{profile.display_name}</span>
-                  </div>
-                )}
-                {profile.first_name && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">First Name</span>
-                    <span className="font-medium">{profile.first_name}</span>
-                  </div>
-                )}
-                {profile.last_name && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Last Name</span>
-                    <span className="font-medium">{profile.last_name}</span>
-                  </div>
-                )}
-                {profile.location && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Location</span>
-                    <span className="font-medium">{profile.location}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Member Since</span>
-                  <span className="font-medium">{dateAgo(profile.created_at)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Karma</span>
-                  <span className="font-medium">{formatCompactNumber(profile.karma || 0)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Top Badges */}
-            <ReputationBadges userId={profile.handle} variant="compact" limit={3} />
-
-            {/* Social Connections */}
-            <div className="card p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">
-                Social
-              </h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Followers</span>
-                  <span className="font-medium">{formatCompactNumber(profile.stats?.followers || 0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Following</span>
-                  <span className="font-medium">{formatCompactNumber(profile.stats?.following || 0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Profile Views</span>
-                  <span className="font-medium">{formatCompactNumber(profile.stats?.profile_views || 0)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Contact */}
-            {(profile.website || profile.social_links) && (
-              <div className="card p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">
-                  Links
-                </h3>
-                <div className="space-y-3">
-                  {profile.website && (
-                    <a
-                      href={profile.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 text-sm"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                      </svg>
-                      <span>Website</span>
-                    </a>
-                  )}
-                  {/* Add more social links as needed */}
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Tab Content */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {renderTabContent()}
+            </motion.div>
+          </AnimatePresence>
         </div>
-      </div>
-    </Container>
+      </Container>
+    </div>
   )
 }
+
+export default Profile
