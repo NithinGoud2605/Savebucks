@@ -141,7 +141,7 @@ const AdminPage = () => {
                   Manage deals, coupons, users, and analytics
                 </p>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 <Cog6ToothIcon className="w-6 h-6 text-secondary-400" />
                 <span className="text-sm text-secondary-600">
@@ -156,24 +156,30 @@ const AdminPage = () => {
       {/* Navigation Tabs */}
       <div className="bg-white border-b border-primary-200">
         <Container>
-          <div className="flex space-x-4 sm:space-x-8 overflow-x-auto pb-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`
-                  flex items-center space-x-1 sm:space-x-2 py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0
-                  ${activeTab === tab.id
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
-                  }
-                `}
-              >
-                <tab.icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden sm:inline">{tab.name}</span>
-                <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
-              </button>
-            ))}
+          <div className="relative">
+            {/* Scroll fade indicators */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none z-10 sm:hidden" />
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10 sm:hidden" />
+
+            <div className="flex space-x-2 sm:space-x-4 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`
+                    flex items-center space-x-1 sm:space-x-2 py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 rounded-t-lg transition-all
+                    ${activeTab === tab.id
+                      ? 'border-primary-500 text-primary-600 bg-primary-50'
+                      : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:bg-secondary-50'
+                    }
+                  `}
+                >
+                  <tab.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">{tab.name}</span>
+                  <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </Container>
       </div>

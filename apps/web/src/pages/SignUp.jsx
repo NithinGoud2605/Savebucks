@@ -100,10 +100,10 @@ const AnimatedInput = ({
           onBlur={() => setIsFocused(false)}
           autoComplete={autoComplete}
           className={`w-full pl-12 ${showPasswordToggle ? 'pr-12' : 'pr-4'} py-3.5 border-2 rounded-xl bg-white text-slate-900 placeholder-slate-400 transition-all duration-200 outline-none ${error
-              ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-50'
-              : isFocused
-                ? 'border-violet-400 ring-4 ring-violet-50'
-                : 'border-slate-200 hover:border-slate-300'
+            ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-50'
+            : isFocused
+              ? 'border-violet-400 ring-4 ring-violet-50'
+              : 'border-slate-200 hover:border-slate-300'
             }`}
           placeholder={placeholder}
         />
@@ -173,8 +173,8 @@ const PasswordStrength = ({ password }) => {
           ))}
         </div>
         <span className={`text-xs font-medium ${strength === 4 ? 'text-emerald-600' :
-            strength === 3 ? 'text-yellow-600' :
-              strength === 2 ? 'text-orange-600' : 'text-red-600'
+          strength === 3 ? 'text-yellow-600' :
+            strength === 2 ? 'text-orange-600' : 'text-red-600'
           }`}>
           {strengthLabels[strength - 1] || 'Too weak'}
         </span>
@@ -345,7 +345,7 @@ export default function SignUp() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/30 to-teal-50/50 flex overflow-hidden">
+    <div className="min-h-screen bg-white flex overflow-hidden">
       {/* Floating background shapes */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <FloatingShape delay={0} x={-100} y={-100} size={400} color="bg-emerald-300" />
@@ -486,10 +486,10 @@ export default function SignUp() {
                         className="sr-only"
                       />
                       <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${agreedToTerms
-                          ? 'bg-emerald-600 border-emerald-600'
-                          : errors.terms
-                            ? 'border-red-300'
-                            : 'border-slate-300 group-hover:border-emerald-400'
+                        ? 'bg-emerald-600 border-emerald-600'
+                        : errors.terms
+                          ? 'border-red-300'
+                          : 'border-slate-300 group-hover:border-emerald-400'
                         }`}>
                         {agreedToTerms && <Check className="w-3.5 h-3.5 text-white" />}
                       </div>

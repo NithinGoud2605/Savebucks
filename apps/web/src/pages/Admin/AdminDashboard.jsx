@@ -141,28 +141,45 @@ const AdminDashboard = () => {
           <div className="p-6">
             {dashboardData?.recentActivity?.deals?.length > 0 ? (
               <div className="space-y-4">
-                {dashboardData.recentActivity.deals.map((deal) => (
-                  <div key={deal.id} className="flex items-center justify-between py-3 border-b border-secondary-100 last:border-0">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-secondary-900 truncate">{deal.title}</p>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <span className="text-sm text-secondary-500">
-                          {deal.companies?.name || 'Unknown Company'}
-                        </span>
-                        <span className="text-secondary-300">•</span>
-                        <span className="text-sm text-secondary-500">
-                          by {deal.profiles?.handle || 'Unknown User'}
+                {dashboardData.recentActivity.deals.map((deal) => {
+                  const isIngested = !deal.submitter_id || deal.source
+                  const companyName = deal.companies?.name || deal.merchant || 'Unknown'
+                  const submitterName = isIngested ? 'Official' : (deal.profiles?.handle || 'Unknown')
+
+                  return (
+                    <div key={deal.id} className="flex items-center justify-between py-3 border-b border-secondary-100 last:border-0">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-secondary-900 truncate">{deal.title}</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="text-sm text-secondary-500">
+                            {companyName}
+                          </span>
+                          <span className="text-secondary-300">•</span>
+                          <span className={`text-sm ${isIngested ? 'text-blue-600 font-medium' : 'text-secondary-500'}`}>
+                            {isIngested && '🤖 '}{submitterName}
+                          </span>
+                          {deal.quality_score !== undefined && (
+                            <>
+                              <span className="text-secondary-300">•</span>
+                              <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${deal.quality_score >= 0.7 ? 'bg-green-100 text-green-700' :
+                                deal.quality_score >= 0.4 ? 'bg-yellow-100 text-yellow-700' :
+                                  'bg-red-100 text-red-700'
+                                }`}>
+                                QS: {Math.round(deal.quality_score * 100)}%
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="ml-4 flex flex-col items-end">
+                        <StatusBadge status={deal.status} />
+                        <span className="text-xs text-secondary-500 mt-1">
+                          {new Date(deal.created_at).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
-                    <div className="ml-4 flex flex-col items-end">
-                      <StatusBadge status={deal.status} />
-                      <span className="text-xs text-secondary-500 mt-1">
-                        {new Date(deal.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             ) : (
               <p className="text-secondary-500 text-center py-8">No recent deals</p>
@@ -178,28 +195,34 @@ const AdminDashboard = () => {
           <div className="p-6">
             {dashboardData?.recentActivity?.coupons?.length > 0 ? (
               <div className="space-y-4">
-                {dashboardData.recentActivity.coupons.map((coupon) => (
-                  <div key={coupon.id} className="flex items-center justify-between py-3 border-b border-secondary-100 last:border-0">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-secondary-900 truncate">{coupon.title}</p>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <span className="text-sm text-secondary-500">
-                          {coupon.companies?.name || 'Unknown Company'}
-                        </span>
-                        <span className="text-secondary-300">•</span>
-                        <span className="text-sm text-secondary-500">
-                          by {coupon.profiles?.handle || 'Unknown User'}
+                {dashboardData.recentActivity.coupons.map((coupon) => {
+                  const isIngested = !coupon.submitter_id || coupon.source
+                  const companyName = coupon.companies?.name || coupon.merchant || 'Unknown'
+                  const submitterName = isIngested ? 'Official' : (coupon.profiles?.handle || 'Unknown')
+
+                  return (
+                    <div key={coupon.id} className="flex items-center justify-between py-3 border-b border-secondary-100 last:border-0">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-secondary-900 truncate">{coupon.title}</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="text-sm text-secondary-500">
+                            {companyName}
+                          </span>
+                          <span className="text-secondary-300">•</span>
+                          <span className={`text-sm ${isIngested ? 'text-blue-600 font-medium' : 'text-secondary-500'}`}>
+                            {isIngested && '🤖 '}{submitterName}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="ml-4 flex flex-col items-end">
+                        <StatusBadge status={coupon.status} />
+                        <span className="text-xs text-secondary-500 mt-1">
+                          {new Date(coupon.created_at).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
-                    <div className="ml-4 flex flex-col items-end">
-                      <StatusBadge status={coupon.status} />
-                      <span className="text-xs text-secondary-500 mt-1">
-                        {new Date(coupon.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             ) : (
               <p className="text-secondary-500 text-center py-8">No recent coupons</p>

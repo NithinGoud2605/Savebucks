@@ -94,10 +94,10 @@ const AnimatedInput = ({
           onBlur={() => setIsFocused(false)}
           autoComplete={autoComplete}
           className={`w-full pl-12 pr-${showPasswordToggle ? '12' : '4'} py-3.5 border-2 rounded-xl bg-white text-slate-900 placeholder-slate-400 transition-all duration-200 outline-none ${error
-              ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-50'
-              : isFocused
-                ? 'border-violet-400 ring-4 ring-violet-50'
-                : 'border-slate-200 hover:border-slate-300'
+            ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-50'
+            : isFocused
+              ? 'border-violet-400 ring-4 ring-violet-50'
+              : 'border-slate-200 hover:border-slate-300'
             }`}
           placeholder={placeholder}
         />
@@ -263,7 +263,7 @@ export default function SignIn() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-purple-50/50 flex overflow-hidden">
+    <div className="min-h-screen bg-white flex overflow-hidden">
       {/* Floating background shapes */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <FloatingShape delay={0} x={-100} y={-100} size={400} color="bg-violet-300" />
@@ -405,8 +405,8 @@ export default function SignIn() {
                         className="sr-only"
                       />
                       <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${rememberMe
-                          ? 'bg-violet-600 border-violet-600'
-                          : 'border-slate-300 group-hover:border-violet-400'
+                        ? 'bg-violet-600 border-violet-600'
+                        : 'border-slate-300 group-hover:border-violet-400'
                         }`}>
                         {rememberMe && <CheckCircle className="w-3.5 h-3.5 text-white" />}
                       </div>

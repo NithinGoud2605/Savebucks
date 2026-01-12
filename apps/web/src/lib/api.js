@@ -702,7 +702,7 @@ export const api = {
   },
 
   updateUserRole: (userId, role) => apiRequest(`/api/admin/users/${userId}/role`, {
-    method: 'POST',
+    method: 'PUT',
     body: { role },
   }),
 

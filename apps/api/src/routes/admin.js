@@ -1,4 +1,4 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { makeAdminClient } from '../lib/supa.js';
 import { requireAdmin } from '../middleware/requireAdmin.js';
 import multer from 'multer';
@@ -61,7 +61,7 @@ r.get('/dashboard', requireAdmin, async (req, res) => {
     const { data: recentDeals } = await supaAdmin
       .from('deals')
       .select(`
-        id, title, status, created_at,
+        id, title, status, created_at, merchant, source, submitter_id, quality_score,
         companies(name),
         profiles!submitter_id(handle)
       `)
@@ -71,7 +71,7 @@ r.get('/dashboard', requireAdmin, async (req, res) => {
     const { data: recentCoupons } = await supaAdmin
       .from('coupons')
       .select(`
-        id, title, status, created_at,
+        id, title, status, created_at, merchant, source, submitter_id, quality_score,
         companies(name),
         profiles!submitter_id(handle)
       `)
@@ -123,6 +123,171 @@ r.get('/whoami', async (req, res) => {
     res.json({ isAdmin: prof?.role === 'admin' });
   } catch (_) {
     res.json({ isAdmin: false });
+  }
+});
+
+// Analytics endpoint
+r.get('/analytics', requireAdmin, async (req, res) => {
+  try {
+    // Get top contributors (users with highest karma)
+    const { data: topContributors } = await supaAdmin
+      .from('profiles')
+      .select('id, handle, avatar_url, karma')
+      .order('karma', { ascending: false })
+      .limit(10);
+
+    // Get deal submission counts for each top contributor
+    const contributorsWithStats = await Promise.all(
+      (topContributors || []).map(async (user) => {
+        const { count: dealCount } = await supaAdmin
+          .from('deals')
+          .select('*', { count: 'exact', head: true })
+          .eq('submitter_id', user.id);
+
+        const { count: commentCount } = await supaAdmin
+          .from('comments')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        return {
+          ...user,
+          total_posts: dealCount || 0,
+          total_comments: commentCount || 0
+        };
+      })
+    );
+
+    // Get platform-wide stats
+    const [
+      { count: totalDeals },
+      { count: totalViews },
+      { count: totalClicks }
+    ] = await Promise.all([
+      supaAdmin.from('deals').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+      supaAdmin.from('deals').select('views_count').eq('status', 'approved'),
+      supaAdmin.from('deals').select('clicks_count').eq('status', 'approved')
+    ]);
+
+    // Get deals with most views
+    const { data: topDeals } = await supaAdmin
+      .from('deals')
+      .select('id, title, views_count, clicks_count')
+      .eq('status', 'approved')
+      .order('views_count', { ascending: false })
+      .limit(5);
+
+    // Get ingestion stats (deals by source)
+    const { data: sourceStats } = await supaAdmin
+      .from('deals')
+      .select('source')
+      .not('source', 'is', null);
+
+    const sourceCounts = (sourceStats || []).reduce((acc, d) => {
+      acc[d.source] = (acc[d.source] || 0) + 1;
+      return acc;
+    }, {});
+
+    res.json({
+      topContributors: contributorsWithStats,
+      topDeals: topDeals || [],
+      stats: {
+        totalDeals: totalDeals || 0,
+        dealsBySource: sourceCounts
+      },
+      votes: {
+        deals: [],
+        coupons: []
+      }
+    });
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get all users with email (admin only)
+r.get('/users', requireAdmin, async (req, res) => {
+  try {
+    const { search = '', role = '', page = 1, limit = 50 } = req.query;
+    const offset = (page - 1) * limit;
+
+    // Build query for profiles
+    let query = supaAdmin
+      .from('profiles')
+      .select('id, handle, avatar_url, role, karma, created_at')
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    // Apply filters
+    if (search) {
+      query = query.ilike('handle', `%${search}%`);
+    }
+    if (role) {
+      query = query.eq('role', role);
+    }
+
+    const { data: profiles, error } = await query;
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    // Try to get emails from Supabase admin API (if available)
+    // Note: This requires admin privileges
+    let usersWithEmails = profiles || [];
+
+    try {
+      // Get auth users to match emails
+      const { data: authData } = await supaAdmin.auth.admin.listUsers();
+      const authUsers = authData?.users || [];
+
+      // Create email lookup map
+      const emailMap = {};
+      authUsers.forEach(u => {
+        emailMap[u.id] = u.email;
+      });
+
+      // Add emails to profiles
+      usersWithEmails = (profiles || []).map(profile => ({
+        ...profile,
+        email: emailMap[profile.id] || null
+      }));
+    } catch (authError) {
+      console.log('Could not fetch auth users, emails will be null');
+    }
+
+    res.json(usersWithEmails);
+  } catch (error) {
+    console.error('Users fetch error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update user role
+r.put('/users/:id/role', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!['user', 'mod', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+
+    const { data: profile, error } = await supaAdmin
+      .from('profiles')
+      .update({ role })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ success: true, profile });
+  } catch (error) {
+    console.error('Role update error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -247,10 +412,10 @@ r.get('/coupons', requireAdmin, async (req, res) => {
 function calculateKarmaPoints(submissionType, submissionData) {
   let fieldCount = 0;
   let totalPossibleFields;
-  
+
   if (submissionType === 'deal') {
     totalPossibleFields = 15; // Total optional fields for deals
-    
+
     // Check each optional field
     if (submissionData.original_price) fieldCount++;
     if (submissionData.discount_percentage) fieldCount++;
@@ -267,10 +432,10 @@ function calculateKarmaPoints(submissionType, submissionData) {
     if (submissionData.image_url) fieldCount++;
     if (submissionData.description) fieldCount++;
     if (submissionData.terms_conditions) fieldCount++;
-    
+
   } else if (submissionType === 'coupon') {
     totalPossibleFields = 10; // Total optional fields for coupons
-    
+
     if (submissionData.minimum_order_amount) fieldCount++;
     if (submissionData.maximum_discount_amount) fieldCount++;
     if (submissionData.usage_limit) fieldCount++;
@@ -282,7 +447,7 @@ function calculateKarmaPoints(submissionType, submissionData) {
     if (submissionData.description) fieldCount++;
     if (submissionData.terms_conditions) fieldCount++;
   }
-  
+
   // Calculate karma based on field completion percentage
   if (fieldCount === 0) {
     return 3; // Only required fields
@@ -321,7 +486,7 @@ r.post('/deals/:id/review', requireAdmin, async (req, res) => {
         .select('*')
         .eq('id', id)
         .single();
-      
+
       if (fetchError) {
         return res.status(400).json({ error: fetchError.message });
       }
@@ -355,29 +520,29 @@ r.post('/deals/:id/review', requireAdmin, async (req, res) => {
     // Award karma points for approved deals
     if (action === 'approve' && deal.submitter_id) {
       const karmaPoints = calculateKarmaPoints('deal', existingDeal);
-      
+
       // Get current karma and update it
       const { data: currentProfile } = await supaAdmin
         .from('profiles')
         .select('karma')
         .eq('id', deal.submitter_id)
         .single();
-      
+
       if (currentProfile) {
         const newKarma = (currentProfile.karma || 0) + karmaPoints;
         await supaAdmin
           .from('profiles')
           .update({ karma: newKarma })
           .eq('id', deal.submitter_id);
-        
+
         console.log(`Awarded ${karmaPoints} karma points to user ${deal.submitter_id} for detailed deal submission`);
       }
     }
 
-    res.json({ 
-      success: true, 
-      deal, 
-      karma_points: action === 'approve' ? calculateKarmaPoints('deal', existingDeal) : null 
+    res.json({
+      success: true,
+      deal,
+      karma_points: action === 'approve' ? calculateKarmaPoints('deal', existingDeal) : null
     });
   } catch (error) {
     console.error('Error reviewing deal:', error);
@@ -389,18 +554,18 @@ r.post('/deals/:id/review', requireAdmin, async (req, res) => {
 r.post('/deals/:id/approve', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // First get the deal data to calculate karma
     const { data: existingDeal, error: fetchError } = await supaAdmin
       .from('deals')
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (fetchError) {
       return res.status(400).json({ error: fetchError.message });
     }
-    
+
     const updateData = {
       status: 'approved',
       approved_at: new Date().toISOString()
@@ -424,14 +589,14 @@ r.post('/deals/:id/approve', requireAdmin, async (req, res) => {
     // Award karma points based on submission completeness
     if (deal.submitter_id) {
       const karmaPoints = calculateKarmaPoints('deal', existingDeal);
-      
+
       // Get current karma and update it
       const { data: currentProfile } = await supaAdmin
         .from('profiles')
         .select('karma')
         .eq('id', deal.submitter_id)
         .single();
-      
+
       if (currentProfile) {
         const newKarma = (currentProfile.karma || 0) + karmaPoints;
         await supaAdmin
@@ -439,7 +604,7 @@ r.post('/deals/:id/approve', requireAdmin, async (req, res) => {
           .update({ karma: newKarma })
           .eq('id', deal.submitter_id);
       }
-      
+
       console.log(`Awarded ${karmaPoints} karma points to user ${deal.submitter_id} for detailed deal submission`);
     }
 
@@ -507,7 +672,7 @@ r.post('/coupons/:id/review', requireAdmin, async (req, res) => {
         .select('*')
         .eq('id', id)
         .single();
-      
+
       if (fetchError) {
         return res.status(400).json({ error: fetchError.message });
       }
@@ -541,14 +706,14 @@ r.post('/coupons/:id/review', requireAdmin, async (req, res) => {
     // Award karma points for approved coupons
     if (action === 'approve' && coupon.submitter_id && existingCoupon) {
       const karmaPoints = calculateKarmaPoints('coupon', existingCoupon);
-      
+
       // Get current karma and update it
       const { data: currentProfile } = await supaAdmin
         .from('profiles')
         .select('karma')
         .eq('id', coupon.submitter_id)
         .single();
-      
+
       if (currentProfile) {
         const newKarma = (currentProfile.karma || 0) + karmaPoints;
         await supaAdmin
@@ -556,9 +721,9 @@ r.post('/coupons/:id/review', requireAdmin, async (req, res) => {
           .update({ karma: newKarma })
           .eq('id', coupon.submitter_id);
       }
-      
+
       console.log(`Awarded ${karmaPoints} karma points to user ${coupon.submitter_id} for detailed coupon submission`);
-      
+
       res.json({ success: true, coupon, karma_points: karmaPoints });
     } else {
       res.json({ success: true, coupon });
@@ -584,6 +749,7 @@ r.put('/deals/:id/edit', requireAdmin, async (req, res) => {
       company_name,
       company_website,
       category_id,
+      quality_score,
       deal_type,
       discount_percentage,
       discount_amount,
@@ -650,6 +816,7 @@ r.put('/deals/:id/edit', requireAdmin, async (req, res) => {
       merchant: merchant?.trim() || null,
       company_id: finalCompanyId,
       category_id: category_id || null,
+      quality_score: quality_score !== undefined ? parseFloat(quality_score) : null,
       deal_type: deal_type || null,
       discount_percentage: discount_percentage ? parseFloat(discount_percentage) : null,
       discount_amount: discount_amount ? parseFloat(discount_amount) : null,
@@ -693,7 +860,7 @@ r.put('/deals/:id/edit', requireAdmin, async (req, res) => {
         // Process each tag
         for (const tag of tags) {
           let tagId;
-          
+
           if (typeof tag === 'number' || (typeof tag === 'string' && !isNaN(tag))) {
             // Existing tag ID
             tagId = parseInt(tag);
@@ -716,7 +883,7 @@ r.put('/deals/:id/edit', requireAdmin, async (req, res) => {
               console.error('Error creating tag:', tagError);
               continue;
             }
-            
+
             tagId = newTag.id;
           } else {
             continue;
@@ -866,7 +1033,7 @@ r.put('/coupons/:id/edit', requireAdmin, async (req, res) => {
         // Process each tag
         for (const tag of tags) {
           let tagId;
-          
+
           if (typeof tag === 'number' || (typeof tag === 'string' && !isNaN(tag))) {
             // Existing tag ID
             tagId = parseInt(tag);
@@ -889,7 +1056,7 @@ r.put('/coupons/:id/edit', requireAdmin, async (req, res) => {
               console.error('Error creating tag:', tagError);
               continue;
             }
-            
+
             tagId = newTag.id;
           } else {
             continue;
@@ -1191,8 +1358,8 @@ r.get('/expiration/stats', requireAdmin, async (req, res) => {
 r.get('/expiration/expiring-soon', requireAdmin, async (req, res) => {
   try {
     const { hours = 24 } = req.query
-    const { data: expiringItems, error } = await supabase.rpc('get_expiring_soon', { 
-      hours_ahead: parseInt(hours) 
+    const { data: expiringItems, error } = await supabase.rpc('get_expiring_soon', {
+      hours_ahead: parseInt(hours)
     })
 
     if (error) {
@@ -1215,8 +1382,8 @@ r.post('/expiration/mark-expired', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: error.message })
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       expired_count: expiredCount || 0,
       message: `Marked ${expiredCount || 0} items as expired`
     })
@@ -1235,8 +1402,8 @@ r.post('/expiration/cleanup', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: error.message })
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       cleanup_count: cleanupCount || 0,
       message: `Archived ${cleanupCount || 0} old expired items`
     })
@@ -1305,7 +1472,7 @@ r.get('/gamification/achievements', requireAdmin, async (req, res) => {
 r.post('/gamification/achievements', requireAdmin, async (req, res) => {
   try {
     const { name, slug, description, category, criteria_type, criteria_value, xp_reward, badge_icon, badge_color, rarity, is_hidden } = req.body;
-    
+
     const { data, error } = await supaAdmin
       .from('achievements')
       .insert({
@@ -1336,7 +1503,7 @@ r.put('/gamification/achievements/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    
+
     const { data, error } = await supaAdmin
       .from('achievements')
       .update(updateData)
@@ -1370,7 +1537,7 @@ r.put('/gamification/xp-config/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { base_xp, max_daily, is_active } = req.body;
-    
+
     const { data, error } = await supaAdmin
       .from('xp_config')
       .update({ base_xp, max_daily, is_active })
@@ -1439,7 +1606,7 @@ r.get('/auto-tagging/merchant-patterns', requireAdmin, async (req, res) => {
 r.post('/auto-tagging/merchant-patterns', requireAdmin, async (req, res) => {
   try {
     const { merchant_name, domain_patterns, title_patterns, auto_apply_tags, confidence_score } = req.body;
-    
+
     const { data, error } = await supaAdmin
       .from('merchant_patterns')
       .insert({
@@ -1480,7 +1647,7 @@ r.get('/auto-tagging/category-patterns', requireAdmin, async (req, res) => {
 r.post('/auto-tagging/category-patterns', requireAdmin, async (req, res) => {
   try {
     const { category_name, category_id, keyword_patterns, title_patterns, confidence_score, priority } = req.body;
-    
+
     const { data, error } = await supaAdmin
       .from('category_patterns')
       .insert({
@@ -1709,48 +1876,48 @@ r.delete('/reports/:id', requireAdmin, async (req, res) => {
 r.delete('/deals/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // First, delete associated images from storage
     const { data: images } = await supaAdmin
       .from('images')
       .select('storage_path')
       .eq('entity_type', 'deal')
       .eq('entity_id', id);
-    
+
     if (images && images.length > 0) {
       const pathsToDelete = images.map(img => img.storage_path);
       await supaAdmin.storage
         .from('images')
         .remove(pathsToDelete);
     }
-    
+
     // Delete associated records (tags, votes, etc.)
     await supaAdmin
       .from('deal_tags')
       .delete()
       .eq('deal_id', id);
-    
+
     await supaAdmin
       .from('deal_votes')
       .delete()
       .eq('deal_id', id);
-    
+
     await supaAdmin
       .from('images')
       .delete()
       .eq('entity_type', 'deal')
       .eq('entity_id', id);
-    
+
     // Finally, delete the deal
     const { error } = await supaAdmin
       .from('deals')
       .delete()
       .eq('id', id);
-    
+
     if (error) {
       return res.status(400).json({ error: error.message });
     }
-    
+
     res.json({ success: true, message: 'Deal deleted successfully' });
   } catch (error) {
     console.error('Error deleting deal:', error);
@@ -1762,48 +1929,48 @@ r.delete('/deals/:id', requireAdmin, async (req, res) => {
 r.delete('/coupons/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // First, delete associated images from storage
     const { data: images } = await supaAdmin
       .from('images')
       .select('storage_path')
       .eq('entity_type', 'coupon')
       .eq('entity_id', id);
-    
+
     if (images && images.length > 0) {
       const pathsToDelete = images.map(img => img.storage_path);
       await supaAdmin.storage
         .from('images')
         .remove(pathsToDelete);
     }
-    
+
     // Delete associated records (tags, votes, etc.)
     await supaAdmin
       .from('coupon_tags')
       .delete()
       .eq('coupon_id', id);
-    
+
     await supaAdmin
       .from('coupon_votes')
       .delete()
       .eq('coupon_id', id);
-    
+
     await supaAdmin
       .from('images')
       .delete()
       .eq('entity_type', 'coupon')
       .eq('entity_id', id);
-    
+
     // Finally, delete the coupon
     const { error } = await supaAdmin
       .from('coupons')
       .delete()
       .eq('id', id);
-    
+
     if (error) {
       return res.status(400).json({ error: error.message });
     }
-    
+
     res.json({ success: true, message: 'Coupon deleted successfully' });
   } catch (error) {
     console.error('Error deleting coupon:', error);
@@ -1817,7 +1984,7 @@ r.put('/coupons/:id/edit', requireAdmin, async (req, res) => {
     const { id } = req.params;
     const updateData = { ...req.body };
     const tags = updateData.tags;
-    
+
     // Handle company creation/association
     if (updateData.company_name && !updateData.company_id) {
       // Create new company
@@ -1830,19 +1997,19 @@ r.put('/coupons/:id/edit', requireAdmin, async (req, res) => {
         })
         .select()
         .single();
-      
+
       if (companyError) {
         return res.status(400).json({ error: `Failed to create company: ${companyError.message}` });
       }
-      
+
       updateData.company_id = newCompany.id;
     }
-    
+
     // Remove company creation fields and tags from coupon update
     delete updateData.company_name;
     delete updateData.company_website;
     delete updateData.tags;
-    
+
     const { data: coupon, error } = await supaAdmin
       .from('coupons')
       .update(updateData)
@@ -1853,16 +2020,16 @@ r.put('/coupons/:id/edit', requireAdmin, async (req, res) => {
         profiles!submitter_id(handle)
       `)
       .single();
-      
+
     if (error) {
       return res.status(400).json({ error: error.message });
     }
-    
+
     // Handle tags if provided
     if (tags && Array.isArray(tags)) {
       // Remove existing coupon tags
       await supaAdmin.from('coupon_tags').delete().eq('coupon_id', id);
-      
+
       // Process and add new tags
       const tagIds = [];
       for (const tag of tags) {
@@ -1871,8 +2038,8 @@ r.put('/coupons/:id/edit', requireAdmin, async (req, res) => {
           const tagSlug = tag.toLowerCase().replace(/[^a-z0-9]+/g, '-');
           const { data: newTag, error: tagError } = await supaAdmin
             .from('tags')
-            .upsert({ 
-              name: tag, 
+            .upsert({
+              name: tag,
               slug: tagSlug,
               created_at: new Date().toISOString()
             }, {
@@ -1880,7 +2047,7 @@ r.put('/coupons/:id/edit', requireAdmin, async (req, res) => {
             })
             .select()
             .single();
-          
+
           if (!tagError && newTag) {
             tagIds.push(newTag.id);
           }
@@ -1889,14 +2056,14 @@ r.put('/coupons/:id/edit', requireAdmin, async (req, res) => {
           tagIds.push(tag);
         }
       }
-      
+
       // Create coupon-tag associations
       if (tagIds.length > 0) {
         const couponTagRows = tagIds.map(tag_id => ({ coupon_id: parseInt(id), tag_id }));
         await supaAdmin.from('coupon_tags').insert(couponTagRows);
       }
     }
-    
+
     res.json({ success: true, coupon });
   } catch (error) {
     console.error('Error updating coupon:', error);
@@ -1911,11 +2078,11 @@ r.get('/tags', requireAdmin, async (req, res) => {
       .from('tags')
       .select('*')
       .order('name');
-      
+
     if (error) {
       return res.status(400).json({ error: error.message });
     }
-    
+
     res.json(tags || []);
   } catch (error) {
     console.error('Error fetching tags:', error);
@@ -1927,13 +2094,13 @@ r.get('/tags', requireAdmin, async (req, res) => {
 r.post('/expire-items', requireAdmin, async (req, res) => {
   try {
     const { data, error } = await supaAdmin.rpc('handle_expired_items');
-    
+
     if (error) {
       return res.status(400).json({ error: error.message });
     }
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       expired_count: data || 0,
       message: `Successfully expired ${data || 0} items`
     });
@@ -1948,11 +2115,11 @@ r.get('/expiring-soon', requireAdmin, async (req, res) => {
   try {
     const hours = parseInt(req.query.hours) || 24;
     const { data, error } = await supaAdmin.rpc('get_expiring_soon', { hours_ahead: hours });
-    
+
     if (error) {
       return res.status(400).json({ error: error.message });
     }
-    
+
     res.json(data || []);
   } catch (error) {
     console.error('Error fetching expiring items:', error);
@@ -1974,13 +2141,13 @@ r.post('/upload-image', requireAdmin, upload.single('image'), async (req, res) =
       console.error('Error listing buckets:', bucketError);
       return res.status(500).json({ error: 'Storage service unavailable' });
     }
-    
+
     const imagesBucket = buckets.find(bucket => bucket.id === 'images');
     if (!imagesBucket) {
       console.error('Images bucket not found. Available buckets:', buckets.map(b => b.id));
       return res.status(500).json({ error: 'Images storage bucket not configured' });
     }
-    
+
 
     // Generate unique filename
     const fileExtension = req.file.originalname.split('.').pop();
@@ -1999,10 +2166,10 @@ r.post('/upload-image', requireAdmin, upload.single('image'), async (req, res) =
 
     if (error) {
       console.error('Storage upload error:', error);
-      return res.status(500).json({ 
-        error: 'Failed to upload image', 
+      return res.status(500).json({
+        error: 'Failed to upload image',
         details: error.message,
-        code: error.statusCode 
+        code: error.statusCode
       });
     }
 
@@ -2022,9 +2189,9 @@ r.post('/upload-image', requireAdmin, upload.single('image'), async (req, res) =
 
   } catch (error) {
     console.error('Error uploading image:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: error.message,
-      stack: error.stack 
+      stack: error.stack
     });
   }
 });
@@ -2112,8 +2279,8 @@ r.delete('/companies/:id', requireAdmin, async (req, res) => {
 
     console.log('✅ Company deleted successfully:', company.name);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: `Company "${company.name}" deleted successfully`,
       deletedData: {
         company: company.name,

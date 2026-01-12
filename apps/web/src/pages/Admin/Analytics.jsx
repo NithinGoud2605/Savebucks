@@ -88,7 +88,7 @@ const Analytics = () => {
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
                         <span className="text-primary-600 font-medium">
-                          {contributor.handle[0]?.toUpperCase()}
+                          {contributor.handle?.[0]?.toUpperCase() || '?'}
                         </span>
                       </div>
                     )}

@@ -92,20 +92,39 @@ export default function EnhancedPendingItem({
       <div className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            {/* Title and Status */}
-            <div className="flex items-center gap-3 mb-3">
+            {/* Title and Status with Image */}
+            <div className="flex items-start gap-4 mb-3">
               <input
                 type="checkbox"
                 checked={isSelected}
                 onChange={handleToggleSelection}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 mt-1 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
-              <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
-                {item.title}
-              </h3>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                Pending Review
-              </span>
+
+              {/* Deal Image Thumbnail */}
+              {item.image_url ? (
+                <img
+                  src={item.image_url}
+                  alt={item.title}
+                  className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0"
+                  onError={(e) => {
+                    e.target.style.display = 'none'
+                  }}
+                />
+              ) : (
+                <div className="w-20 h-20 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center flex-shrink-0">
+                  <PhotoIcon className="w-8 h-8 text-gray-400" />
+                </div>
+              )}
+
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+                  {item.title}
+                </h3>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-1">
+                  Pending Review
+                </span>
+              </div>
             </div>
 
             {/* Submitter Info */}
@@ -121,14 +140,31 @@ export default function EnhancedPendingItem({
 
             {/* Karma Points Preview */}
             <div className="mb-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-gray-600">Karma Points:</span>
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getKarmaColor()}`}>
                   {karmaPoints} points
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-700">
                   ({karmaPoints === 3 ? 'Basic' : karmaPoints === 5 ? 'Good' : karmaPoints === 8 ? 'Great' : 'Excellent'} submission)
                 </span>
+
+                {/* Quality Score Badge */}
+                {item.quality_score !== undefined && item.quality_score !== null && (
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold ml-2 ${item.quality_score >= 0.7 ? 'bg-green-100 text-green-800 border border-green-300' :
+                      item.quality_score >= 0.4 ? 'bg-yellow-100 text-yellow-800 border border-yellow-300' :
+                        'bg-red-100 text-red-800 border border-red-300'
+                    }`}>
+                    QS: {(item.quality_score * 100).toFixed(0)}%
+                  </span>
+                )}
+
+                {/* Source Badge */}
+                {item.source && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300 ml-2">
+                    {item.source.replace('_', ' ').replace('slickdeals', 'SD')}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -165,6 +201,11 @@ export default function EnhancedPendingItem({
                 <span className="font-medium text-gray-900">
                   {isDeal ? item.merchant : item.companies?.name}
                 </span>
+                {item.coupon_code && (
+                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
+                    Has Coupon
+                  </span>
+                )}
                 {item.companies?.is_verified && (
                   <span className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
                     Verified
@@ -183,7 +224,7 @@ export default function EnhancedPendingItem({
               {/* Submission Date */}
               <div className="flex items-center gap-2 text-sm">
                 <CalendarIcon className="w-4 h-4 text-gray-600" />
-                <span className="text-gray-600">
+                <span className="text-gray-700">
                   {new Date(item.created_at).toLocaleDateString()}
                 </span>
               </div>
@@ -192,7 +233,7 @@ export default function EnhancedPendingItem({
               {item.expires_at && (
                 <div className="flex items-center gap-2 text-sm">
                   <ClockIcon className="w-4 h-4 text-orange-600" />
-                  <span className="text-gray-600">
+                  <span className="text-gray-700">
                     Expires {new Date(item.expires_at).toLocaleDateString()}
                   </span>
                 </div>
@@ -229,28 +270,43 @@ export default function EnhancedPendingItem({
             {item.deal_images && item.deal_images.length > 0 && (
               <div className="mb-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <PhotoIcon className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-900">
-                    Images ({item.deal_images.length})
-                  </span>
+                  <PhotoIcon className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-medium text-gray-700">Gallery Images</span>
                 </div>
-                <div className="flex gap-2 overflow-x-auto">
-                  {item.deal_images.slice(0, 3).map((image, index) => (
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {item.deal_images.map((img, idx) => (
                     <img
-                      key={index}
-                      src={image}
-                      alt={`${item.title} ${index + 1}`}
-                      className="w-16 h-16 object-cover rounded border"
+                      key={idx}
+                      src={img}
+                      alt={`Gallery ${idx + 1}`}
+                      className="w-16 h-16 object-cover rounded border border-gray-200"
                     />
                   ))}
-                  {item.deal_images.length > 3 && (
-                    <div className="w-16 h-16 bg-gray-50 rounded border flex items-center justify-center">
-                      <span className="text-xs text-gray-600">
-                        +{item.deal_images.length - 3}
-                      </span>
-                    </div>
-                  )}
                 </div>
+              </div>
+            )}
+
+            {/* Coupon Code for Deals */}
+            {isDeal && item.coupon_code && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                <div>
+                  <span className="text-xs text-green-600 font-semibold uppercase tracking-wider block mb-1">
+                    Coupon Code
+                  </span>
+                  <code className="text-lg font-bold text-green-700 font-mono">
+                    {item.coupon_code}
+                  </code>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(item.coupon_code);
+                    toast.success('Code copied!');
+                  }}
+                  className="px-3 py-1.5 bg-white text-green-700 text-xs font-medium border border-green-200 rounded hover:bg-green-50 transition-colors"
+                >
+                  Copy
+                </button>
               </div>
             )}
 

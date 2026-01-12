@@ -33,6 +33,7 @@ export default function AdminEditModal({
     company_name: '',
     company_website: '',
     category_id: '',
+    quality_score: 0.65,
     deal_type: '',
     discount_percentage: '',
     discount_amount: '',
@@ -99,13 +100,18 @@ export default function AdminEditModal({
         company_name: item.companies?.name || '',
         company_website: item.companies?.website_url || '',
         category_id: item.category_id || '',
+        quality_score: item.quality_score ?? 0.65,
         deal_type: item.deal_type || '',
         discount_percentage: item.discount_percentage || '',
         discount_amount: item.discount_amount || '',
         coupon_code: item.coupon_code || '',
         expires_at: item.expires_at ? item.expires_at.split('T')[0] : '',
-        deal_images: item.deal_images || [],
-        featured_image: item.featured_image || '',
+        deal_images: item.deal_images?.length > 0
+          ? item.deal_images
+          : (item.images?.length > 0
+            ? item.images
+            : (item.image_url ? [item.image_url] : [])),
+        featured_image: item.featured_image || item.image_url || '',
         // Additional deal fields
         starts_at: item.starts_at ? item.starts_at.split('T')[0] : '',
         stock_status: item.stock_status || 'unknown',
@@ -306,6 +312,7 @@ export default function AdminEditModal({
         company_name: formData.company_name.trim() || null,
         company_website: formData.company_website.trim() || null,
         category_id: formData.category_id || null,
+        quality_score: formData.quality_score !== undefined ? parseFloat(formData.quality_score) : null,
         deal_type: formData.deal_type || null,
         discount_percentage: formData.discount_percentage ? parseFloat(formData.discount_percentage) : null,
         discount_amount: formData.discount_amount ? parseFloat(formData.discount_amount) : null,
@@ -380,14 +387,14 @@ export default function AdminEditModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Title */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
                   Title *
                 </label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.title ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 ${errors.title ? 'border-red-300' : 'border-gray-300'
                     }`}
                   placeholder="Enter title"
                 />
@@ -396,14 +403,14 @@ export default function AdminEditModal({
 
               {/* Description */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
                   Description
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   placeholder="Enter description"
                 />
               </div>
@@ -411,7 +418,7 @@ export default function AdminEditModal({
               {/* URL (Deals only) */}
               {isDeal && (
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
                     <LinkIcon className="w-4 h-4 inline mr-1" />
                     Deal URL *
                   </label>
@@ -419,7 +426,7 @@ export default function AdminEditModal({
                     type="url"
                     value={formData.url}
                     onChange={(e) => handleInputChange('url', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.url ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 ${errors.url ? 'border-red-300' : 'border-gray-300'
                       }`}
                     placeholder="https://example.com/deal"
                   />
@@ -427,29 +434,27 @@ export default function AdminEditModal({
                 </div>
               )}
 
-              {/* Coupon Code (Coupons only) */}
-              {isCoupon && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Coupon Code *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.coupon_code}
-                    onChange={(e) => handleInputChange('coupon_code', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.coupon_code ? 'border-red-300' : 'border-gray-300'
-                      }`}
-                    placeholder="SAVE20"
-                  />
-                  {errors.coupon_code && <p className="text-red-500 text-sm mt-1">{errors.coupon_code}</p>}
-                </div>
-              )}
+              {/* Coupon Code (Optional for Deals, Required for Coupons) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Coupon Code {isCoupon && '*'}
+                </label>
+                <input
+                  type="text"
+                  value={formData.coupon_code}
+                  onChange={(e) => handleInputChange('coupon_code', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 ${errors.coupon_code ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  placeholder={isCoupon ? "SAVE20" : "Optional Coupon Code"}
+                />
+                {errors.coupon_code && <p className="text-red-500 text-sm mt-1">{errors.coupon_code}</p>}
+              </div>
 
               {/* Price (Deals) */}
               {isDeal && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-900 mb-2">
                       <CurrencyDollarIcon className="w-4 h-4 inline mr-1" />
                       Price
                     </label>
@@ -458,13 +463,13 @@ export default function AdminEditModal({
                       step="0.01"
                       value={formData.price}
                       onChange={(e) => handleInputChange('price', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                       placeholder="99.99"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-900 mb-2">
                       Original Price
                     </label>
                     <input
@@ -472,7 +477,7 @@ export default function AdminEditModal({
                       step="0.01"
                       value={formData.original_price}
                       onChange={(e) => handleInputChange('original_price', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                       placeholder="199.99"
                     />
                   </div>
@@ -483,7 +488,7 @@ export default function AdminEditModal({
               {isCoupon && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-900 mb-2">
                       Discount Value
                     </label>
                     <input
@@ -491,19 +496,19 @@ export default function AdminEditModal({
                       step="0.01"
                       value={formData.discount_value}
                       onChange={(e) => handleInputChange('discount_value', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                       placeholder="20"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-900 mb-2">
                       Discount Type
                     </label>
                     <select
                       value={formData.discount_type}
                       onChange={(e) => handleInputChange('discount_type', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     >
                       <option value="percentage">Percentage</option>
                       <option value="fixed">Fixed Amount</option>
@@ -514,7 +519,7 @@ export default function AdminEditModal({
 
               {/* Company Selection */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
                   <BuildingOfficeIcon className="w-4 h-4 inline mr-1" />
                   Company
                 </label>
@@ -530,7 +535,7 @@ export default function AdminEditModal({
                           handleInputChange('company_website', selectedCompany.website_url || '')
                         }
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     >
                       <option value="">Select existing company</option>
                       {companies.map(company => (
@@ -548,7 +553,7 @@ export default function AdminEditModal({
                         handleInputChange('company_name', e.target.value)
                         handleInputChange('company_id', '') // Clear selection when typing new name
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                       placeholder="Or enter new company name"
                     />
                   </div>
@@ -569,14 +574,14 @@ export default function AdminEditModal({
               {/* Merchant (Deals) */}
               {isDeal && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
                     Merchant
                   </label>
                   <input
                     type="text"
                     value={formData.merchant}
                     onChange={(e) => handleInputChange('merchant', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     placeholder="Store Name"
                   />
                 </div>
@@ -585,7 +590,7 @@ export default function AdminEditModal({
               {/* Deal Type (Deals) */}
               {isDeal && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
                     <TagIcon className="w-4 h-4 inline mr-1" />
                     Deal Type
                   </label>
@@ -603,6 +608,50 @@ export default function AdminEditModal({
                   </select>
                 </div>
               )}
+
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  <TagIcon className="w-4 h-4 inline mr-1" />
+                  Category
+                </label>
+                <select
+                  value={formData.category_id}
+                  onChange={(e) => handleInputChange('category_id', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                >
+                  <option value="">Select Category</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Quality Score */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Quality Score
+                  <span className={`ml-2 px-2 py-0.5 rounded text-xs font-bold ${(formData.quality_score || 0) >= 0.7 ? 'bg-green-100 text-green-800' :
+                    (formData.quality_score || 0) >= 0.4 ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                    {Math.round((formData.quality_score || 0) * 100)}%
+                  </span>
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={Math.round((formData.quality_score || 0.65) * 100)}
+                  onChange={(e) => handleInputChange('quality_score', parseFloat(e.target.value) / 100)}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Low (0%)</span>
+                  <span>Medium (50%)</span>
+                  <span>High (100%)</span>
+                </div>
+              </div>
 
               {/* Expiration Date */}
               <div>

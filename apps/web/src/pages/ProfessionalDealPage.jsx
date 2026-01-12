@@ -801,6 +801,30 @@ export default function ProfessionalDealPage() {
                 )}
               </div>
 
+              {/* Coupon Code Section */}
+              {deal.coupon_code && (
+                <div className="mt-4 mb-2 p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-0.5">Coupon Code</p>
+                      <code className="text-lg font-mono font-bold text-emerald-800 break-all">
+                        {deal.coupon_code}
+                      </code>
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(deal.coupon_code);
+                        toast.success('Coupon code copied!');
+                      }}
+                      className="flex-shrink-0 px-3 py-1.5 bg-white border border-emerald-200 shadow-sm text-emerald-700 text-sm font-bold rounded-lg hover:bg-emerald-50 transition-colors active:scale-95 flex items-center gap-1.5"
+                    >
+                      <TagIcon className="w-4 h-4" />
+                      Copy
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {deal.original_price && deal.original_price > deal.price && (
                 <div className="mt-2 text-sm text-emerald-700 font-medium">
                   💰 You save {formatPrice(deal.original_price - deal.price)}
@@ -844,8 +868,8 @@ export default function ProfessionalDealPage() {
                   <button
                     onClick={() => handleVote('up')}
                     className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${deal?.userVote === 1
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-slate-100 text-slate-600 hover:bg-emerald-50'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-slate-100 text-slate-600 hover:bg-emerald-50'
                       }`}
                   >
                     <HandThumbUpIcon className="w-4 h-4" />
@@ -854,8 +878,8 @@ export default function ProfessionalDealPage() {
                   <button
                     onClick={() => handleVote('down')}
                     className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${deal?.userVote === -1
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-slate-100 text-slate-600 hover:bg-red-50'
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-slate-100 text-slate-600 hover:bg-red-50'
                       }`}
                   >
                     <HandThumbDownIcon className="w-4 h-4" />
